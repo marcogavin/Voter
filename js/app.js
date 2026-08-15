@@ -1,74 +1,128 @@
-// Demo-mode poll: fake, local-only vote counts, with a simulated live
-// feed so the meters move on their own (like a real event would produce).
-// This whole file is the piece that gets replaced once real sync is wired up.
+// Audience view: shows the live poll and takes one vote from this device.
+// All database work goes through sync.js.
 
-const poll = {
-  options: [
-    { id: "a", label: "Real-time voting", votes: 12 },
-    { id: "b", label: "Q&A with upvotes", votes: 19 },
-    { id: "c", label: "Live word cloud", votes: 7 },
-  ],
-};
+import { connect, onPollChange, castVote, getUid } from "./sync.js";
+import { isConfigured } from "./firebase-config.js";
 
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const optionsEl = document.getElementById("options");
+const questionEl = document.getElementById("question");
+const statusEl = document.getElementById("status");
 
-function totalVotes() {
-  return poll.options.reduce((sum, o) => sum + o.votes, 0);
-}
+let myVote = null; // which option this device picked, once it has
+let busy = false; // guards against double-taps while a write is in flight
 
-function buildRows() {
-  const container = document.getElementById("options");
-  container.innerHTML = "";
+start();
 
-  for (const option of poll.options) {
-    const row = document.createElement("button");
-    row.type = "button";
-    row.className = "meter";
-    row.dataset.id = option.id;
-    row.setAttribute("aria-label", `Vote for ${option.label}`);
-    row.innerHTML = `
-      <span class="meter-label">${option.label}</span>
-      <span class="meter-track">
-        <span class="meter-fill"></span>
-        <span class="meter-needle"></span>
-      </span>
-      <span class="meter-pct">0%</span>
-    `;
-    row.addEventListener("click", () => castVote(option.id));
-    container.appendChild(row);
+async function start() {
+  if (!isConfigured()) {
+    setStatus("Setup needed", "warn");
+    showMessage(
+      "Add your Firebase details to js/firebase-config.js to go live.",
+    );
+    return;
   }
 
-  updateMeters();
+  setStatus("Connecting", "pending");
+
+  try {
+    await connect();
+  } catch (error) {
+    setStatus("Offline", "error");
+    showMessage(error.message);
+    return;
+  }
+
+  setStatus("Live", "live");
+  onPollChange(render);
 }
 
-function updateMeters() {
-  const total = totalVotes();
+function render(poll) {
+  if (!poll || !poll.options) {
+    questionEl.textContent = "No poll running";
+    showMessage("Waiting for the host to start a poll.");
+    return;
+  }
 
-  document.querySelectorAll(".meter").forEach((row) => {
-    const option = poll.options.find((o) => o.id === row.dataset.id);
-    const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
+  myVote = poll.voters ? poll.voters[getUid()] ?? null : null;
 
-    row.querySelector(".meter-fill").style.width = pct + "%";
-    row.querySelector(".meter-needle").style.left = pct + "%";
-    row.querySelector(".meter-pct").textContent = pct + "%";
-  });
+  questionEl.textContent = poll.question || "Untitled poll";
+  drawOptions(poll.options);
 }
 
-function castVote(optionId) {
-  const option = poll.options.find((o) => o.id === optionId);
-  option.votes += 1;
-  updateMeters();
+function drawOptions(options) {
+  const entries = Object.entries(options);
+  const total = entries.reduce((sum, [, o]) => sum + (o.votes || 0), 0);
+  const showResults = myVote !== null;
+
+  // Rebuild only when the set of options changed, so the CSS width transitions
+  // animate smoothly instead of restarting from zero on every update.
+  const existingIds = [...optionsEl.querySelectorAll(".meter")].map(
+    (el) => el.dataset.id,
+  );
+  const sameRows =
+    existingIds.length === entries.length &&
+    entries.every(([id], i) => existingIds[i] === id);
+
+  if (!sameRows) {
+    optionsEl.innerHTML = "";
+    for (const [id, option] of entries) {
+      optionsEl.appendChild(buildRow(id, option.label));
+    }
+  }
+
+  for (const [id, option] of entries) {
+    const row = optionsEl.querySelector(`.meter[data-id="${id}"]`);
+    if (!row) continue;
+
+    const votes = option.votes || 0;
+    const pct = total === 0 ? 0 : Math.round((votes / total) * 100);
+
+    row.querySelector(".meter-label").textContent = option.label;
+    row.querySelector(".meter-fill").style.width = showResults ? pct + "%" : "0%";
+    row.querySelector(".meter-needle").style.left = showResults ? pct + "%" : "0%";
+    row.querySelector(".meter-pct").textContent = showResults ? pct + "%" : "";
+    row.classList.toggle("is-mine", id === myVote);
+    row.disabled = showResults;
+  }
 }
 
-function simulateLiveActivity() {
-  if (reduceMotion) return; // don't auto-animate for users who asked not to
-
-  setInterval(() => {
-    const option = poll.options[Math.floor(Math.random() * poll.options.length)];
-    option.votes += 1;
-    updateMeters();
-  }, 1800);
+function buildRow(id, label) {
+  const row = document.createElement("button");
+  row.type = "button";
+  row.className = "meter";
+  row.dataset.id = id;
+  row.setAttribute("aria-label", `Vote for ${label}`);
+  row.innerHTML = `
+    <span class="meter-label"></span>
+    <span class="meter-track">
+      <span class="meter-fill"></span>
+      <span class="meter-needle"></span>
+    </span>
+    <span class="meter-pct"></span>
+  `;
+  row.addEventListener("click", () => submitVote(id));
+  return row;
 }
 
-buildRows();
-simulateLiveActivity();
+async function submitVote(optionId) {
+  if (myVote !== null || busy) return;
+  busy = true;
+
+  try {
+    await castVote(optionId);
+  } catch (error) {
+    setStatus("Vote refused", "error");
+    console.error(error);
+  } finally {
+    busy = false;
+  }
+}
+
+function showMessage(text) {
+  optionsEl.innerHTML = `<p class="panel-message">${text}</p>`;
+}
+
+function setStatus(text, state) {
+  statusEl.textContent = text;
+  statusEl.dataset.state = state;
+}
