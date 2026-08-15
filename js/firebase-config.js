@@ -12,13 +12,15 @@
 // crashing.
 
 export const firebaseConfig = {
+  // Still needed — copy these two from the console.
   apiKey: "PASTE_API_KEY_HERE",
-  authDomain: "PASTE_PROJECT.firebaseapp.com",
-  databaseURL: "https://PASTE_PROJECT-default-rtdb.firebaseio.com",
-  projectId: "PASTE_PROJECT",
-  storageBucket: "PASTE_PROJECT.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
   appId: "PASTE_APP_ID",
+
+  // Already confirmed. Note the europe-west1 region: this project's database
+  // lives on firebasedatabase.app, not the older firebaseio.com domain.
+  databaseURL: "https://voter-72d36-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "voter-72d36",
+  authDomain: "voter-72d36.firebaseapp.com",
 };
 
 // Which poll this deployment reads and writes. One event = one id is fine.
