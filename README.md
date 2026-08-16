@@ -17,22 +17,22 @@ different jobs:
   answer. Leave it on **No right answer** for opinion questions. Votes already
   cast survive an edit unless you change the options themselves, since a vote
   belongs to a specific option.
-- **Run** — one question on screen, live results, and **Take down** to clear the
-  screen between sections. Every attendee's phone follows whatever you have up.
+- **Run** — one question on screen, live results, and **Clear screen** to put the
+  audience back to a waiting state between sections. Every attendee's phone
+  follows whatever you have up.
 
 ### Right answers and the reveal step
 
-**Next** does two things in turn. With a question up, the first press
-**reveals the answer** and closes voting; the second press moves to the next
-question. For questions with no right answer the first press still closes
-voting, and the button says **Close voting** instead.
+For a question with a right answer, **Next** does two things in turn: the first
+press **reveals the answer** and closes voting, the second moves on. Questions
+with no right answer advance on a single press.
 
-Colours carry the result, alongside ●, ✓ and ✗ so the meaning survives for
-anyone who can't separate red from green:
+Colours carry the result, alongside the tick, ✓ and ✗ so the meaning survives
+for anyone who can't separate red from green:
 
 | | |
 | :--- | :--- |
-| **Blue ●** | the option this phone voted for |
+| **Blue tick** | the option this phone voted for |
 | **Green ✓** | the right answer, once revealed |
 | **Red ✗** | the wrong answers, once revealed |
 
@@ -78,11 +78,12 @@ In the console: **Realtime Database → Rules**, paste the contents of
 
 They enforce:
 
-- only signed-in devices (including anonymous ones) can read a poll
+- only signed-in devices (including anonymous ones) can read an event
 - an attendee can add their own vote **once**, and can't change it afterwards
 - vote counters only move up by one at a time — nobody can set them to 900
-- the question and the option labels are writable **only by the device that
-  created the poll**
+- no votes at all once the answer has been revealed
+- questions and option labels are writable **only by the device that created
+  the event**
 
 Check them with the **Rules Playground** tab before a real event.
 
@@ -111,7 +112,7 @@ Reorder with the arrows, fix wording with ✎, remove with ✕.
 1. Open `host.html` and switch to **Run**
 2. Share the audience URL — a QR code on a slide works well
 3. **Next** puts the first question up; every phone follows within about a second
-4. Move through with **Prev** / **Next**, and **Take down** between sections so
+4. Move through with **Prev** / **Next**, and **Clear screen** between sections so
    nothing is on screen while you talk
 
 **Reset votes** clears the current question only, so you can re-run one without
