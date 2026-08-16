@@ -48,14 +48,16 @@ function render(event) {
   }
 
   questionEl.textContent = question.text;
-  noteEl.textContent = `Question ${event.currentIndex + 1} of ${event.questions.length}`;
+  noteEl.textContent = event.revealed
+    ? "Voting closed"
+    : `Question ${event.currentIndex + 1} of ${event.questions.length}`;
 
   if (question.id !== shownQuestionId) {
     buildRows(question);
     shownQuestionId = question.id;
   }
 
-  updateRows(question);
+  updateRows(question, event.revealed);
 }
 
 function buildRows(question) {
@@ -80,9 +82,13 @@ function buildRows(question) {
   }
 }
 
-function updateRows(question) {
+function updateRows(question, revealed) {
   const myVote = question.voters[getUid()] ?? null;
-  const showResults = myVote !== null;
+
+  // Results appear once you've voted, and to everyone once the answer is out —
+  // so someone who didn't vote in time still sees how it landed.
+  const showResults = myVote !== null || revealed;
+  const scored = revealed && question.correct !== null;
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
 
   for (const option of question.options) {
@@ -95,8 +101,11 @@ function updateRows(question) {
     row.querySelector(".meter-fill").style.width = showResults ? pct + "%" : "0%";
     row.querySelector(".meter-needle").style.left = showResults ? pct + "%" : "0%";
     row.querySelector(".meter-pct").textContent = showResults ? pct + "%" : "";
+
     row.classList.toggle("is-mine", option.id === myVote);
-    row.disabled = showResults;
+    row.classList.toggle("is-right", scored && option.id === question.correct);
+    row.classList.toggle("is-wrong", scored && option.id !== question.correct);
+    row.disabled = revealed || myVote !== null;
   }
 }
 

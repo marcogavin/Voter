@@ -7,8 +7,13 @@
 //   /events/{EVENT_ID}
 //     ownerUid:     the device allowed to author questions and drive the event
 //     currentIndex: which question is on screen, or -1 for none
+//     revealed:     true once the current question's answer is showing, which
+//                   also closes voting — enforced in the rules, not just here
 //     questions/
-//       q000: { text, options: { a: {label, votes} }, voters: { uid: "a" } }
+//       q000: { text, correct: "b", options: { a: {label, votes} },
+//               voters: { uid: "a" } }
+//
+// `correct` is optional: plenty of questions have no right answer.
 //
 // Question keys are zero-padded and sort into presentation order, so the key
 // order is the running order and no separate sort field is needed.
@@ -84,6 +89,7 @@ function normalise(raw) {
     .map(([id, question]) => ({
       id,
       text: question.text || "",
+      correct: question.correct ?? null,
       voters: question.voters || {},
       options: Object.entries(question.options || {})
         .sort(([a], [b]) => a.localeCompare(b))
@@ -97,6 +103,7 @@ function normalise(raw) {
   return {
     ownerUid: raw?.ownerUid ?? null,
     currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
+    revealed: raw?.revealed === true,
     questions,
   };
 }
@@ -126,6 +133,7 @@ export function saveQuestions(questions) {
     stored[questionKey(index)] = {
       text: question.text,
       options,
+      ...(question.correct ? { correct: question.correct } : {}),
       ...(question.voters && Object.keys(question.voters).length
         ? { voters: question.voters }
         : {}),
@@ -138,10 +146,28 @@ export function saveQuestions(questions) {
   });
 }
 
-/** Puts a question on screen for everyone. Pass -1 to show none. */
+/**
+ * Puts a question on screen for everyone. Pass -1 to show none.
+ * Always lands with the answer hidden and voting open, so stepping back to a
+ * question reopens it rather than showing its answer again.
+ */
 export function setCurrentIndex(index) {
   requireConnection();
-  return database.update(eventRef, { ownerUid: uid, currentIndex: index });
+  return database.update(eventRef, {
+    ownerUid: uid,
+    currentIndex: index,
+    revealed: false,
+  });
+}
+
+/**
+ * Shows or hides the current question's answer. Revealing also closes voting;
+ * the rules reject votes while this is true, so it's a real close rather than
+ * the buttons merely being hidden.
+ */
+export function setRevealed(revealed) {
+  requireConnection();
+  return database.update(eventRef, { ownerUid: uid, revealed });
 }
 
 /**

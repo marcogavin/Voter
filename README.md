@@ -13,11 +13,35 @@ The host page has two modes, because writing questions and presenting them are
 different jobs:
 
 - **Setup** — add, edit, reorder and delete questions before the event. Options
-  go in one per line. Votes already cast survive an edit unless you change the
-  options themselves, since a vote belongs to a specific option.
-- **Run** — one question on screen, Prev/Next to move through them, live results,
-  and **Take down** to clear the screen between sections. Every attendee's phone
-  follows whatever you have up.
+  go in one per line, and a tick list underneath lets you mark one as the right
+  answer. Leave it on **No right answer** for opinion questions. Votes already
+  cast survive an edit unless you change the options themselves, since a vote
+  belongs to a specific option.
+- **Run** — one question on screen, live results, and **Take down** to clear the
+  screen between sections. Every attendee's phone follows whatever you have up.
+
+### Right answers and the reveal step
+
+**Next** does two things in turn. With a question up, the first press
+**reveals the answer** and closes voting; the second press moves to the next
+question. For questions with no right answer the first press still closes
+voting, and the button says **Close voting** instead.
+
+Colours carry the result, alongside ●, ✓ and ✗ so the meaning survives for
+anyone who can't separate red from green:
+
+| | |
+| :--- | :--- |
+| **Blue ●** | the option this phone voted for |
+| **Green ✓** | the right answer, once revealed |
+| **Red ✗** | the wrong answers, once revealed |
+
+Closing voting is enforced by the security rules, not just hidden in the
+interface — a vote arriving after the reveal is rejected by the database.
+
+**Reopen voting** puts the current question back in play, and stepping back with
+**Prev** reopens it too. Anyone who already voted still can't vote twice; use
+**Reset votes** to clear a question and start it over.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.

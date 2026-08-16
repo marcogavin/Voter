@@ -10,6 +10,16 @@
   --hairline: #cfccc3;
   --accent: #c1481f;
   --accent-glow: rgba(193, 72, 31, 0.35);
+
+  /* Result colours. Muted enough to sit on the cream panel, distinct enough
+     to read across a room. Never the only signal — ●, ✓ and ✗ carry the same
+     meaning for anyone who can't separate the red from the green. */
+  --vote: #2f6690;
+  --vote-deep: #244f6f;
+  --right: #3d7a4e;
+  --right-deep: #2e6040;
+  --wrong: #a3312a;
+  --wrong-deep: #82241f;
 }
 
 * {
@@ -148,13 +158,19 @@ h1 {
   overflow: visible;
 }
 
+.meter {
+  --bar-deep: #a8391a;
+  --bar: var(--accent);
+}
+
 .meter-fill {
   position: absolute;
   inset: 0;
   width: 0%;
   border-radius: 5px;
-  background: linear-gradient(90deg, #a8391a, var(--accent));
-  transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(90deg, var(--bar-deep), var(--bar));
+  transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.5s ease;
 }
 
 .meter-needle {
@@ -246,13 +262,87 @@ h1 {
   cursor: default;
 }
 
-.meter.is-mine .meter-label {
-  color: var(--accent);
+/* Your own pick, before the answer is out. */
+.meter.is-mine {
+  --bar-deep: var(--vote-deep);
+  --bar: var(--vote);
 }
 
-.meter.is-mine .meter-label::after {
-  content: " ●";
+.meter.is-mine .meter-label {
+  color: var(--vote);
+}
+
+/* Marks your choice throughout, so it stays findable once correctness
+   takes over the colour. */
+.meter.is-mine .meter-label::before {
+  content: "● ";
   font-size: 0.7em;
+}
+
+/* Correctness wins over "mine" — declared after it on purpose. */
+.meter.is-right {
+  --bar-deep: var(--right-deep);
+  --bar: var(--right);
+}
+
+.meter.is-right .meter-label {
+  color: var(--right);
+}
+
+.meter.is-right .meter-label::after {
+  content: " ✓";
+}
+
+.meter.is-wrong {
+  --bar-deep: var(--wrong-deep);
+  --bar: var(--wrong);
+}
+
+.meter.is-wrong .meter-label {
+  color: var(--wrong);
+}
+
+.meter.is-wrong .meter-label::after {
+  content: " ✗";
+}
+
+/* Host only: which one is right, before the room is told. */
+.meter.is-key .meter-label::after {
+  content: " ✓";
+  color: var(--muted);
+}
+
+/* ─── Marking the right answer in Setup ────────────────────────────────── */
+
+.correct-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.correct-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  /* Thumb-sized, since these get tapped repeatedly during setup. */
+  min-height: 2.1rem;
+}
+
+.correct-choice.is-picked {
+  background: var(--bezel-hi);
+  color: var(--right);
+  font-weight: 600;
+}
+
+.correct-choice input {
+  accent-color: var(--right);
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
 }
 
 /* ─── Host view ────────────────────────────────────────────────────────── */
