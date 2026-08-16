@@ -37,7 +37,7 @@
         },
 
         "voters": {
-          ".write": "auth != null && data.parent().child('ownerUid').val() === auth.uid",
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
 
           "$voterUid": {
             ".write": "auth != null && $voterUid === auth.uid && !data.exists()",
