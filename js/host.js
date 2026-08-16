@@ -78,11 +78,32 @@ async function start() {
   }
 
   setStatus("Live", "live");
-  wireUp();
-  onEventChange(render);
+
+  try {
+    wireUp();
+    onEventChange(render);
+  } catch (error) {
+    setStatus("Broken", "error");
+    showMessage(
+      `This page didn't start: ${error.message}. A hard refresh usually fixes ` +
+        `it — the usual cause is the browser holding an old copy of the page ` +
+        `while running the new script.`,
+    );
+    console.error(error);
+  }
 }
 
 function wireUp() {
+  // A missing element used to kill this function silently, leaving a page that
+  // looked connected but never rendered or saved. Name the casualties instead.
+  const missing = Object.entries(els)
+    .filter(([, element]) => !element)
+    .map(([name]) => name);
+
+  if (missing.length) {
+    throw new Error(`page is missing: ${missing.join(", ")}`);
+  }
+
   els.tabSetup.addEventListener("click", () => showView("setup"));
   els.tabRun.addEventListener("click", () => showView("run"));
 
@@ -333,9 +354,12 @@ async function onSubmit(submitEvent) {
       : { text, correct, options: labels.map(toOption), voters: {} };
   }
 
-  await commit(next, editingIndex === null ? "Added" : "Saved");
-  stopEditing();
-  els.questionInput.focus();
+  // Only clear the form once the save has actually landed — otherwise a
+  // refused write silently throws away what was just typed.
+  if (await commit(next, editingIndex === null ? "Added" : "Saved")) {
+    stopEditing();
+    els.questionInput.focus();
+  }
 }
 
 function onListClick(clickEvent) {
@@ -398,13 +422,17 @@ function stopEditing() {
   drawList();
 }
 
+/** Returns true when the write landed, so callers know not to discard input. */
 async function commit(next, verb) {
   try {
     await saveQuestions(next);
     setStatus(verb, "live");
+    return true;
   } catch (error) {
     setStatus("Refused", "error");
+    els.hint.textContent = `Database refused the write: ${error.message}`;
     console.error(error);
+    return false;
   }
 }
 

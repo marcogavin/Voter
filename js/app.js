@@ -32,6 +32,24 @@ async function start() {
     return;
   }
 
+  const missing = Object.entries({
+    options: optionsEl,
+    question: questionEl,
+    note: noteEl,
+  })
+    .filter(([, element]) => !element)
+    .map(([name]) => name);
+
+  if (missing.length) {
+    // Almost always a cached page running a newer script.
+    setStatus("Broken", "error");
+    showMessage(
+      `This page is missing: ${missing.join(", ")}. A hard refresh usually ` +
+        `fixes it.`,
+    );
+    return;
+  }
+
   setStatus("Live", "live");
   onEventChange(render);
 }
