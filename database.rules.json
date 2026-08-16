@@ -1,0 +1,54 @@
+{
+  "rules": {
+    "polls": {
+      "$pollId": {
+        ".read": "auth != null",
+
+        "ownerUid": {
+          ".write": "auth != null && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)",
+          ".validate": "newData.isString()"
+        },
+
+        "question": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+        },
+
+        "active": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isBoolean()"
+        },
+
+        "options": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+
+          "$optionId": {
+            "label": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+            },
+            "votes": {
+              ".write": "auth != null && data.exists() && newData.isNumber() && newData.val() === data.val() + 1",
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
+            "$otherField": {
+              ".validate": false
+            }
+          }
+        },
+
+        "voters": {
+          ".write": "auth != null && data.parent().child('ownerUid').val() === auth.uid",
+
+          "$voterUid": {
+            ".write": "auth != null && $voterUid === auth.uid && !data.exists()",
+            ".validate": "newData.isString() && root.child('polls').child($pollId).child('options').child(newData.val()).exists()"
+          }
+        },
+
+        "$otherField": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

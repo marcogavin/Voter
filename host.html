@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voter — Host</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="host">
+  <div class="frame frame--host">
+    <div class="panel">
+      <div class="top-row">
+        <p class="eyebrow">Host control</p>
+        <div class="mark"><span class="dot"></span><span class="word">VOTER</span></div>
+      </div>
+
+      <h1 id="question">Connecting…</h1>
+      <div id="options"></div>
+
+      <form id="setup" class="setup" hidden>
+        <label class="field">
+          <span class="field-label">Question</span>
+          <input id="question-input" type="text" maxlength="200" required
+                 placeholder="What should we build next?">
+        </label>
+        <label class="field">
+          <span class="field-label">Options — one per line</span>
+          <textarea id="options-input" rows="4" required
+                    placeholder="Real-time voting&#10;Q&amp;A with upvotes&#10;Live word cloud"></textarea>
+        </label>
+        <div class="actions">
+          <button type="submit" class="btn btn--primary">Start poll</button>
+          <button type="button" class="btn" id="reset">Reset votes</button>
+        </div>
+      </form>
+
+      <div class="foot">
+        <p class="note" id="hint">Attendees open index.html on their phones</p>
+        <span class="badge" id="status" data-state="pending">Connecting</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/host.js"></script>
+</body>
+</html>
