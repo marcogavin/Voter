@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- viewport-fit=cover lets the page reach the screen edges on a notched
+     phone, which is also what makes env(safe-area-inset-*) report real
+     values — the stylesheet uses them to keep clear of the notch and the
+     home indicator. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Voter</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
