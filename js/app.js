@@ -65,10 +65,14 @@ function render(event) {
     return;
   }
 
+  const myVote = question.voters[getUid()] ?? null;
+
   questionEl.textContent = question.text;
   noteEl.textContent = event.revealed
     ? "Voting closed"
-    : `Question ${event.currentIndex + 1} of ${event.questions.length}`;
+    : myVote !== null
+      ? "Tap another to change your answer"
+      : `Question ${event.currentIndex + 1} of ${event.questions.length}`;
 
   if (question.id !== shownQuestionId) {
     buildRows(question);
@@ -126,13 +130,15 @@ function updateRows(question, revealed) {
     row.classList.toggle("is-mine", option.id === myVote);
     row.classList.toggle("is-right", scored && option.id === question.correct);
     row.classList.toggle("is-wrong", scored && option.id !== question.correct);
-    row.disabled = revealed || myVote !== null;
+    // Stays live until the host reveals, so a choice can be reconsidered.
+    row.disabled = revealed;
   }
 }
 
 async function submitVote(questionId, optionId) {
   if (busy) return;
   busy = true;
+
 
   try {
     await castVote(questionId, optionId);

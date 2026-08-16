@@ -39,9 +39,13 @@ for anyone who can't separate red from green:
 Closing voting is enforced by the security rules, not just hidden in the
 interface — a vote arriving after the reveal is rejected by the database.
 
+Until you reveal, anyone can tap a different option to change their mind — the
+new choice replaces the old one, so the totals stay honest. The reveal is what
+locks it.
+
 **Reopen voting** puts the current question back in play, and stepping back with
-**Prev** reopens it too. Anyone who already voted still can't vote twice; use
-**Reset votes** to clear a question and start it over.
+**Prev** reopens it too. Use **Reset votes** to clear a question and start it
+over from nothing.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
@@ -58,8 +62,8 @@ Done once, all of it from a browser (an iPad works fine).
    — do *not* pick test mode, which leaves the database open to anyone who finds
    the URL
 4. **Build → Authentication → Get started → Anonymous → Enable.** This silently
-   gives each device an id, with no login screen, so one-vote-per-device can
-   actually be enforced
+   gives each device an id, with no login screen. That id is what ties a vote to
+   a device, so one device counts once however many times it changes its mind
 
 ### 2. Paste your config
 
@@ -79,9 +83,10 @@ In the console: **Realtime Database → Rules**, paste the contents of
 They enforce:
 
 - only signed-in devices (including anonymous ones) can read an event
-- an attendee can add their own vote **once**, and can't change it afterwards
-- vote counters only move up by one at a time — nobody can set them to 900
-- no votes at all once the answer has been revealed
+- an attendee can write only their own vote, and nobody else's
+- no votes or changes at all once the answer has been revealed
+- there are no counters to tamper with: results are tallied from the votes
+  themselves, so a total can never disagree with the votes behind it
 - questions and option labels are writable **only by the device that created
   the event**
 

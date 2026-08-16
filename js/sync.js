@@ -10,10 +10,16 @@
 //     revealed:     true once the current question's answer is showing, which
 //                   also closes voting — enforced in the rules, not just here
 //     questions/
-//       q000: { text, correct: "b", options: { a: {label, votes} },
+//       q000: { text, correct: "b", options: { a: {label} },
 //               voters: { uid: "a" } }
 //
 // `correct` is optional: plenty of questions have no right answer.
+//
+// There are no vote counters. `voters` is the record, and counts are tallied
+// from it when the data comes in. That's what lets someone change their mind:
+// a new choice overwrites their entry, with no counter to decrement and no
+// rule needed to permit subtraction. Counts can't drift from the votes that
+// produced them, because they *are* the votes.
 //
 // Question keys are zero-padded and sort into presentation order, so the key
 // order is the running order and no separate sort field is needed.
@@ -86,19 +92,28 @@ export function onEventChange(callback) {
 function normalise(raw) {
   const questions = Object.entries(raw?.questions || {})
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, question]) => ({
-      id,
-      text: question.text || "",
-      correct: question.correct ?? null,
-      voters: question.voters || {},
-      options: Object.entries(question.options || {})
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([optionId, option]) => ({
-          id: optionId,
-          label: option.label || "",
-          votes: option.votes || 0,
-        })),
-    }));
+    .map(([id, question]) => {
+      const voters = question.voters || {};
+
+      const tally = {};
+      for (const choice of Object.values(voters)) {
+        tally[choice] = (tally[choice] || 0) + 1;
+      }
+
+      return {
+        id,
+        text: question.text || "",
+        correct: question.correct ?? null,
+        voters,
+        options: Object.entries(question.options || {})
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([optionId, option]) => ({
+            id: optionId,
+            label: option.label || "",
+            votes: tally[optionId] || 0,
+          })),
+      };
+    });
 
   return {
     ownerUid: raw?.ownerUid ?? null,
@@ -124,10 +139,7 @@ export function saveQuestions(questions) {
     const options = {};
     question.options.forEach((option, optionIndex) => {
       // 'a', 'b', 'c', ... — short, stable within a question
-      options[String.fromCharCode(97 + optionIndex)] = {
-        label: option.label,
-        votes: option.votes || 0,
-      };
+      options[String.fromCharCode(97 + optionIndex)] = { label: option.label };
     });
 
     stored[questionKey(index)] = {
@@ -171,14 +183,13 @@ export function setRevealed(revealed) {
 }
 
 /**
- * Records one vote. The counter bump and the voter record are written as a
- * single atomic update, and the increment happens on the server — so two
- * people tapping at the same instant can't overwrite each other.
+ * Records this device's choice, replacing any earlier one. Each device writes
+ * only its own entry, so simultaneous voters can't overwrite each other and
+ * changing your mind needs no arithmetic.
  */
 export function castVote(questionId, optionId) {
   requireConnection();
   return database.update(eventRef, {
-    [`questions/${questionId}/options/${optionId}/votes`]: database.increment(1),
     [`questions/${questionId}/voters/${uid}`]: optionId,
   });
 }
@@ -186,12 +197,9 @@ export function castVote(questionId, optionId) {
 /** Clears one question's results and lets everyone vote on it again. */
 export function resetVotes(question) {
   requireConnection();
-
-  const updates = { [`questions/${question.id}/voters`]: null };
-  for (const option of question.options) {
-    updates[`questions/${question.id}/options/${option.id}/votes`] = 0;
-  }
-  return database.update(eventRef, updates);
+  return database.update(eventRef, {
+    [`questions/${question.id}/voters`]: null,
+  });
 }
 
 function questionKey(index) {
