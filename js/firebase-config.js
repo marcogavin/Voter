@@ -17,9 +17,10 @@ export const firebaseConfig = {
   authDomain: "voter-72d36.firebaseapp.com",
 };
 
-// Which poll this deployment reads and writes. One event = one id is fine.
-// Change it to run a second, separate poll without disturbing the first.
-export const POLL_ID = "live";
+// Which event this deployment reads and writes. An event holds the whole set of
+// questions plus a pointer to whichever one is currently on screen.
+// Change it to run a second, separate event without disturbing the first.
+export const EVENT_ID = "live";
 
 // Version of the Firebase JS SDK loaded from Google's CDN.
 // Bump this if you ever need a newer release.

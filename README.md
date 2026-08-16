@@ -6,8 +6,18 @@ Two screens, no build step, no server to run:
 
 | Page | Who opens it | What it does |
 | :--- | :--- | :--- |
-| `host.html` | you | write the question, watch results, reset between rounds |
+| `host.html` | you | write the questions, then put them on screen one at a time |
 | `index.html` | the audience | one tap to vote, results appear live |
+
+The host page has two modes, because writing questions and presenting them are
+different jobs:
+
+- **Setup** — add, edit, reorder and delete questions before the event. Options
+  go in one per line. Votes already cast survive an edit unless you change the
+  options themselves, since a vote belongs to a specific option.
+- **Run** — one question on screen, Prev/Next to move through them, live results,
+  and **Take down** to clear the screen between sections. Every attendee's phone
+  follows whatever you have up.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
@@ -69,14 +79,25 @@ https://<username>.github.io/Voter/host.html ← you
 
 ## Running an event
 
-1. Open `host.html`, type a question and one option per line, press **Start poll**
+**Beforehand**, in **Setup**: add each question with its options, one per line.
+Reorder with the arrows, fix wording with ✎, remove with ✕.
+
+**On the day:**
+
+1. Open `host.html` and switch to **Run**
 2. Share the audience URL — a QR code on a slide works well
-3. Watch the meters move; press **Reset votes** to run the same poll again
+3. **Next** puts the first question up; every phone follows within about a second
+4. Move through with **Prev** / **Next**, and **Take down** between sections so
+   nothing is on screen while you talk
 
-The device that starts a poll owns it. If you clear that browser's storage you
-lose ownership — delete the `polls/live` node in the Firebase console to reclaim it.
+**Reset votes** clears the current question only, so you can re-run one without
+disturbing the rest.
 
-To run a second independent poll, change `POLL_ID` in `js/firebase-config.js`.
+The device that first saves questions owns the event. If you clear that browser's
+storage you lose ownership — delete the `events/live` node in the Firebase console
+to reclaim it.
+
+To run a second independent event, change `EVENT_ID` in `js/firebase-config.js`.
 
 ## Limits worth knowing
 

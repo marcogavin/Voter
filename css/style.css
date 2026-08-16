@@ -266,6 +266,141 @@ body.host {
   max-width: 560px;
 }
 
+/* ─── Setup / Run tabs ─────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.9rem 0 0.2rem;
+}
+
+.tab {
+  font-family: inherit;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.35rem 0.1rem;
+  margin-right: 0.9rem;
+  cursor: pointer;
+}
+
+.tab.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── Question list ────────────────────────────────────────────────────── */
+
+.qlist {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.qitem {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  background: var(--bezel-hi);
+}
+
+.qitem.is-editing {
+  outline: 2px solid var(--accent);
+}
+
+.qnum {
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 1.4em;
+}
+
+.qtext {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.qtext small {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 0.1rem;
+}
+
+.qbtns {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.iconbtn {
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--ink);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  /* Generous target: these get tapped with a thumb, repeatedly. */
+  min-width: 2rem;
+  min-height: 2rem;
+  cursor: pointer;
+}
+
+.iconbtn:hover:not(:disabled) {
+  border-color: var(--hairline);
+}
+
+.iconbtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.iconbtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ─── Run controls ─────────────────────────────────────────────────────── */
+
+.runbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.counter {
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
 .setup {
   display: flex;
   flex-direction: column;

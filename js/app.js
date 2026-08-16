@@ -1,14 +1,16 @@
-// Audience view: shows the live poll and takes one vote from this device.
+// Audience view: shows whichever question the host currently has on screen,
+// and takes one vote per question from this device.
 // All database work goes through sync.js.
 
-import { connect, onPollChange, castVote, getUid } from "./sync.js";
+import { connect, onEventChange, castVote, getUid } from "./sync.js";
 import { isConfigured } from "./firebase-config.js";
 
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
 const statusEl = document.getElementById("status");
+const noteEl = document.getElementById("note");
 
-let myVote = null; // which option this device picked, once it has
+let shownQuestionId = null; // so we only rebuild rows when the question changes
 let busy = false; // guards against double-taps while a write is in flight
 
 start();
@@ -16,9 +18,7 @@ start();
 async function start() {
   if (!isConfigured()) {
     setStatus("Setup needed", "warn");
-    showMessage(
-      "Add your Firebase details to js/firebase-config.js to go live.",
-    );
+    showMessage("Add your Firebase details to js/firebase-config.js to go live.");
     return;
   }
 
@@ -33,83 +33,79 @@ async function start() {
   }
 
   setStatus("Live", "live");
-  onPollChange(render);
+  onEventChange(render);
 }
 
-function render(poll) {
-  if (!poll || !poll.options) {
-    questionEl.textContent = "No poll running";
-    showMessage("Waiting for the host to start a poll.");
+function render(event) {
+  const question = event.questions[event.currentIndex] ?? null;
+
+  if (!question) {
+    shownQuestionId = null;
+    questionEl.textContent = "Nothing on screen";
+    noteEl.textContent = "One vote per question";
+    showMessage("Waiting for the host to put a question up.");
     return;
   }
 
-  myVote = poll.voters ? poll.voters[getUid()] ?? null : null;
+  questionEl.textContent = question.text;
+  noteEl.textContent = `Question ${event.currentIndex + 1} of ${event.questions.length}`;
 
-  questionEl.textContent = poll.question || "Untitled poll";
-  drawOptions(poll.options);
-}
-
-function drawOptions(options) {
-  const entries = Object.entries(options);
-  const total = entries.reduce((sum, [, o]) => sum + (o.votes || 0), 0);
-  const showResults = myVote !== null;
-
-  // Rebuild only when the set of options changed, so the CSS width transitions
-  // animate smoothly instead of restarting from zero on every update.
-  const existingIds = [...optionsEl.querySelectorAll(".meter")].map(
-    (el) => el.dataset.id,
-  );
-  const sameRows =
-    existingIds.length === entries.length &&
-    entries.every(([id], i) => existingIds[i] === id);
-
-  if (!sameRows) {
-    optionsEl.innerHTML = "";
-    for (const [id, option] of entries) {
-      optionsEl.appendChild(buildRow(id, option.label));
-    }
+  if (question.id !== shownQuestionId) {
+    buildRows(question);
+    shownQuestionId = question.id;
   }
 
-  for (const [id, option] of entries) {
-    const row = optionsEl.querySelector(`.meter[data-id="${id}"]`);
+  updateRows(question);
+}
+
+function buildRows(question) {
+  optionsEl.innerHTML = "";
+
+  for (const option of question.options) {
+    const row = document.createElement("button");
+    row.type = "button";
+    row.className = "meter";
+    row.dataset.id = option.id;
+    row.setAttribute("aria-label", `Vote for ${option.label}`);
+    row.innerHTML = `
+      <span class="meter-label"></span>
+      <span class="meter-track">
+        <span class="meter-fill"></span>
+        <span class="meter-needle"></span>
+      </span>
+      <span class="meter-pct"></span>
+    `;
+    row.addEventListener("click", () => submitVote(question.id, option.id));
+    optionsEl.appendChild(row);
+  }
+}
+
+function updateRows(question) {
+  const myVote = question.voters[getUid()] ?? null;
+  const showResults = myVote !== null;
+  const total = question.options.reduce((sum, o) => sum + o.votes, 0);
+
+  for (const option of question.options) {
+    const row = optionsEl.querySelector(`.meter[data-id="${option.id}"]`);
     if (!row) continue;
 
-    const votes = option.votes || 0;
-    const pct = total === 0 ? 0 : Math.round((votes / total) * 100);
+    const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
 
     row.querySelector(".meter-label").textContent = option.label;
     row.querySelector(".meter-fill").style.width = showResults ? pct + "%" : "0%";
     row.querySelector(".meter-needle").style.left = showResults ? pct + "%" : "0%";
     row.querySelector(".meter-pct").textContent = showResults ? pct + "%" : "";
-    row.classList.toggle("is-mine", id === myVote);
+    row.classList.toggle("is-mine", option.id === myVote);
     row.disabled = showResults;
   }
 }
 
-function buildRow(id, label) {
-  const row = document.createElement("button");
-  row.type = "button";
-  row.className = "meter";
-  row.dataset.id = id;
-  row.setAttribute("aria-label", `Vote for ${label}`);
-  row.innerHTML = `
-    <span class="meter-label"></span>
-    <span class="meter-track">
-      <span class="meter-fill"></span>
-      <span class="meter-needle"></span>
-    </span>
-    <span class="meter-pct"></span>
-  `;
-  row.addEventListener("click", () => submitVote(id));
-  return row;
-}
-
-async function submitVote(optionId) {
-  if (myVote !== null || busy) return;
+async function submitVote(questionId, optionId) {
+  if (busy) return;
   busy = true;
 
   try {
-    await castVote(optionId);
+    await castVote(questionId, optionId);
   } catch (error) {
     setStatus("Vote refused", "error");
     console.error(error);

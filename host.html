@@ -14,28 +14,52 @@
         <div class="mark"><span class="dot"></span><span class="word">VOTER</span></div>
       </div>
 
-      <h1 id="question">Connecting…</h1>
-      <div id="options"></div>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab is-active" id="tab-setup" role="tab">Setup</button>
+        <button type="button" class="tab" id="tab-run" role="tab">Run</button>
+      </div>
 
-      <form id="setup" class="setup" hidden>
-        <label class="field">
-          <span class="field-label">Question</span>
-          <input id="question-input" type="text" maxlength="200" required
-                 placeholder="What should we build next?">
-        </label>
-        <label class="field">
-          <span class="field-label">Options — one per line</span>
-          <textarea id="options-input" rows="4" required
-                    placeholder="Real-time voting&#10;Q&amp;A with upvotes&#10;Live word cloud"></textarea>
-        </label>
-        <div class="actions">
-          <button type="submit" class="btn btn--primary">Start poll</button>
-          <button type="button" class="btn" id="reset">Reset votes</button>
+      <!-- ── Setup: write the questions before the event ─────────────────── -->
+      <section id="view-setup">
+        <form id="editor" class="setup">
+          <label class="field">
+            <span class="field-label" id="editor-label">Question 1</span>
+            <input id="question-input" type="text" maxlength="200" required
+                   placeholder="What's your age?" autocomplete="off">
+          </label>
+          <label class="field">
+            <span class="field-label">Options — one per line</span>
+            <textarea id="options-input" rows="3" required
+                      placeholder="Under 30&#10;30–50&#10;Over 50"></textarea>
+          </label>
+          <div class="actions">
+            <button type="submit" class="btn btn--primary" id="save">Add question</button>
+            <button type="button" class="btn" id="cancel" hidden>Cancel</button>
+          </div>
+        </form>
+
+        <ol id="question-list" class="qlist"></ol>
+        <p class="panel-message" id="setup-empty">No questions yet — add your first above.</p>
+      </section>
+
+      <!-- ── Run: drive the event ────────────────────────────────────────── -->
+      <section id="view-run" hidden>
+        <h1 id="run-question">Nothing on screen</h1>
+        <div id="options"></div>
+
+        <div class="runbar">
+          <button type="button" class="btn" id="prev">‹ Prev</button>
+          <span class="counter" id="counter">—</span>
+          <button type="button" class="btn" id="next">Next ›</button>
         </div>
-      </form>
+        <div class="actions">
+          <button type="button" class="btn" id="reset">Reset votes</button>
+          <button type="button" class="btn" id="clear">Take down</button>
+        </div>
+      </section>
 
       <div class="foot">
-        <p class="note" id="hint">Attendees open index.html on their phones</p>
+        <p class="note" id="hint">Attendees open the audience page on their phones</p>
         <span class="badge" id="status" data-state="pending">Connecting</span>
       </div>
     </div>
