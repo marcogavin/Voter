@@ -32,6 +32,10 @@
             <textarea id="options-input" rows="3" required
                       placeholder="Under 30&#10;30–50&#10;Over 50"></textarea>
           </label>
+          <div class="field">
+            <span class="field-label">Right answer — optional</span>
+            <div id="correct-list" class="correct-list"></div>
+          </div>
           <div class="actions">
             <button type="submit" class="btn btn--primary" id="save">Add question</button>
             <button type="button" class="btn" id="cancel" hidden>Cancel</button>
@@ -50,9 +54,10 @@
         <div class="runbar">
           <button type="button" class="btn" id="prev">‹ Prev</button>
           <span class="counter" id="counter">—</span>
-          <button type="button" class="btn" id="next">Next ›</button>
+          <button type="button" class="btn btn--primary" id="next">Next ›</button>
         </div>
         <div class="actions">
+          <button type="button" class="btn" id="reopen" hidden>Reopen voting</button>
           <button type="button" class="btn" id="reset">Reset votes</button>
           <button type="button" class="btn" id="clear">Take down</button>
         </div>

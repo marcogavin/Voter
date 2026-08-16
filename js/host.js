@@ -15,6 +15,7 @@ import {
   onEventChange,
   saveQuestions,
   setCurrentIndex,
+  setRevealed,
   resetVotes,
   getUid,
 } from "./sync.js";
@@ -30,6 +31,7 @@ const els = {
   editorLabel: document.getElementById("editor-label"),
   questionInput: document.getElementById("question-input"),
   optionsInput: document.getElementById("options-input"),
+  correctList: document.getElementById("correct-list"),
   save: document.getElementById("save"),
   cancel: document.getElementById("cancel"),
   list: document.getElementById("question-list"),
@@ -40,6 +42,7 @@ const els = {
   prev: document.getElementById("prev"),
   next: document.getElementById("next"),
   counter: document.getElementById("counter"),
+  reopen: document.getElementById("reopen"),
   reset: document.getElementById("reset"),
   clear: document.getElementById("clear"),
 
@@ -49,7 +52,9 @@ const els = {
 
 let questions = []; // local mirror, in running order
 let currentIndex = -1;
+let revealed = false;
 let editingIndex = null; // which question the form is editing, null when adding
+let correctIndex = null; // which option the form has ticked, null for none
 let isOwner = true;
 let shownQuestionId = null;
 
@@ -84,11 +89,65 @@ function wireUp() {
   els.editor.addEventListener("submit", onSubmit);
   els.cancel.addEventListener("click", stopEditing);
   els.list.addEventListener("click", onListClick);
+  els.optionsInput.addEventListener("input", drawCorrectChoices);
+  els.correctList.addEventListener("change", onCorrectChange);
 
   els.prev.addEventListener("click", () => go(currentIndex - 1));
-  els.next.addEventListener("click", () => go(currentIndex + 1));
+  els.next.addEventListener("click", onNext);
+  els.reopen.addEventListener("click", () => reveal(false));
   els.clear.addEventListener("click", () => go(-1));
   els.reset.addEventListener("click", onReset);
+
+  drawCorrectChoices();
+}
+
+/* ── Marking the right answer ──────────────────────────────────────────── */
+
+function parseOptions() {
+  return els.optionsInput.value
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Redraws the tick list under the options box as they're typed, so the right
+ * answer is chosen against the actual options rather than remembered by number.
+ */
+function drawCorrectChoices() {
+  const labels = parseOptions();
+
+  // A shrinking list can strand the tick past the end.
+  if (correctIndex !== null && correctIndex >= labels.length) correctIndex = null;
+
+  els.correctList.innerHTML = "";
+
+  if (!labels.length) {
+    els.correctList.innerHTML =
+      '<p class="panel-message">Add options above to mark one as right.</p>';
+    return;
+  }
+
+  els.correctList.appendChild(choice("", "No right answer", correctIndex === null));
+  labels.forEach((label, index) => {
+    els.correctList.appendChild(choice(index, label, correctIndex === index));
+  });
+}
+
+function choice(value, label, checked) {
+  const wrap = document.createElement("label");
+  wrap.className = "correct-choice" + (checked ? " is-picked" : "");
+  wrap.innerHTML = `
+    <input type="radio" name="correct" value="${value}"${checked ? " checked" : ""}>
+    <span>${escapeHtml(label)}</span>
+  `;
+  return wrap;
+}
+
+function onCorrectChange(changeEvent) {
+  const { value } = changeEvent.target;
+  correctIndex = value === "" ? null : Number(value);
+  drawCorrectChoices();
 }
 
 /* ── Rendering ─────────────────────────────────────────────────────────── */
@@ -96,6 +155,7 @@ function wireUp() {
 function render(event) {
   questions = event.questions;
   currentIndex = event.currentIndex;
+  revealed = event.revealed;
   isOwner = !event.ownerUid || event.ownerUid === getUid();
 
   els.hint.textContent = isOwner
@@ -129,11 +189,14 @@ function drawList() {
     const item = document.createElement("li");
     item.className = "qitem" + (index === editingIndex ? " is-editing" : "");
     item.dataset.index = String(index);
+    const answer = question.options.find((o) => o.id === question.correct);
     item.innerHTML = `
       <span class="qnum">${index + 1}</span>
       <span class="qtext">
         ${escapeHtml(question.text)}
-        <small>${question.options.length} options</small>
+        <small>${question.options.length} options${
+          answer ? ` · ✓ ${escapeHtml(answer.label)}` : ""
+        }</small>
       </span>
       <span class="qbtns">
         <button type="button" class="iconbtn" data-act="up"   aria-label="Move up"    ${index === 0 ? "disabled" : ""}>↑</button>
@@ -156,8 +219,22 @@ function drawRun() {
     ? `${question ? currentIndex + 1 : "—"} / ${questions.length}`
     : "—";
 
+  // Next does double duty: first press reveals the answer and closes voting,
+  // second press moves on. That's the whole point of the two-step.
+  const willReveal = Boolean(question) && !revealed;
+  els.next.textContent = willReveal
+    ? question.correct
+      ? "Reveal answer"
+      : "Close voting"
+    : "Next ›";
+
   els.prev.disabled = !isOwner || currentIndex <= 0;
-  els.next.disabled = !isOwner || currentIndex >= questions.length - 1;
+  els.next.disabled =
+    !isOwner ||
+    !questions.length ||
+    (!willReveal && currentIndex >= questions.length - 1);
+  els.reopen.hidden = !revealed;
+  els.reopen.disabled = !isOwner;
   els.reset.disabled = !isOwner || !question;
   els.clear.disabled = !isOwner || !question;
 
@@ -196,6 +273,8 @@ function drawRun() {
   }
 
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
+  const scored = revealed && question.correct !== null;
+
   for (const option of question.options) {
     const row = els.options.querySelector(`.meter[data-id="${option.id}"]`);
     if (!row) continue;
@@ -205,9 +284,19 @@ function drawRun() {
     row.querySelector(".meter-fill").style.width = pct + "%";
     row.querySelector(".meter-needle").style.left = pct + "%";
     row.querySelector(".meter-pct").textContent = `${pct}%`;
+
+    row.classList.toggle("is-right", scored && option.id === question.correct);
+    row.classList.toggle("is-wrong", scored && option.id !== question.correct);
+    // Before revealing, the presenter still needs to know which one it is.
+    row.classList.toggle(
+      "is-key",
+      !revealed && option.id === question.correct,
+    );
   }
 
-  els.hint.textContent = `${total} vote${total === 1 ? "" : "s"} in`;
+  els.hint.textContent =
+    `${total} vote${total === 1 ? "" : "s"} in` +
+    (revealed ? " · voting closed" : "");
 }
 
 /* ── Setup actions ─────────────────────────────────────────────────────── */
@@ -227,9 +316,10 @@ async function onSubmit(submitEvent) {
   }
 
   const next = [...questions];
+  const correct = correctIndex === null ? null : optionId(correctIndex);
 
   if (editingIndex === null) {
-    next.push({ text, options: labels.map(toOption), voters: {} });
+    next.push({ text, correct, options: labels.map(toOption), voters: {} });
   } else {
     const existing = next[editingIndex];
     const sameOptions =
@@ -239,8 +329,8 @@ async function onSubmit(submitEvent) {
     // Votes belong to specific options, so they only survive an edit that
     // leaves the options themselves untouched.
     next[editingIndex] = sameOptions
-      ? { ...existing, text }
-      : { text, options: labels.map(toOption), voters: {} };
+      ? { ...existing, text, correct }
+      : { text, correct, options: labels.map(toOption), voters: {} };
   }
 
   await commit(next, editingIndex === null ? "Added" : "Saved");
@@ -281,11 +371,15 @@ function onListClick(clickEvent) {
 }
 
 function startEditing(index) {
+  const question = questions[index];
   editingIndex = index;
-  els.questionInput.value = questions[index].text;
-  els.optionsInput.value = questions[index].options
-    .map((option) => option.label)
-    .join("\n");
+  els.questionInput.value = question.text;
+  els.optionsInput.value = question.options.map((o) => o.label).join("\n");
+
+  const marked = question.options.findIndex((o) => o.id === question.correct);
+  correctIndex = marked === -1 ? null : marked;
+  drawCorrectChoices();
+
   els.editorLabel.textContent = `Editing question ${index + 1}`;
   els.save.textContent = "Save changes";
   els.cancel.hidden = false;
@@ -295,7 +389,9 @@ function startEditing(index) {
 
 function stopEditing() {
   editingIndex = null;
+  correctIndex = null;
   els.editor.reset();
+  drawCorrectChoices();
   els.editorLabel.textContent = `Question ${questions.length + 1}`;
   els.save.textContent = "Add question";
   els.cancel.hidden = true;
@@ -313,6 +409,25 @@ async function commit(next, verb) {
 }
 
 /* ── Run actions ───────────────────────────────────────────────────────── */
+
+function onNext() {
+  // First press reveals the current question, second moves on.
+  if (currentIndex >= 0 && currentIndex < questions.length && !revealed) {
+    reveal(true);
+  } else {
+    go(currentIndex + 1);
+  }
+}
+
+async function reveal(show) {
+  try {
+    await setRevealed(show);
+    setStatus(show ? "Revealed" : "Reopened", "live");
+  } catch (error) {
+    setStatus("Refused", "error");
+    console.error(error);
+  }
+}
 
 async function go(index) {
   const target = index < 0 || index >= questions.length ? -1 : index;
@@ -349,6 +464,11 @@ function showView(name) {
 
 function toOption(label) {
   return { label, votes: 0 };
+}
+
+/** 0 → "a", 1 → "b", … matching how sync.js keys stored options. */
+function optionId(index) {
+  return String.fromCharCode(97 + index);
 }
 
 function escapeHtml(text) {

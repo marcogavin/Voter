@@ -14,6 +14,11 @@
           ".validate": "newData.isNumber()"
         },
 
+        "revealed": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isBoolean()"
+        },
+
         "questions": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
 
@@ -22,13 +27,17 @@
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
             },
 
+            "correct": {
+              ".validate": "newData.isString() && newData.val().length <= 4"
+            },
+
             "options": {
               "$optionId": {
                 "label": {
                   ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
                 },
                 "votes": {
-                  ".write": "auth != null && data.exists() && newData.isNumber() && newData.val() === data.val() + 1",
+                  ".write": "auth != null && data.exists() && newData.isNumber() && newData.val() === data.val() + 1 && root.child('events').child($eventId).child('revealed').val() !== true",
                   ".validate": "newData.isNumber() && newData.val() >= 0"
                 },
                 "$otherField": {
@@ -39,7 +48,7 @@
 
             "voters": {
               "$voterUid": {
-                ".write": "auth != null && $voterUid === auth.uid && !data.exists()",
+                ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                 ".validate": "newData.isString() && root.child('events').child($eventId).child('questions').child($questionId).child('options').child(newData.val()).exists()"
               }
             },
