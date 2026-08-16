@@ -12,8 +12,8 @@
   --accent-glow: rgba(193, 72, 31, 0.35);
 
   /* Result colours. Muted enough to sit on the cream panel, distinct enough
-     to read across a room. Never the only signal — ●, ✓ and ✗ carry the same
-     meaning for anyone who can't separate the red from the green. */
+     to read across a room. Never the only signal — the tick box, ✓ and ✗
+     carry the same meaning for anyone who can't separate red from green. */
   --vote: #2f6690;
   --vote-deep: #244f6f;
   --right: #3d7a4e;
@@ -114,12 +114,6 @@ h1 {
   gap: 0.55rem;
   flex: 1;
   justify-content: center;
-}
-
-/* Audience rows are tapped, not just read, so they get more room between
-   them than the host's read-only list needs. */
-body:not(.host) #options {
-  gap: 1rem;
 }
 
 .meter {
@@ -627,4 +621,123 @@ body.host {
   .meter-needle {
     transition: none;
   }
+}
+
+/* ─── Audience view at arm's length ─────────────────────────────────────
+   The type scale above was drawn for the host's 640px faceplate on an iPad.
+   The audience reads the same markup on a phone held at arm's length, where
+   it came out roughly half the size it should be. Everything here is scaled
+   for that, and the 16:9 lock is dropped: at this size the frame has to grow
+   with its content instead of squashing it.                              */
+
+body:not(.host) {
+  padding: 1.25rem 1rem;
+}
+
+body:not(.host) .frame {
+  aspect-ratio: auto;
+  max-width: 560px;
+  padding: 18px;
+  border-radius: 26px;
+}
+
+body:not(.host) .panel {
+  padding: 1.5rem 1.4rem;
+  border-radius: 14px;
+}
+
+body:not(.host) .eyebrow {
+  font-size: 1rem;
+}
+
+body:not(.host) .mark .word {
+  font-size: 1.05rem;
+}
+
+body:not(.host) .mark .dot {
+  width: 12px;
+  height: 12px;
+}
+
+body:not(.host) #question {
+  font-size: clamp(1.55rem, 6.5vw, 2.1rem);
+  margin: 1rem 0 1.5rem;
+}
+
+/* Each option becomes two rows: the answer and its share on top, the bar
+   across the full width beneath. At this size a side-by-side label column
+   would be about seven characters wide. */
+body:not(.host) .meter--vote {
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    "tick label pct"
+    "tick track track";
+  gap: 0.5rem 0.85rem;
+  padding: 0.6rem 0.2rem;
+  align-items: center;
+}
+
+body:not(.host) .tick {
+  grid-area: tick;
+  width: 2.1rem;
+  height: 2.1rem;
+  font-size: 1.2rem;
+  border-width: 3px;
+}
+
+body:not(.host) .meter-label {
+  grid-area: label;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  /* Long answers wrap here rather than being cut off. */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+}
+
+body:not(.host) .meter-track {
+  grid-area: track;
+  height: 18px;
+  border-radius: 9px;
+}
+
+body:not(.host) .meter-fill,
+body:not(.host) .meter-needle {
+  border-radius: 9px;
+}
+
+body:not(.host) .meter-needle {
+  width: 3px;
+  top: -4px;
+  bottom: -4px;
+}
+
+body:not(.host) .meter-pct {
+  grid-area: pct;
+  font-size: 1.15rem;
+}
+
+body:not(.host) #options {
+  gap: 1.3rem;
+}
+
+body:not(.host) .panel-message {
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+body:not(.host) .foot {
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+}
+
+body:not(.host) .foot .note {
+  font-size: 0.9rem;
+}
+
+body:not(.host) .badge {
+  font-size: 0.82rem;
+  padding: 0.25rem 0.6rem;
 }
