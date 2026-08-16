@@ -49,7 +49,7 @@
             "voters": {
               "$voterUid": {
                 ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
-                ".validate": "newData.isString() && root.child('events').child($eventId).child('questions').child($questionId).child('options').child(newData.val()).exists()"
+                ".validate": "newData.isString() && newData.val().length <= 4"
               }
             },
 

@@ -116,6 +116,12 @@ h1 {
   justify-content: center;
 }
 
+/* Audience rows are tapped, not just read, so they get more room between
+   them than the host's read-only list needs. */
+body:not(.host) #options {
+  gap: 1rem;
+}
+
 .meter {
   display: grid;
   grid-template-columns: minmax(0, 30%) 1fr auto;
@@ -272,11 +278,42 @@ h1 {
   color: var(--vote);
 }
 
-/* Marks your choice throughout, so it stays findable once correctness
-   takes over the colour. */
-.meter.is-mine .meter-label::before {
-  content: "● ";
-  font-size: 0.7em;
+/* ─── Tick box (audience only) ─────────────────────────────────────────── */
+
+.meter--vote {
+  /* Extra column for the tick, and room around each row so neighbouring
+     options aren't a thumb-width apart. */
+  grid-template-columns: auto minmax(0, 32%) 1fr auto;
+  padding: 0.4rem 0.15rem;
+}
+
+.tick {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid var(--muted);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: transparent;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.tick::after {
+  content: "✓";
+}
+
+/* Your pick, marked throughout — it stays findable after the reveal, when
+   correctness takes over the bar's colour. */
+.meter.is-mine .tick {
+  border-color: var(--vote);
+  background: var(--vote);
+  color: var(--panel);
+}
+
+.meter--vote:disabled:not(.is-mine) .tick {
+  opacity: 0.4;
 }
 
 /* Correctness wins over "mine" — declared after it on purpose. */

@@ -240,14 +240,10 @@ function drawRun() {
     ? `${question ? currentIndex + 1 : "—"} / ${questions.length}`
     : "—";
 
-  // Next does double duty: first press reveals the answer and closes voting,
-  // second press moves on. That's the whole point of the two-step.
-  const willReveal = Boolean(question) && !revealed;
-  els.next.textContent = willReveal
-    ? question.correct
-      ? "Reveal answer"
-      : "Close voting"
-    : "Next ›";
+  // Next does double duty, but only where there's something to reveal:
+  // questions with no right answer advance on a single press.
+  const willReveal = Boolean(question) && !revealed && Boolean(question.correct);
+  els.next.textContent = willReveal ? "Reveal answer" : "Next ›";
 
   els.prev.disabled = !isOwner || currentIndex <= 0;
   els.next.disabled =
@@ -439,8 +435,11 @@ async function commit(next, verb) {
 /* ── Run actions ───────────────────────────────────────────────────────── */
 
 function onNext() {
-  // First press reveals the current question, second moves on.
-  if (currentIndex >= 0 && currentIndex < questions.length && !revealed) {
+  const question = questions[currentIndex] ?? null;
+
+  // Reveal first, advance second — but only for questions that have an answer
+  // to show. The rest would just be an extra press on the way to nowhere.
+  if (question && !revealed && question.correct) {
     reveal(true);
   } else {
     go(currentIndex + 1);

@@ -84,10 +84,13 @@ function buildRows(question) {
   for (const option of question.options) {
     const row = document.createElement("button");
     row.type = "button";
-    row.className = "meter";
+    row.className = "meter meter--vote";
     row.dataset.id = option.id;
     row.setAttribute("aria-label", `Vote for ${option.label}`);
+    // The tick box is what tells people this row is theirs to press — tapping
+    // anywhere on the row still works, but nothing else says "choose one".
     row.innerHTML = `
+      <span class="tick" aria-hidden="true"></span>
       <span class="meter-label"></span>
       <span class="meter-track">
         <span class="meter-fill"></span>
