@@ -330,8 +330,18 @@ body.host {
   cursor: pointer;
 }
 
-.btn:hover:not(:disabled) {
-  background: var(--panel);
+/* Touch devices latch :hover after a tap, which would leave a button stuck in
+   its hover colours, so only devices with a real pointer get hover styling. */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--panel);
+  }
+
+  /* Matches the specificity above, so the primary button keeps a background
+     its cream text can be read against. */
+  .btn--primary:hover:not(:disabled) {
+    background: #a8391a;
+  }
 }
 
 .btn:disabled {
