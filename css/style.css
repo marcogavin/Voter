@@ -741,3 +741,39 @@ body:not(.host) .badge {
   font-size: 0.82rem;
   padding: 0.25rem 0.6rem;
 }
+
+/* ─── Portrait phone ────────────────────────────────────────────────────
+   Where the audience actually reads this. A phone in portrait is tall and
+   narrow, so the panel fills the screen instead of floating in the middle
+   of it, and the bezel thins to give the content back its width.        */
+
+@media (max-width: 700px) {
+  body:not(.host) {
+    /* Stretch, so the faceplate fills the height rather than sitting as a
+       short card in a tall dark surround. */
+    align-items: stretch;
+
+    /* iOS Safari's address bar collapses as you scroll, which makes 100vh
+       taller than what you can actually see — the footer ends up behind the
+       bar. dvh tracks the visible viewport; vh stays as the fallback. */
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    /* Keep clear of the notch and the home indicator. */
+    padding:
+      max(0.5rem, env(safe-area-inset-top))
+      max(0.5rem, env(safe-area-inset-right))
+      max(0.5rem, env(safe-area-inset-bottom))
+      max(0.5rem, env(safe-area-inset-left));
+  }
+
+  body:not(.host) .frame {
+    max-width: none;
+    padding: 9px;
+    border-radius: 22px;
+  }
+
+  body:not(.host) .panel {
+    padding: 1.4rem 1.15rem;
+  }
+}
