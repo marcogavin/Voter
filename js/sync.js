@@ -2,10 +2,20 @@
 //
 // Everything else (app.js, host.js) talks to these functions instead of the
 // database directly, so swapping backends later stays a one-file change.
+//
+// Stored shape:
+//   /events/{EVENT_ID}
+//     ownerUid:     the device allowed to author questions and drive the event
+//     currentIndex: which question is on screen, or -1 for none
+//     questions/
+//       q000: { text, options: { a: {label, votes} }, voters: { uid: "a" } }
+//
+// Question keys are zero-padded and sort into presentation order, so the key
+// order is the running order and no separate sort field is needed.
 
 import {
   firebaseConfig,
-  POLL_ID,
+  EVENT_ID,
   FIREBASE_VERSION,
   isConfigured,
 } from "./firebase-config.js";
@@ -13,7 +23,7 @@ import {
 const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
 
 let database = null; // the Firebase database module namespace
-let pollRef = null;
+let eventRef = null;
 let uid = null;
 
 /**
@@ -45,7 +55,7 @@ export async function connect() {
   const credential = await authModule.signInAnonymously(auth);
   uid = credential.user.uid;
 
-  pollRef = dbModule.ref(dbModule.getDatabase(app), `polls/${POLL_ID}`);
+  eventRef = dbModule.ref(dbModule.getDatabase(app), `events/${EVENT_ID}`);
   return uid;
 }
 
@@ -54,13 +64,84 @@ export function getUid() {
 }
 
 /**
- * Calls `callback(poll)` immediately with the current poll, then again every
- * time anyone anywhere changes it. `poll` is null when no poll exists yet.
- * Returns an unsubscribe function.
+ * Calls `callback(event)` immediately with the current event, then again every
+ * time anyone changes it. The event is normalised for the UI:
+ *
+ *   { ownerUid, currentIndex, questions: [{ id, text, options: [...], voters }] }
+ *
+ * `questions` is an array in running order. Returns an unsubscribe function.
  */
-export function onPollChange(callback) {
+export function onEventChange(callback) {
   requireConnection();
-  return database.onValue(pollRef, (snapshot) => callback(snapshot.val()));
+  return database.onValue(eventRef, (snapshot) =>
+    callback(normalise(snapshot.val())),
+  );
+}
+
+function normalise(raw) {
+  const questions = Object.entries(raw?.questions || {})
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([id, question]) => ({
+      id,
+      text: question.text || "",
+      voters: question.voters || {},
+      options: Object.entries(question.options || {})
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([optionId, option]) => ({
+          id: optionId,
+          label: option.label || "",
+          votes: option.votes || 0,
+        })),
+    }));
+
+  return {
+    ownerUid: raw?.ownerUid ?? null,
+    currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
+    questions,
+  };
+}
+
+/**
+ * Replaces the whole question set. Authoring is owner-only and happens before
+ * an event, so rewriting the node wholesale keeps adds, edits, deletes and
+ * reordering to a single code path.
+ *
+ * Existing votes ride along inside each question, so re-saving to fix a typo
+ * doesn't wipe results that have already come in.
+ */
+export function saveQuestions(questions) {
+  requireConnection();
+
+  const stored = {};
+  questions.forEach((question, index) => {
+    const options = {};
+    question.options.forEach((option, optionIndex) => {
+      // 'a', 'b', 'c', ... — short, stable within a question
+      options[String.fromCharCode(97 + optionIndex)] = {
+        label: option.label,
+        votes: option.votes || 0,
+      };
+    });
+
+    stored[questionKey(index)] = {
+      text: question.text,
+      options,
+      ...(question.voters && Object.keys(question.voters).length
+        ? { voters: question.voters }
+        : {}),
+    };
+  });
+
+  return database.update(eventRef, {
+    ownerUid: uid,
+    questions: Object.keys(stored).length ? stored : null,
+  });
+}
+
+/** Puts a question on screen for everyone. Pass -1 to show none. */
+export function setCurrentIndex(index) {
+  requireConnection();
+  return database.update(eventRef, { ownerUid: uid, currentIndex: index });
 }
 
 /**
@@ -68,53 +149,33 @@ export function onPollChange(callback) {
  * single atomic update, and the increment happens on the server — so two
  * people tapping at the same instant can't overwrite each other.
  */
-export function castVote(optionId) {
+export function castVote(questionId, optionId) {
   requireConnection();
-  return database.update(pollRef, {
-    [`options/${optionId}/votes`]: database.increment(1),
-    [`voters/${uid}`]: optionId,
+  return database.update(eventRef, {
+    [`questions/${questionId}/options/${optionId}/votes`]: database.increment(1),
+    [`questions/${questionId}/voters/${uid}`]: optionId,
   });
 }
 
-/**
- * Creates or replaces the poll. The first device to create it becomes the
- * owner, and only the owner can change the question or reset the votes.
- *
- * `options` is an array of label strings.
- */
-export function createPoll(question, options) {
+/** Clears one question's results and lets everyone vote on it again. */
+export function resetVotes(question) {
   requireConnection();
 
-  const optionsById = {};
-  options.forEach((label, index) => {
-    // 'a', 'b', 'c', ... — short, stable keys
-    optionsById[String.fromCharCode(97 + index)] = { label, votes: 0 };
-  });
-
-  return database.update(pollRef, {
-    ownerUid: uid,
-    question,
-    active: true,
-    options: optionsById,
-    voters: null,
-  });
-}
-
-/** Sets every counter back to zero and lets everyone vote again. Owner only. */
-export function resetVotes(optionIds) {
-  requireConnection();
-
-  const updates = { voters: null };
-  for (const id of optionIds) {
-    updates[`options/${id}/votes`] = 0;
+  const updates = { [`questions/${question.id}/voters`]: null };
+  for (const option of question.options) {
+    updates[`questions/${question.id}/options/${option.id}/votes`] = 0;
   }
-  return database.update(pollRef, updates);
+  return database.update(eventRef, updates);
+}
+
+function questionKey(index) {
+  return "q" + String(index).padStart(3, "0");
 }
 
 function requireConnection() {
-  if (!pollRef) {
+  if (!eventRef) {
     throw new Error("connect() must finish before using the database");
   }
 }
 
-export { POLL_ID };
+export { EVENT_ID };
