@@ -555,6 +555,10 @@ function explain(error) {
       return "Google sign-in isn't switched on. Enable it under Authentication → Sign-in method.";
     case "auth/network-request-failed":
       return "Couldn't reach Google. Check the connection and try again.";
+    case undefined:
+      // No auth/ code means it isn't Firebase Auth complaining — in practice
+      // it's the browser refusing the storage the session is kept in.
+      return `The browser blocked the sign-in from being saved (${error.message}). Turning off Private Browsing for this site usually fixes it.`;
     default:
       return `${error.code || "Sign-in failed"} — ${error.message}`;
   }
