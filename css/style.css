@@ -1013,30 +1013,23 @@ body.host .correct-choice {
 }
 
 .waiting-art {
-  width: min(42%, 120px);
+  width: min(62%, 190px);
   height: auto;
 }
 
-.waiting-lens,
-.waiting-handle {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 6;
-  stroke-linecap: round;
-}
-
-.waiting-handle {
-  stroke-width: 9;
-}
-
+/* The bars keep the fills they carry in the logo file. Nothing here sets a
+   colour, so the mark can't end up drawn in something other than its own —
+   which is exactly how these came out black when the fills lived in CSS.
+   fill-box puts each bar's origin at its own base, so they grow from where
+   they stand rather than from the middle of the glass. */
 .waiting-bar {
-  transform-origin: 50% 56px;
+  transform-box: fill-box;
+  transform-origin: bottom;
   animation: waiting-breathe 2.4s ease-in-out infinite;
 }
 
-.waiting-bar:nth-of-type(3) { fill: var(--wrong); }
-.waiting-bar:nth-of-type(4) { fill: var(--accent); animation-delay: 0.3s; }
-.waiting-bar:nth-of-type(5) { fill: var(--right); animation-delay: 0.6s; }
+.waiting-bar--b { animation-delay: 0.3s; }
+.waiting-bar--c { animation-delay: 0.6s; }
 
 @keyframes waiting-breathe {
   0%, 100% { transform: scaleY(0.55); opacity: 0.65; }
@@ -1061,4 +1054,50 @@ body.host .correct-choice {
 .note.is-urgent {
   color: var(--wrong);
   font-weight: 700;
+}
+
+/* ─── QR overlay ───────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 14, 12, 0.82);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: min(90vw, 460px);
+  padding: 1.4rem;
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+/* White behind the code rather than the panel's cream: scanners cope with
+   cream, but contrast is the one thing worth not economising on here. */
+.qr-card svg {
+  display: block;
+  width: min(70vw, 340px);
+  height: auto;
+  border-radius: 6px;
+}
+
+.qr-url {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
