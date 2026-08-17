@@ -175,9 +175,9 @@ function showWaiting() {
            aria-label="${t("waitingForHost")}">
         <line class="waiting-handle" x1="33" y1="65" x2="15" y2="84"/>
         <circle class="waiting-lens" cx="57" cy="41" r="30"/>
-        <rect class="waiting-bar" x="45" y="44" width="6" height="12" rx="3"/>
-        <rect class="waiting-bar" x="54" y="34" width="6" height="22" rx="3"/>
-        <rect class="waiting-bar" x="63" y="39" width="6" height="17" rx="3"/>
+        <rect class="waiting-bar waiting-bar--a" x="45" y="44" width="6" height="12" rx="3"/>
+        <rect class="waiting-bar waiting-bar--b" x="54" y="34" width="6" height="22" rx="3"/>
+        <rect class="waiting-bar waiting-bar--c" x="63" y="39" width="6" height="17" rx="3"/>
       </svg>
       <p class="panel-message">${t("waitingForHost")}</p>
     </div>
