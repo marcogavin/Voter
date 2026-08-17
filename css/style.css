@@ -953,18 +953,37 @@ body.host .correct-choice {
   gap: 0.5rem;
 }
 
+/* Ink until it's a problem, then red. The accent was used for "getting
+   close", which is the colour the rest of the interface uses for ordinary
+   emphasis — so a warning read as decoration. */
 .charcount {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--ink);
   white-space: nowrap;
 }
 
-.charcount.is-close {
-  color: var(--accent);
+.charcount.is-over {
+  color: var(--wrong);
+  font-weight: 700;
 }
 
-.charcount.is-over {
+/* One count per answer, in the order they're typed. */
+.charlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.7rem;
+  margin-top: 0.35rem;
+}
+
+.charchip {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.charchip.is-over {
   color: var(--wrong);
   font-weight: 700;
 }
