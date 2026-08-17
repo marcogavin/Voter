@@ -281,11 +281,13 @@ function render(event) {
   els.language.value = getLanguage();
   els.language.disabled = !isOwner;
 
-  els.hint.textContent = isOwner
-    ? t("attendeesHint")
-    : signedIn
-      ? t("viewOnly")
-      : t("signInPrompt");
+  if (isOwner) {
+    els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });
+    const slot = els.hint.querySelector("b");
+    if (slot) slot.textContent = audienceUrl();
+  } else {
+    els.hint.textContent = signedIn ? t("viewOnly") : t("signInPrompt");
+  }
 
   els.editor.classList.toggle("is-locked", !isOwner);
   for (const control of [els.questionInput, els.optionsInput, els.save]) {
@@ -706,6 +708,16 @@ function showView(name) {
 
 function toOption(label) {
   return { label, votes: 0 };
+}
+
+/**
+ * Where attendees should go, derived from where the host page is rather than
+ * written down anywhere — so it stays right on any deployment.
+ * Shown without the scheme, since that's what someone types.
+ */
+function audienceUrl() {
+  const url = new URL(".", location.href);
+  return (url.host + url.pathname).replace(/\/$/, "");
 }
 
 /** 0 → "a", 1 → "b", … matching how sync.js keys stored options. */

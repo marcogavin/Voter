@@ -1049,3 +1049,11 @@ body.host .correct-choice {
     opacity: 0.55;
   }
 }
+
+/* The audience address is the one thing on the host screen someone will read
+   out or copy, so it gets weight the surrounding note doesn't. */
+.foot .note b {
+  color: var(--ink);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
