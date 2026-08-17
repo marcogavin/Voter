@@ -15,6 +15,10 @@
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isBoolean()"
         },
+        "askedAt": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isNumber()"
+        },
         "blanked": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isBoolean()"

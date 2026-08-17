@@ -2,8 +2,8 @@
 // and takes one vote per question from this device.
 // All database work goes through sync.js.
 
-import { connect, onEventChange, castVote, getUid } from "./sync.js";
-import { isConfigured } from "./firebase-config.js";
+import { connect, onEventChange, castVote, getUid, serverNow } from "./sync.js";
+import { isConfigured, SECONDS_PER_QUESTION } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 const optionsEl = document.getElementById("options");
@@ -13,6 +13,8 @@ const noteEl = document.getElementById("note");
 
 let shownQuestionId = null; // so we only rebuild rows when the question changes
 let busy = false; // guards against double-taps while a write is in flight
+let latest = null; // the last event seen, so the ticker can redraw from it
+let ticker = null;
 
 start();
 
@@ -56,6 +58,7 @@ async function start() {
 }
 
 function render(event) {
+  latest = event;
   // The host picks the language for the room; a change re-renders everything,
   // including rows that would otherwise keep their old labels.
   if (setLanguage(event.lang)) {
@@ -73,7 +76,8 @@ function render(event) {
   if (!question) {
     shownQuestionId = null;
     questionEl.hidden = true;
-    noteEl.textContent = t("oneVotePerQuestion");
+    noteEl.textContent = "";
+    stopTicking();
     showWaiting();
     return;
   }
@@ -81,19 +85,59 @@ function render(event) {
   questionEl.hidden = false;
 
   questionEl.textContent = question.text;
-  noteEl.textContent = event.revealed
-    ? t("votingClosed")
-    : t("questionNofM", {
-        n: event.currentIndex + 1,
-        m: event.questions.length,
-      });
 
   if (question.id !== shownQuestionId) {
     buildRows(question);
     shownQuestionId = question.id;
   }
 
-  updateRows(question, event.revealed);
+  drawTime();
+  updateRows(question, event.revealed || secondsLeft() === 0);
+
+  // A countdown has to redraw itself; nothing arrives from the database
+  // between the question going up and its time running out.
+  if (!event.revealed && secondsLeft() > 0) startTicking();
+  else stopTicking();
+}
+
+/* ── Countdown ─────────────────────────────────────────────────────────── */
+
+/** Seconds still on the clock, floored at zero. Null when nothing is timed. */
+function secondsLeft() {
+  if (!latest?.askedAt) return null;
+  const gone = (serverNow() - latest.askedAt) / 1000;
+  return Math.max(0, Math.ceil(SECONDS_PER_QUESTION - gone));
+}
+
+function drawTime() {
+  const left = secondsLeft();
+  const closed = latest?.revealed || left === 0;
+
+  noteEl.textContent = closed
+    ? t("votingClosed")
+    : left === null
+      ? ""
+      : t("secondsLeft", { n: left });
+  noteEl.classList.toggle("is-urgent", !closed && left !== null && left <= 5);
+}
+
+function startTicking() {
+  if (ticker) return;
+  ticker = setInterval(() => {
+    const question = latest?.questions[latest.currentIndex] ?? null;
+    if (!question) return stopTicking();
+
+    drawTime();
+    if (secondsLeft() === 0) {
+      updateRows(question, true);
+      stopTicking();
+    }
+  }, 250);
+}
+
+function stopTicking() {
+  if (ticker) clearInterval(ticker);
+  ticker = null;
 }
 
 function buildRows(question) {

@@ -1050,6 +1050,12 @@ body.host .correct-choice {
   overflow-wrap: anywhere;
 }
 
+/* The last few seconds, so a glance is enough. */
+.note.is-urgent {
+  color: var(--wrong);
+  font-weight: 700;
+}
+
 /* ─── QR overlay ───────────────────────────────────────────────────────── */
 
 .overlay {

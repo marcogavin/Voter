@@ -26,6 +26,22 @@ every attendee's phone, because the room should read one language rather than
 each person hunting for a setting. Available in English, Portuguese, Spanish,
 French and German.
 
+### The clock
+
+A question accepts votes for **30 seconds**, then closes itself. You can always
+close sooner — revealing the answer or moving on does it — but a question can't
+be left open while the room moves on without you.
+
+The countdown appears on every phone and beside the counter on the host screen,
+and turns red for the last five seconds. It's timed from the server's clock
+rather than each phone's, so everyone counts the same thirty seconds from the
+same instant however wrong their own clock is.
+
+**Reopen voting** restarts the clock rather than resuming a spent one.
+
+To change the length, edit `SECONDS_PER_QUESTION` in
+[`js/firebase-config.js`](js/firebase-config.js).
+
 ### Right answers and the reveal step
 
 For a question with a right answer, **Next** does two things in turn: the first
