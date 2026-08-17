@@ -4,7 +4,7 @@
       "$eventId": {
         ".read": "auth != null",
         "ownerUid": {
-          ".write": "auth != null && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)",
           ".validate": "newData.isString()"
         },
         "currentIndex": {

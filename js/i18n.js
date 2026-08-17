@@ -6,12 +6,15 @@
 //
 // `{n}`-style placeholders are filled by the second argument to t().
 
+// Flags stand in for languages here, which isn't strictly right — Spanish
+// isn't only Spain, and English isn't only Britain — but for picking between
+// five European languages it reads faster than text alone.
 export const LANGUAGES = {
-  en: "English",
-  pt: "Português",
-  es: "Español",
-  fr: "Français",
-  de: "Deutsch",
+  en: "🇬🇧 English",
+  pt: "🇵🇹 Português",
+  es: "🇪🇸 Español",
+  fr: "🇫🇷 Français",
+  de: "🇩🇪 Deutsch",
 };
 
 export const DEFAULT_LANGUAGE = "en";
@@ -71,6 +74,12 @@ const strings = {
     questionNofM: "Question {n} of {m}",
     votingClosed: "Voting closed",
     voteFor: "Vote for {label}",
+    cantConnect: "Can't connect",
+    tryAgain: "Try again",
+    signIn: "Sign in with Google",
+    signOut: "Sign out",
+    signInPrompt: "Sign in to run this event",
+    signedInAs: "Signed in as {name}",
 
     connecting: "Connecting",
     live: "Live",
@@ -144,6 +153,12 @@ const strings = {
     questionNofM: "Pergunta {n} de {m}",
     votingClosed: "Votação encerrada",
     voteFor: "Votar em {label}",
+    cantConnect: "Sem ligação",
+    tryAgain: "Tentar de novo",
+    signIn: "Entrar com Google",
+    signOut: "Sair",
+    signInPrompt: "Entra para conduzires este evento",
+    signedInAs: "Sessão de {name}",
 
     connecting: "A ligar",
     live: "Live",
@@ -217,6 +232,12 @@ const strings = {
     questionNofM: "Pregunta {n} de {m}",
     votingClosed: "Votación cerrada",
     voteFor: "Votar por {label}",
+    cantConnect: "Sin conexión",
+    tryAgain: "Reintentar",
+    signIn: "Entrar con Google",
+    signOut: "Cerrar sesión",
+    signInPrompt: "Inicia sesión para dirigir este evento",
+    signedInAs: "Sesión de {name}",
 
     connecting: "Conectando",
     live: "Live",
@@ -290,6 +311,12 @@ const strings = {
     questionNofM: "Question {n} sur {m}",
     votingClosed: "Vote clos",
     voteFor: "Voter pour {label}",
+    cantConnect: "Connexion impossible",
+    tryAgain: "Réessayer",
+    signIn: "Se connecter avec Google",
+    signOut: "Se déconnecter",
+    signInPrompt: "Connecte-toi pour animer cet événement",
+    signedInAs: "Connecté en tant que {name}",
 
     connecting: "Connexion",
     live: "Live",
@@ -363,6 +390,12 @@ const strings = {
     questionNofM: "Frage {n} von {m}",
     votingClosed: "Abstimmung beendet",
     voteFor: "Für {label} stimmen",
+    cantConnect: "Keine Verbindung",
+    tryAgain: "Erneut versuchen",
+    signIn: "Mit Google anmelden",
+    signOut: "Abmelden",
+    signInPrompt: "Melde dich an, um dieses Event zu leiten",
+    signedInAs: "Angemeldet als {name}",
 
     connecting: "Verbinden",
     live: "Live",
