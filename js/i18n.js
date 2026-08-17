@@ -6,12 +6,15 @@
 //
 // `{n}`-style placeholders are filled by the second argument to t().
 
+// Flags stand in for languages here, which isn't strictly right — Spanish
+// isn't only Spain, and English isn't only Britain — but for picking between
+// five European languages it reads faster than text alone.
 export const LANGUAGES = {
-  en: "English",
-  pt: "Português",
-  es: "Español",
-  fr: "Français",
-  de: "Deutsch",
+  en: "🇬🇧 English",
+  pt: "🇵🇹 Português",
+  es: "🇪🇸 Español",
+  fr: "🇫🇷 Français",
+  de: "🇩🇪 Deutsch",
 };
 
 export const DEFAULT_LANGUAGE = "en";

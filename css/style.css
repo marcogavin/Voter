@@ -823,3 +823,88 @@ body:not(.host) .logo {
 .field--lang select:disabled {
   opacity: 0.5;
 }
+
+/* ─── Host at a comfortable reading size ────────────────────────────────
+   The host screen was drawn dense, on the assumption of one person reading
+   it up close. That assumption fails for anyone whose eyes aren't what they
+   were, and a host squinting at a control panel in front of a room is worse
+   than a slightly fuller screen. Everything here is half again as large.
+
+   Scoped to body.host so none of it reaches the audience page, which has
+   its own sizes and was just made smaller.                              */
+
+body.host .eyebrow,
+body.host .tab,
+body.host .field-label,
+body.host .qtext small,
+body.host .foot .note {
+  font-size: 0.9rem;
+}
+
+body.host h1 {
+  font-size: clamp(1.4rem, 3.6vw, 1.9rem);
+  margin: 0.7rem 0 1rem;
+}
+
+body.host .meter-label {
+  font-size: 1rem;
+}
+
+body.host .meter-pct {
+  font-size: 1.08rem;
+}
+
+body.host .meter-track {
+  height: 14px;
+  border-radius: 7px;
+}
+
+body.host .qnum {
+  font-size: 1.02rem;
+}
+
+body.host .qtext,
+body.host .correct-choice {
+  font-size: 1.17rem;
+}
+
+body.host .panel-message {
+  font-size: 1.08rem;
+}
+
+body.host .setup input,
+body.host .setup textarea,
+body.host .field--lang select {
+  font-size: 1.28rem;
+}
+
+body.host .btn {
+  font-size: 0.93rem;
+  padding: 0.7rem 1.1rem;
+}
+
+body.host .counter {
+  font-size: 1.05rem;
+}
+
+body.host .badge {
+  font-size: 0.87rem;
+  padding: 0.2rem 0.55rem;
+}
+
+/* Targets grow with the text — a bigger label above a small button helps
+   nobody. */
+body.host .iconbtn {
+  font-size: 1.28rem;
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+}
+
+body.host .correct-choice {
+  min-height: 2.6rem;
+}
+
+/* More type needs more room before it starts wrapping awkwardly. */
+.frame--host {
+  max-width: 640px;
+}
