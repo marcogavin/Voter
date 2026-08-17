@@ -11,6 +11,7 @@
 //                   also closes voting — enforced in the rules, not just here
 //     askedAt:      when the current question went up, on the server's clock,
 //                   so every device counts down from the same instant
+//     seconds:      how long a question stays open, or 0 for no limit
 //     questions/
 //       q000: { text, correct: "b", options: { a: {label, votes} },
 //               voters: { uid: "a" } }
@@ -24,6 +25,7 @@ import {
   firebaseConfig,
   EVENT_ID,
   FIREBASE_VERSION,
+  DEFAULT_SECONDS,
   isConfigured,
 } from "./firebase-config.js";
 
@@ -224,6 +226,9 @@ function normalise(raw) {
     currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
     revealed: raw?.revealed === true,
     askedAt: typeof raw?.askedAt === "number" ? raw.askedAt : null,
+    // An event saved before the clock existed has no setting of its own, and
+    // should behave the way it did rather than suddenly run untimed.
+    seconds: typeof raw?.seconds === "number" ? raw.seconds : DEFAULT_SECONDS,
     blanked: raw?.blanked === true,
     lang: typeof raw?.lang === "string" ? raw.lang : "en",
     questions,
@@ -317,6 +322,24 @@ export function setBlanked(blanked) {
 export function saveLanguage(lang) {
   requireConnection();
   return database.update(eventRef, { ownerUid: uid, lang });
+}
+
+/**
+ * Sets how long each question stays open, or 0 for no limit. Like the
+ * language, it belongs to the event: the countdown every phone draws has to
+ * be the same one the host's page is about to act on.
+ *
+ * Restamps askedAt, so a change lands on the question already up rather than
+ * only on the next one — shortening the clock mid-question would otherwise
+ * close it retroactively.
+ */
+export function saveSeconds(seconds) {
+  requireConnection();
+  return database.update(eventRef, {
+    ownerUid: uid,
+    seconds,
+    askedAt: database.serverTimestamp(),
+  });
 }
 
 /**

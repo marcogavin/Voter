@@ -21,26 +21,36 @@ different jobs:
 - **Run** — one question on screen, live results, and the controls to move
   through the set. Every attendee's phone follows whatever you have up.
 
-Setup also holds the **Language** picker. It applies to the host screen *and*
+Setup also holds the **Language** and **Time limit** pickers. Both belong to the
+event rather than to a device: the language applies to the host screen *and*
 every attendee's phone, because the room should read one language rather than
 each person hunting for a setting. Available in English, Portuguese, Spanish,
 French and German.
 
 ### The clock
 
-A question accepts votes for **30 seconds**, then closes itself. You can always
-close sooner — revealing the answer or moving on does it — but a question can't
-be left open while the room moves on without you.
+A question accepts votes for a set number of seconds, then closes itself. You
+can always close sooner — revealing the answer or moving on does it — but a
+question can't be left open while the room moves on without you.
+
+The length is the **Time limit** picker in Setup: ten seconds up to two minutes,
+or **No time limit**, which leaves a question open until you close it. It
+changes live, including on the question already up, and every phone follows.
 
 The countdown appears on every phone and beside the counter on the host screen,
 and turns red for the last five seconds. It's timed from the server's clock
-rather than each phone's, so everyone counts the same thirty seconds from the
-same instant however wrong their own clock is.
+rather than each phone's, so everyone counts the same seconds from the same
+instant however wrong their own clock is.
 
 **Reopen voting** restarts the clock rather than resuming a spent one.
 
-To change the length, edit `SECONDS_PER_QUESTION` in
-[`js/firebase-config.js`](js/firebase-config.js).
+A quiz question and an opinion question want different clocks; the limit is one
+setting for the whole event, so change it between the two rather than expecting
+each question to remember its own.
+
+The starting value for an event that has never had one set lives in
+`DEFAULT_SECONDS` in [`js/firebase-config.js`](js/firebase-config.js), alongside
+`SECONDS_CHOICES` — the list the picker offers.
 
 ### Right answers and the reveal step
 

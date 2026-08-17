@@ -22,12 +22,13 @@ import {
   signInWithGoogle,
   signOutHost,
   saveLanguage,
+  saveSeconds,
   resetVotes,
   resetAllVotes,
   getUid,
   serverNow,
 } from "./sync.js";
-import { isConfigured, SECONDS_PER_QUESTION } from "./firebase-config.js";
+import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import {
   t,
@@ -56,6 +57,7 @@ const els = {
   list: document.getElementById("question-list"),
   setupEmpty: document.getElementById("setup-empty"),
   language: document.getElementById("language"),
+  seconds: document.getElementById("seconds"),
 
   runQuestion: document.getElementById("run-question"),
   options: document.getElementById("options"),
@@ -85,6 +87,8 @@ const QUESTION_MAX = 200;
 const OPTION_MAX = 100;
 
 let askedAt = null;
+let seconds = 0; // how long a question stays open; 0 for no limit
+let secondsMenu = null; // signature of what the duration picker currently offers
 let ticker = null;
 
 let questions = []; // local mirror, in running order
@@ -163,6 +167,9 @@ function wireUp() {
 
   fillLanguages();
   els.language.addEventListener("change", onLanguageChange);
+
+  fillSeconds();
+  els.seconds.addEventListener("change", onSecondsChange);
 
   els.qr.addEventListener("click", showQr);
   els.qrClose.addEventListener("click", hideQr);
@@ -269,6 +276,7 @@ function render(event) {
   revealed = event.revealed;
   blanked = event.blanked;
   askedAt = event.askedAt;
+  seconds = event.seconds;
 
   // The language belongs to the event, so a change made on any device
   // re-renders every string here. This has to run before anything below
@@ -297,6 +305,10 @@ function render(event) {
 
   els.language.value = getLanguage();
   els.language.disabled = !isOwner;
+
+  fillSeconds();
+  els.seconds.value = String(seconds);
+  els.seconds.disabled = !isOwner;
 
   if (isOwner) {
     els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });
@@ -640,17 +652,21 @@ async function go(index) {
  * Closes the current question when its time runs out. Only the owner may
  * write that, so the host's page is what actually ends it — the audience
  * merely stops offering the buttons.
+ *
+ * With the limit set to none there's nothing to watch: the question stays open
+ * until the host closes it, and the counter keeps the plain "3 / 10" drawn by
+ * drawRun rather than growing a clock that never runs down.
  */
 function watchClock() {
   clearInterval(ticker);
   ticker = null;
 
   const question = questions[currentIndex] ?? null;
-  if (!isOwner || !question || revealed || !askedAt) return;
+  if (!isOwner || !question || revealed || !askedAt || !seconds) return;
 
   ticker = setInterval(() => {
     const gone = (serverNow() - askedAt) / 1000;
-    const left = Math.max(0, Math.ceil(SECONDS_PER_QUESTION - gone));
+    const left = Math.max(0, Math.ceil(seconds - gone));
 
     els.counter.textContent = `${currentIndex + 1} / ${questions.length} · ${left}s`;
     if (left === 0) {
@@ -721,6 +737,42 @@ function fillLanguages() {
 async function onLanguageChange(changeEvent) {
   try {
     await saveLanguage(changeEvent.target.value);
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+/**
+ * Offers the standard durations plus whatever the event is already set to, so
+ * a value set from somewhere else can still be seen rather than leaving the
+ * picker looking empty.
+ */
+function fillSeconds() {
+  const choices = [...new Set([...SECONDS_CHOICES, seconds])].sort(
+    (a, b) => a - b,
+  );
+  const signature = getLanguage() + ":" + choices.join(",");
+
+  // Rebuilding a <select> closes it under whoever is choosing, and render()
+  // runs on every vote that lands. Only touch it when it would really differ.
+  if (signature === secondsMenu) return;
+  secondsMenu = signature;
+
+  els.seconds.innerHTML = "";
+  for (const value of choices) {
+    const option = document.createElement("option");
+    option.value = String(value);
+    option.textContent =
+      value === 0 ? t("noTimeLimit") : t("secondsOption", { n: value });
+    els.seconds.appendChild(option);
+  }
+}
+
+async function onSecondsChange(changeEvent) {
+  try {
+    await saveSeconds(Number(changeEvent.target.value));
+    setStatus("saved", "live");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);

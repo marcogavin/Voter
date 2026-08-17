@@ -804,15 +804,29 @@ body:not(.host) .logo {
   width: min(100%, 225px);
 }
 
-/* ─── Language picker ──────────────────────────────────────────────────── */
+/* ─── Event settings: language and time limit ──────────────────────────── */
 
-.field--lang {
+/* Both belong to the event rather than to a question, so they sit together
+   below the question list rather than inside the form. */
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.4rem;
   margin-top: 1rem;
   padding-top: 0.9rem;
   border-top: 1px solid var(--hairline);
 }
 
-.field--lang select {
+.field--pick {
+  flex: 1 1 11rem;
+  /* A long option label mustn't stretch the column past the panel. */
+  min-width: 0;
+}
+
+.field--pick select {
+  /* Match the column rather than the longest option, so the two pickers line
+     up and neither pushes the other out of the panel. */
+  width: 100%;
   font-family: inherit;
   font-size: 0.85rem;
   color: var(--ink);
@@ -824,12 +838,12 @@ body:not(.host) .logo {
   min-height: 2.4rem;
 }
 
-.field--lang select:focus-visible {
+.field--pick select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
-.field--lang select:disabled {
+.field--pick select:disabled {
   opacity: 0.5;
 }
 
@@ -883,7 +897,7 @@ body.host .panel-message {
 
 body.host .setup input,
 body.host .setup textarea,
-body.host .field--lang select {
+body.host .field--pick select {
   font-size: 1.28rem;
 }
 

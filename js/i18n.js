@@ -39,6 +39,9 @@ const strings = {
     optionsCount: "{n} options",
     needTwoOptions: "Need 2+ options",
     language: "Language",
+    timeLimit: "Time limit",
+    noTimeLimit: "No time limit",
+    secondsOption: "{n} seconds",
     questionPlaceholder: "What's your age?",
     optionsPlaceholder: "Under 30\n30–50\nOver 50",
 
@@ -125,6 +128,9 @@ const strings = {
     optionsCount: "{n} opções",
     needTwoOptions: "Mínimo 2 opções",
     language: "Idioma",
+    timeLimit: "Tempo limite",
+    noTimeLimit: "Sem tempo limite",
+    secondsOption: "{n} segundos",
     questionPlaceholder: "Que idade tens?",
     optionsPlaceholder: "Menos de 30\n30–50\nMais de 50",
 
@@ -211,6 +217,9 @@ const strings = {
     optionsCount: "{n} opciones",
     needTwoOptions: "Mínimo 2 opciones",
     language: "Idioma",
+    timeLimit: "Tiempo límite",
+    noTimeLimit: "Sin tiempo límite",
+    secondsOption: "{n} segundos",
     questionPlaceholder: "¿Qué edad tienes?",
     optionsPlaceholder: "Menos de 30\n30–50\nMás de 50",
 
@@ -297,6 +306,9 @@ const strings = {
     optionsCount: "{n} options",
     needTwoOptions: "2 options minimum",
     language: "Langue",
+    timeLimit: "Temps limite",
+    noTimeLimit: "Pas de limite",
+    secondsOption: "{n} secondes",
     questionPlaceholder: "Quel âge as-tu ?",
     optionsPlaceholder: "Moins de 30\n30–50\nPlus de 50",
 
@@ -383,6 +395,9 @@ const strings = {
     optionsCount: "{n} Antworten",
     needTwoOptions: "Mind. 2 Antworten",
     language: "Sprache",
+    timeLimit: "Zeitlimit",
+    noTimeLimit: "Kein Zeitlimit",
+    secondsOption: "{n} Sekunden",
     questionPlaceholder: "Wie alt bist du?",
     optionsPlaceholder: "Unter 30\n30–50\nÜber 50",
 

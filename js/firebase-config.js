@@ -22,10 +22,14 @@ export const firebaseConfig = {
 // Change it to run a second, separate event without disturbing the first.
 export const EVENT_ID = "live";
 
-// How long a question accepts votes before closing itself. The host can
-// always close sooner; this is the backstop so a question can't be left open
-// while the room moves on.
-export const SECONDS_PER_QUESTION = 30;
+// How long a question accepts votes before closing itself. The host sets this
+// in Setup and it's stored with the event; this is only what an event that has
+// never had it set falls back to. Zero means no time limit at all.
+export const DEFAULT_SECONDS = 30;
+
+// What the Setup picker offers. Zero is "no time limit" — a question then stays
+// open until the host closes it, which is how the app worked before the clock.
+export const SECONDS_CHOICES = [0, 10, 15, 20, 30, 45, 60, 90, 120];
 
 // Version of the Firebase JS SDK loaded from Google's CDN.
 // Bump this if you ever need a newer release.
