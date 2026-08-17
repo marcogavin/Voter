@@ -1057,3 +1057,49 @@ body.host .correct-choice {
   font-weight: 700;
   overflow-wrap: anywhere;
 }
+
+/* ─── QR overlay ───────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(15, 14, 12, 0.82);
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-width: min(90vw, 460px);
+  padding: 1.4rem;
+  border-radius: 16px;
+  background: var(--panel);
+}
+
+/* White behind the code rather than the panel's cream: scanners cope with
+   cream, but contrast is the one thing worth not economising on here. */
+.qr-card svg {
+  display: block;
+  width: min(70vw, 340px);
+  height: auto;
+  border-radius: 6px;
+}
+
+.qr-url {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  overflow-wrap: anywhere;
+}

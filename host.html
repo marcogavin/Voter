@@ -23,6 +23,7 @@
 
       <div class="hostbar">
         <span class="hostbar-who" id="account"></span>
+        <button type="button" class="btn" id="qr" data-i18n="qrCode">QR code</button>
         <button type="button" class="btn" id="signin" data-i18n="signIn">Sign in with Google</button>
         <button type="button" class="btn" id="signout" data-i18n="signOut" hidden>Sign out</button>
       </div>
@@ -88,6 +89,14 @@
         <p class="note" id="hint" data-i18n="attendeesHint">Attendees open the audience page on their phones</p>
         <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
       </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="qr-overlay" hidden>
+    <div class="qr-card">
+      <div id="qr-art"></div>
+      <p class="qr-url" id="qr-url"></p>
+      <button type="button" class="btn btn--primary" id="qr-close" data-i18n="close">Close</button>
     </div>
   </div>
 
