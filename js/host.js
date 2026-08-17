@@ -23,6 +23,7 @@ import {
   signOutHost,
   saveLanguage,
   resetVotes,
+  resetAllVotes,
   getUid,
 } from "./sync.js";
 import { isConfigured } from "./firebase-config.js";
@@ -357,7 +358,10 @@ function drawRun() {
     (!willReveal && currentIndex >= questions.length - 1);
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
-  els.reset.disabled = !isOwner || !question;
+  // With nothing on screen there's no single question to clear, but wanting a
+  // clean slate before running the set again is exactly when this is needed.
+  els.reset.textContent = question ? t("resetVotes") : t("resetAllVotes");
+  els.reset.disabled = !isOwner || !questions.length;
   els.clear.disabled = !isOwner || !question;
 
   // Blanking only means anything while something is up.
@@ -678,11 +682,11 @@ async function onLanguageChange(changeEvent) {
 }
 
 async function onReset() {
-  const question = questions[currentIndex];
-  if (!question) return;
+  const question = questions[currentIndex] ?? null;
+  if (!question && !questions.length) return;
 
   try {
-    await resetVotes(question);
+    await (question ? resetVotes(question) : resetAllVotes(questions));
     setStatus("reset", "live");
   } catch (error) {
     setStatus("refused", "error");
