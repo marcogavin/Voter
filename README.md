@@ -120,7 +120,8 @@ Reorder with the arrows, fix wording with ✎, remove with ✕.
 4. Move through with **Prev** / **Next**
 5. **Hide screen** blanks every phone while keeping your place, for talking
    between questions. **Show screen** brings it back
-6. **Start over** takes the question down and returns to the top of the set
+6. **Start over** takes the question down and returns to the top of the set.
+   Votes are kept — use **Reset votes** to clear a question's results
 
 **Reset votes** clears the current question only, so you can re-run one without
 disturbing the rest.
