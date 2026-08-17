@@ -246,6 +246,19 @@ function render(event) {
   currentIndex = event.currentIndex;
   revealed = event.revealed;
   blanked = event.blanked;
+
+  // The language belongs to the event, so a change made on any device
+  // re-renders every string here. This has to run before anything below
+  // reads t(), or that text is written in the language being replaced.
+  if (setLanguage(event.lang)) {
+    applyStaticText();
+    fillLanguages();
+    drawCorrectChoices();
+    drawCounts();
+    shownQuestionId = null;
+    setStatus(els.status.dataset.key, els.status.dataset.state);
+  }
+
   // Only a signed-in account can hold or claim an event. An anonymous
   // visitor watches; that's what stops an attendee who finds this page.
   const signedIn = !isAnonymous();
@@ -259,14 +272,6 @@ function render(event) {
       : t("signInPrompt");
   }
 
-  // The language belongs to the event, so a change made on any device
-  // re-renders every string here, including rows already on screen.
-  if (setLanguage(event.lang)) {
-    applyStaticText();
-    fillLanguages();
-    shownQuestionId = null;
-    setStatus(els.status.dataset.key, els.status.dataset.state);
-  }
   els.language.value = getLanguage();
   els.language.disabled = !isOwner;
 
@@ -287,10 +292,7 @@ function render(event) {
     stopEditing();
   }
 
-  if (editingIndex === null) {
-    els.editorLabel.textContent = t("questionN", { n: questions.length + 1 });
-  }
-
+  drawEditorLabels();
   drawList();
   drawRun();
 }
@@ -525,11 +527,24 @@ function startEditing(index) {
   drawCorrectChoices();
 
   drawCounts();
-  els.editorLabel.textContent = t("editingQuestionN", { n: index + 1 });
-  els.save.textContent = t("saveChanges");
-  els.cancel.hidden = false;
+  drawEditorLabels();
   drawList();
   els.questionInput.focus();
+}
+
+/**
+ * The form's own labels depend on whether a question is being edited, and on
+ * the current language. Deriving them in one place means every render keeps
+ * them current instead of leaving whichever language they were written in.
+ */
+function drawEditorLabels() {
+  const adding = editingIndex === null;
+
+  els.editorLabel.textContent = adding
+    ? t("questionN", { n: questions.length + 1 })
+    : t("editingQuestionN", { n: editingIndex + 1 });
+  els.save.textContent = adding ? t("addQuestion") : t("saveChanges");
+  els.cancel.hidden = adding;
 }
 
 function stopEditing() {
@@ -539,9 +554,7 @@ function stopEditing() {
   showFormError(null);
   drawCorrectChoices();
   drawCounts();
-  els.editorLabel.textContent = t("questionN", { n: questions.length + 1 });
-  els.save.textContent = t("addQuestion");
-  els.cancel.hidden = true;
+  drawEditorLabels();
   drawList();
 }
 
