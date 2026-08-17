@@ -80,6 +80,9 @@ const strings = {
     signOut: "Sign out",
     signInPrompt: "Sign in to run this event",
     signedInAs: "Signed in as {name}",
+    charCount: "{n} / {max}",
+    longestOption: "Longest {n} / {max}",
+    optionTooLong: "Answer {i} is {n} characters. The limit is {max}.",
 
     connecting: "Connecting",
     live: "Live",
@@ -159,6 +162,9 @@ const strings = {
     signOut: "Sair",
     signInPrompt: "Entra para conduzires este evento",
     signedInAs: "Sessão de {name}",
+    charCount: "{n} / {max}",
+    longestOption: "Maior {n} / {max}",
+    optionTooLong: "A resposta {i} tem {n} caracteres. O limite é {max}.",
 
     connecting: "A ligar",
     live: "Live",
@@ -238,6 +244,9 @@ const strings = {
     signOut: "Cerrar sesión",
     signInPrompt: "Inicia sesión para dirigir este evento",
     signedInAs: "Sesión de {name}",
+    charCount: "{n} / {max}",
+    longestOption: "Máx. {n} / {max}",
+    optionTooLong: "La respuesta {i} tiene {n} caracteres. El límite es {max}.",
 
     connecting: "Conectando",
     live: "Live",
@@ -317,6 +326,9 @@ const strings = {
     signOut: "Se déconnecter",
     signInPrompt: "Connecte-toi pour animer cet événement",
     signedInAs: "Connecté en tant que {name}",
+    charCount: "{n} / {max}",
+    longestOption: "Plus longue {n} / {max}",
+    optionTooLong: "La réponse {i} fait {n} caractères. La limite est {max}.",
 
     connecting: "Connexion",
     live: "Live",
@@ -396,6 +408,9 @@ const strings = {
     signOut: "Abmelden",
     signInPrompt: "Melde dich an, um dieses Event zu leiten",
     signedInAs: "Angemeldet als {name}",
+    charCount: "{n} / {max}",
+    longestOption: "Längste {n} / {max}",
+    optionTooLong: "Antwort {i} hat {n} Zeichen. Erlaubt sind {max}.",
 
     connecting: "Verbinden",
     live: "Live",

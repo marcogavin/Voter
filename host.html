@@ -31,13 +31,19 @@
       <section id="view-setup">
         <form id="editor" class="setup">
           <label class="field">
-            <span class="field-label" id="editor-label">Question 1</span>
+            <span class="counted">
+              <span class="field-label" id="editor-label">Question 1</span>
+              <span class="charcount" id="question-count"></span>
+            </span>
             <input id="question-input" type="text" maxlength="200" required
                    data-i18n-placeholder="questionPlaceholder"
                    placeholder="What's your age?" autocomplete="off">
           </label>
           <label class="field">
-            <span class="field-label" data-i18n="optionsLabel">Options — one per line</span>
+            <span class="counted">
+              <span class="field-label" data-i18n="optionsLabel">Options — one per line</span>
+              <span class="charcount" id="options-count"></span>
+            </span>
             <textarea id="options-input" rows="3" required
                       data-i18n-placeholder="optionsPlaceholder"
                       placeholder="Under 30&#10;30–50&#10;Over 50"></textarea>
@@ -46,6 +52,7 @@
             <span class="field-label" data-i18n="correctLabel">Right answer — optional</span>
             <div id="correct-list" class="correct-list"></div>
           </div>
+          <p class="form-error" id="form-error" hidden></p>
           <div class="actions">
             <button type="submit" class="btn btn--primary" id="save" data-i18n="addQuestion">Add question</button>
             <button type="button" class="btn" id="cancel" data-i18n="cancel" hidden>Cancel</button>

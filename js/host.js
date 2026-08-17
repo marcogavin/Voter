@@ -45,6 +45,9 @@ const els = {
   questionInput: document.getElementById("question-input"),
   optionsInput: document.getElementById("options-input"),
   correctList: document.getElementById("correct-list"),
+  questionCount: document.getElementById("question-count"),
+  optionsCount: document.getElementById("options-count"),
+  formError: document.getElementById("form-error"),
   save: document.getElementById("save"),
   cancel: document.getElementById("cancel"),
   list: document.getElementById("question-list"),
@@ -67,6 +70,11 @@ const els = {
   hint: document.getElementById("hint"),
   status: document.getElementById("status"),
 };
+
+// These mirror the limits in database.rules.json. Keeping them in step means
+// the form refuses what the database would refuse, in a place you can see.
+const QUESTION_MAX = 200;
+const OPTION_MAX = 100;
 
 let questions = []; // local mirror, in running order
 let currentIndex = -1;
@@ -129,6 +137,9 @@ function wireUp() {
   els.editor.addEventListener("submit", onSubmit);
   els.cancel.addEventListener("click", stopEditing);
   els.list.addEventListener("click", onListClick);
+  els.questionInput.setAttribute("maxlength", String(QUESTION_MAX));
+  els.questionInput.addEventListener("input", drawCounts);
+  els.optionsInput.addEventListener("input", drawCounts);
   els.optionsInput.addEventListener("input", drawCorrectChoices);
   els.correctList.addEventListener("change", onCorrectChange);
 
@@ -146,6 +157,35 @@ function wireUp() {
   els.signout.addEventListener("click", () => signOutHost());
 
   drawCorrectChoices();
+  drawCounts();
+}
+
+/* ── Character counts ──────────────────────────────────────────────────── */
+
+/**
+ * Counts down as you type, so a limit is visible before it's hit rather than
+ * discovered as a refusal after pressing the button.
+ */
+function drawCounts() {
+  const used = els.questionInput.value.length;
+  els.questionCount.textContent = t("charCount", { n: used, max: QUESTION_MAX });
+  mark(els.questionCount, used, QUESTION_MAX);
+
+  const longest = parseOptions().reduce((max, line) => Math.max(max, line.length), 0);
+  els.optionsCount.textContent = longest
+    ? t("longestOption", { n: longest, max: OPTION_MAX })
+    : "";
+  mark(els.optionsCount, longest, OPTION_MAX);
+}
+
+function mark(element, used, max) {
+  element.classList.toggle("is-over", used > max);
+  element.classList.toggle("is-close", used <= max && used > max * 0.85);
+}
+
+function showFormError(text) {
+  els.formError.textContent = text ?? "";
+  els.formError.hidden = !text;
 }
 
 /* ── Marking the right answer ──────────────────────────────────────────── */
@@ -393,8 +433,26 @@ async function onSubmit(submitEvent) {
 
   if (!text || labels.length < 2) {
     setStatus("needTwoOptions", "warn");
+    showFormError(t("needTwoOptions"));
     return;
   }
+
+  // Catch an over-long answer here rather than letting the database refuse it,
+  // which reported into the footer where it couldn't be seen.
+  const overLong = labels.findIndex((label) => label.length > OPTION_MAX);
+  if (overLong !== -1) {
+    setStatus("needTwoOptions", "warn");
+    showFormError(
+      t("optionTooLong", {
+        i: overLong + 1,
+        n: labels[overLong].length,
+        max: OPTION_MAX,
+      }),
+    );
+    return;
+  }
+
+  showFormError(null);
 
   const next = [...questions];
   const correct = correctIndex === null ? null : optionId(correctIndex);
@@ -419,6 +477,8 @@ async function onSubmit(submitEvent) {
   if (await commit(next, editingIndex === null ? "added" : "saved")) {
     stopEditing();
     els.questionInput.focus();
+  } else {
+    showFormError(els.hint.textContent);
   }
 }
 
@@ -464,6 +524,7 @@ function startEditing(index) {
   correctIndex = marked === -1 ? null : marked;
   drawCorrectChoices();
 
+  drawCounts();
   els.editorLabel.textContent = t("editingQuestionN", { n: index + 1 });
   els.save.textContent = t("saveChanges");
   els.cancel.hidden = false;
@@ -475,7 +536,9 @@ function stopEditing() {
   editingIndex = null;
   correctIndex = null;
   els.editor.reset();
+  showFormError(null);
   drawCorrectChoices();
+  drawCounts();
   els.editorLabel.textContent = t("questionN", { n: questions.length + 1 });
   els.save.textContent = t("addQuestion");
   els.cancel.hidden = true;
