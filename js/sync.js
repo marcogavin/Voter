@@ -60,6 +60,16 @@ export async function connect() {
   authApi = authModule;
   auth = authModule.getAuth(app);
 
+  // Firebase prefers IndexedDB for the session, which Safari can refuse
+  // outright — it throws "Database is closing", the sign-in is discarded, and
+  // the failure looks like a rejected login rather than a storage problem.
+  // localStorage holds a host session perfectly well and sidesteps it.
+  try {
+    await authModule.setPersistence(auth, authModule.browserLocalPersistence);
+  } catch (error) {
+    console.error("Falling back to the default session storage:", error);
+  }
+
   // Finish a Google sign-in that sent us away and back. Phones often block
   // the popup, so the redirect route has to work.
   try {
@@ -126,6 +136,14 @@ export async function signInWithGoogle() {
     await authApi.signInWithPopup(auth, provider);
     location.reload();
   } catch (error) {
+    // The sign-in itself may have worked and only the session write failed.
+    // Google has already authenticated the account at that point, so treat a
+    // real signed-in user as success whatever the error claims.
+    if (auth.currentUser && !auth.currentUser.isAnonymous) {
+      location.reload();
+      return;
+    }
+
     // Popups are blocked by default in most phone browsers; the redirect
     // route survives that, and returns through getRedirectResult above.
     if (
