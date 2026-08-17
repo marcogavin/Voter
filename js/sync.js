@@ -104,6 +104,8 @@ function normalise(raw) {
     ownerUid: raw?.ownerUid ?? null,
     currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
     revealed: raw?.revealed === true,
+    blanked: raw?.blanked === true,
+    lang: typeof raw?.lang === "string" ? raw.lang : "en",
     questions,
   };
 }
@@ -168,6 +170,26 @@ export function setCurrentIndex(index) {
 export function setRevealed(revealed) {
   requireConnection();
   return database.update(eventRef, { ownerUid: uid, revealed });
+}
+
+/**
+ * Hides the question from the audience without losing your place — unlike
+ * setCurrentIndex(-1), which returns to the top of the set. For talking
+ * between questions with nothing stale on everyone's phone.
+ */
+export function setBlanked(blanked) {
+  requireConnection();
+  return database.update(eventRef, { ownerUid: uid, blanked });
+}
+
+/**
+ * Sets the interface language for everyone. It belongs to the event rather
+ * than to each device so the room reads the same thing without each person
+ * having to find a setting.
+ */
+export function saveLanguage(lang) {
+  requireConnection();
+  return database.update(eventRef, { ownerUid: uid, lang });
 }
 
 /**

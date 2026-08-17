@@ -76,14 +76,6 @@ body {
   gap: 0.4rem;
 }
 
-.mark .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 6px var(--accent-glow);
-}
-
 .mark .word {
   font-size: 0.68rem;
   font-weight: 700;
@@ -654,11 +646,6 @@ body:not(.host) .mark .word {
   font-size: 1.05rem;
 }
 
-body:not(.host) .mark .dot {
-  width: 12px;
-  height: 12px;
-}
-
 body:not(.host) #question {
   font-size: clamp(1.55rem, 6.5vw, 2.1rem);
   margin: 1rem 0 1.5rem;
@@ -776,4 +763,58 @@ body:not(.host) .badge {
   body:not(.host) .panel {
     padding: 1.4rem 1.15rem;
   }
+}
+
+/* ─── VOTR mark ─────────────────────────────────────────────────────────
+   Rising bars, the same motif the results are drawn with. Inline SVG rather
+   than an image file: it stays crisp at any size and needs no extra
+   request.                                                              */
+
+.logo {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  display: block;
+}
+
+.logo-plate {
+  fill: var(--accent);
+}
+
+.logo-bar {
+  fill: var(--panel);
+}
+
+body:not(.host) .logo {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+/* ─── Language picker ──────────────────────────────────────────────────── */
+
+.field--lang {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.field--lang select {
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--ink);
+  background: var(--bezel-hi);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 0.55rem 0.7rem;
+  /* Comfortable to hit on a touchscreen. */
+  min-height: 2.4rem;
+}
+
+.field--lang select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.field--lang select:disabled {
+  opacity: 0.5;
 }

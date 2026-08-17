@@ -3,20 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voter — Host</title>
+<title>VOTR — Host</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="host">
   <div class="frame frame--host">
     <div class="panel">
       <div class="top-row">
-        <p class="eyebrow">Host control</p>
-        <div class="mark"><span class="dot"></span><span class="word">VOTER</span></div>
+        <p class="eyebrow" data-i18n="hostControl">Host control</p>
+        <div class="mark">
+          <!-- Rising bars: the same meter motif the results are drawn with. -->
+          <svg class="logo" viewBox="0 0 24 24" aria-hidden="true">
+            <rect class="logo-plate" x="0" y="0" width="24" height="24" rx="6"/>
+            <rect class="logo-bar" x="5.5"  y="13" width="3.5" height="6"  rx="1.75"/>
+            <rect class="logo-bar" x="10.25" y="9" width="3.5" height="10" rx="1.75"/>
+            <rect class="logo-bar" x="15"   y="5" width="3.5" height="14" rx="1.75"/>
+          </svg>
+          <span class="word">VOTR</span>
+        </div>
       </div>
 
       <div class="tabs" role="tablist">
-        <button type="button" class="tab is-active" id="tab-setup" role="tab">Setup</button>
-        <button type="button" class="tab" id="tab-run" role="tab">Run</button>
+        <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup</button>
+        <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run</button>
       </div>
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
@@ -25,25 +34,32 @@
           <label class="field">
             <span class="field-label" id="editor-label">Question 1</span>
             <input id="question-input" type="text" maxlength="200" required
+                   data-i18n-placeholder="questionPlaceholder"
                    placeholder="What's your age?" autocomplete="off">
           </label>
           <label class="field">
-            <span class="field-label">Options — one per line</span>
+            <span class="field-label" data-i18n="optionsLabel">Options — one per line</span>
             <textarea id="options-input" rows="3" required
+                      data-i18n-placeholder="optionsPlaceholder"
                       placeholder="Under 30&#10;30–50&#10;Over 50"></textarea>
           </label>
           <div class="field">
-            <span class="field-label">Right answer — optional</span>
+            <span class="field-label" data-i18n="correctLabel">Right answer — optional</span>
             <div id="correct-list" class="correct-list"></div>
           </div>
           <div class="actions">
-            <button type="submit" class="btn btn--primary" id="save">Add question</button>
-            <button type="button" class="btn" id="cancel" hidden>Cancel</button>
+            <button type="submit" class="btn btn--primary" id="save" data-i18n="addQuestion">Add question</button>
+            <button type="button" class="btn" id="cancel" data-i18n="cancel" hidden>Cancel</button>
           </div>
         </form>
 
         <ol id="question-list" class="qlist"></ol>
-        <p class="panel-message" id="setup-empty">No questions yet — add your first above.</p>
+        <p class="panel-message" id="setup-empty" data-i18n="noQuestionsYet">No questions yet — add your first above.</p>
+
+        <label class="field field--lang">
+          <span class="field-label" data-i18n="language">Language</span>
+          <select id="language"></select>
+        </label>
       </section>
 
       <!-- ── Run: drive the event ────────────────────────────────────────── -->
@@ -52,20 +68,21 @@
         <div id="options"></div>
 
         <div class="runbar">
-          <button type="button" class="btn" id="prev">‹ Prev</button>
+          <button type="button" class="btn" id="prev" data-i18n="prev">‹ Prev</button>
           <span class="counter" id="counter">—</span>
-          <button type="button" class="btn btn--primary" id="next">Next ›</button>
+          <button type="button" class="btn btn--primary" id="next" data-i18n="start">Start</button>
         </div>
         <div class="actions">
-          <button type="button" class="btn" id="reopen" hidden>Reopen voting</button>
-          <button type="button" class="btn" id="reset">Reset votes</button>
-          <button type="button" class="btn" id="clear">Start over</button>
+          <button type="button" class="btn" id="blank" data-i18n="hideScreen">Hide screen</button>
+          <button type="button" class="btn" id="reopen" data-i18n="reopenVoting" hidden>Reopen voting</button>
+          <button type="button" class="btn" id="reset" data-i18n="resetVotes">Reset votes</button>
+          <button type="button" class="btn" id="clear" data-i18n="startOver">Start over</button>
         </div>
       </section>
 
       <div class="foot">
-        <p class="note" id="hint">Attendees open the audience page on their phones</p>
-        <span class="badge" id="status" data-state="pending">Connecting</span>
+        <p class="note" id="hint" data-i18n="attendeesHint">Attendees open the audience page on their phones</p>
+        <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
       </div>
     </div>
   </div>
