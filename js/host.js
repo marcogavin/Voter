@@ -241,9 +241,15 @@ function drawRun() {
     : "—";
 
   // Next does double duty, but only where there's something to reveal:
-  // questions with no right answer advance on a single press.
+  // questions with no right answer advance on a single press. And with
+  // nothing on screen yet it isn't a "next" at all — it's the thing that
+  // begins the run.
   const willReveal = Boolean(question) && !revealed && Boolean(question.correct);
-  els.next.textContent = willReveal ? "Reveal answer" : "Next ›";
+  els.next.textContent = !question
+    ? "Start"
+    : willReveal
+      ? "Reveal answer"
+      : "Next ›";
 
   els.prev.disabled = !isOwner || currentIndex <= 0;
   els.next.disabled =
