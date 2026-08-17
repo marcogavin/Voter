@@ -4,6 +4,7 @@
 
 import { connect, onEventChange, castVote, getUid } from "./sync.js";
 import { isConfigured } from "./firebase-config.js";
+import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
@@ -17,17 +18,17 @@ start();
 
 async function start() {
   if (!isConfigured()) {
-    setStatus("Setup needed", "warn");
+    setStatus("setupNeeded", "warn");
     showMessage("Add your Firebase details to js/firebase-config.js to go live.");
     return;
   }
 
-  setStatus("Connecting", "pending");
+  setStatus("connecting", "pending");
 
   try {
     await connect();
   } catch (error) {
-    setStatus("Offline", "error");
+    setStatus("offline", "error");
     showMessage(error.message);
     return;
   }
@@ -42,7 +43,7 @@ async function start() {
 
   if (missing.length) {
     // Almost always a cached page running a newer script.
-    setStatus("Broken", "error");
+    setStatus("broken", "error");
     showMessage(
       `This page is missing: ${missing.join(", ")}. A hard refresh usually ` +
         `fixes it.`,
@@ -50,25 +51,40 @@ async function start() {
     return;
   }
 
-  setStatus("Live", "live");
+  setStatus("live", "live");
   onEventChange(render);
 }
 
 function render(event) {
-  const question = event.questions[event.currentIndex] ?? null;
+  // The host picks the language for the room; a change re-renders everything,
+  // including rows that would otherwise keep their old labels.
+  if (setLanguage(event.lang)) {
+    applyStaticText();
+    shownQuestionId = null;
+  }
+  setStatus(statusEl.dataset.key, statusEl.dataset.state);
+
+  // Blanked hides the question but keeps the host's place, so this looks the
+  // same to the audience as nothing being up at all.
+  const question = event.blanked
+    ? null
+    : (event.questions[event.currentIndex] ?? null);
 
   if (!question) {
     shownQuestionId = null;
-    questionEl.textContent = "Nothing on screen";
-    noteEl.textContent = "One vote per question";
-    showMessage("Waiting for the host to put a question up.");
+    questionEl.textContent = t("nothingOnScreen");
+    noteEl.textContent = t("oneVotePerQuestion");
+    showMessage(t("waitingForHost"));
     return;
   }
 
   questionEl.textContent = question.text;
   noteEl.textContent = event.revealed
-    ? "Voting closed"
-    : `Question ${event.currentIndex + 1} of ${event.questions.length}`;
+    ? t("votingClosed")
+    : t("questionNofM", {
+        n: event.currentIndex + 1,
+        m: event.questions.length,
+      });
 
   if (question.id !== shownQuestionId) {
     buildRows(question);
@@ -86,7 +102,7 @@ function buildRows(question) {
     row.type = "button";
     row.className = "meter meter--vote";
     row.dataset.id = option.id;
-    row.setAttribute("aria-label", `Vote for ${option.label}`);
+    row.setAttribute("aria-label", t("voteFor", { label: option.label }));
     // The tick box is what tells people this row is theirs to press — tapping
     // anywhere on the row still works, but nothing else says "choose one".
     row.innerHTML = `
@@ -137,7 +153,7 @@ async function submitVote(questionId, optionId) {
   try {
     await castVote(questionId, optionId);
   } catch (error) {
-    setStatus("Vote refused", "error");
+    setStatus("voteRefused", "error");
     console.error(error);
   } finally {
     busy = false;
@@ -148,7 +164,10 @@ function showMessage(text) {
   optionsEl.innerHTML = `<p class="panel-message">${text}</p>`;
 }
 
-function setStatus(text, state) {
-  statusEl.textContent = text;
+/** Takes a translation key, so the badge can be re-rendered on a language change. */
+function setStatus(key, state) {
+  if (!key) return;
+  statusEl.dataset.key = key;
+  statusEl.textContent = t(key);
   statusEl.dataset.state = state;
 }

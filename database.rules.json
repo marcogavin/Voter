@@ -3,34 +3,35 @@
     "events": {
       "$eventId": {
         ".read": "auth != null",
-
         "ownerUid": {
           ".write": "auth != null && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)",
           ".validate": "newData.isString()"
         },
-
         "currentIndex": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber()"
         },
-
         "revealed": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isBoolean()"
         },
-
+        "blanked": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isBoolean()"
+        },
+        "lang": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().length <= 5"
+        },
         "questions": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
-
           "$questionId": {
             "text": {
               ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
             },
-
             "correct": {
               ".validate": "newData.isString() && newData.val().length <= 4"
             },
-
             "options": {
               "$optionId": {
                 "label": {
@@ -45,20 +46,17 @@
                 }
               }
             },
-
             "voters": {
               "$voterUid": {
                 ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                 ".validate": "newData.isString() && newData.val().length <= 4"
               }
             },
-
             "$otherField": {
               ".validate": false
             }
           }
         },
-
         "$otherField": {
           ".validate": false
         }
