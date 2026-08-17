@@ -3,7 +3,7 @@
 // All database work goes through sync.js.
 
 import { connect, onEventChange, castVote, getUid, serverNow } from "./sync.js";
-import { isConfigured, SECONDS_PER_QUESTION } from "./firebase-config.js";
+import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 const optionsEl = document.getElementById("options");
@@ -102,11 +102,14 @@ function render(event) {
 
 /* ── Countdown ─────────────────────────────────────────────────────────── */
 
-/** Seconds still on the clock, floored at zero. Null when nothing is timed. */
+/**
+ * Seconds still on the clock, floored at zero. Null when nothing is timed —
+ * either the host turned the limit off, or no question has gone up yet.
+ */
 function secondsLeft() {
-  if (!latest?.askedAt) return null;
+  if (!latest?.askedAt || !latest?.seconds) return null;
   const gone = (serverNow() - latest.askedAt) / 1000;
-  return Math.max(0, Math.ceil(SECONDS_PER_QUESTION - gone));
+  return Math.max(0, Math.ceil(latest.seconds - gone));
 }
 
 function drawTime() {

@@ -61,10 +61,16 @@
         <ol id="question-list" class="qlist"></ol>
         <p class="panel-message" id="setup-empty" data-i18n="noQuestionsYet">No questions yet — add your first above.</p>
 
-        <label class="field field--lang">
-          <span class="field-label" data-i18n="language">Language</span>
-          <select id="language"></select>
-        </label>
+        <div class="settings">
+          <label class="field field--pick">
+            <span class="field-label" data-i18n="language">Language</span>
+            <select id="language"></select>
+          </label>
+          <label class="field field--pick">
+            <span class="field-label" data-i18n="timeLimit">Time limit</span>
+            <select id="seconds"></select>
+          </label>
+        </div>
       </section>
 
       <!-- ── Run: drive the event ────────────────────────────────────────── -->
