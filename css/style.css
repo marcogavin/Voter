@@ -997,3 +997,55 @@ body.host .correct-choice {
   color: var(--wrong);
   overflow-wrap: anywhere;
 }
+
+/* ─── Waiting for the next question ─────────────────────────────────────
+   A phone sits on this while the speaker is talking, so it should look
+   deliberate rather than blank. The bubble is the wordmark's, with its dots
+   at rest.                                                              */
+
+.waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 0;
+  text-align: center;
+}
+
+.waiting-art {
+  width: min(45%, 130px);
+  height: auto;
+}
+
+.waiting-bubble {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.waiting-dot {
+  fill: var(--muted);
+  animation: waiting-pulse 1.8s ease-in-out infinite;
+}
+
+.waiting-dot:nth-of-type(2) {
+  animation-delay: 0.25s;
+}
+
+.waiting-dot:nth-of-type(3) {
+  animation-delay: 0.5s;
+}
+
+@keyframes waiting-pulse {
+  0%, 60%, 100% { opacity: 0.3; }
+  30% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waiting-dot {
+    animation: none;
+    opacity: 0.55;
+  }
+}

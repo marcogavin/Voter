@@ -74,7 +74,7 @@ function render(event) {
     shownQuestionId = null;
     questionEl.textContent = t("nothingOnScreen");
     noteEl.textContent = t("oneVotePerQuestion");
-    showMessage(t("waitingForHost"));
+    showWaiting();
     return;
   }
 
@@ -158,6 +158,27 @@ async function submitVote(questionId, optionId) {
   } finally {
     busy = false;
   }
+}
+
+/**
+ * The blank state is where a phone sits while the speaker is talking, so it
+ * should look deliberate rather than empty. The bubble is the one from the
+ * wordmark, with the three dots resting — something is coming, just not here.
+ */
+function showWaiting() {
+  optionsEl.innerHTML = `
+    <div class="waiting">
+      <svg class="waiting-art" viewBox="0 0 120 104" role="img"
+           aria-label="${t("nothingOnScreen")}">
+        <path class="waiting-bubble"
+              d="M60 8a44 40 0 1 1-27 78l-19 9 6-19A40 40 0 0 1 60 8Z"/>
+        <circle class="waiting-dot" cx="42" cy="48" r="6"/>
+        <circle class="waiting-dot" cx="60" cy="48" r="6"/>
+        <circle class="waiting-dot" cx="78" cy="48" r="6"/>
+      </svg>
+      <p class="panel-message">${t("waitingForHost")}</p>
+    </div>
+  `;
 }
 
 function showMessage(text) {

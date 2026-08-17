@@ -307,6 +307,20 @@ export function castVote(questionId, optionId) {
   });
 }
 
+/** Clears every question's results, for running the whole set again. */
+export function resetAllVotes(questions) {
+  requireConnection();
+
+  const updates = {};
+  for (const question of questions) {
+    updates[`questions/${question.id}/voters`] = null;
+    for (const option of question.options) {
+      updates[`questions/${question.id}/options/${option.id}/votes`] = 0;
+    }
+  }
+  return database.update(eventRef, updates);
+}
+
 /** Clears one question's results and lets everyone vote on it again. */
 export function resetVotes(question) {
   requireConnection();
