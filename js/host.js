@@ -27,6 +27,7 @@ import {
   getUid,
 } from "./sync.js";
 import { isConfigured } from "./firebase-config.js";
+import { encode } from "./qr.js";
 import {
   t,
   setLanguage,
@@ -68,6 +69,11 @@ const els = {
   account: document.getElementById("account"),
   signin: document.getElementById("signin"),
   signout: document.getElementById("signout"),
+  qr: document.getElementById("qr"),
+  qrOverlay: document.getElementById("qr-overlay"),
+  qrArt: document.getElementById("qr-art"),
+  qrUrl: document.getElementById("qr-url"),
+  qrClose: document.getElementById("qr-close"),
   hint: document.getElementById("hint"),
   status: document.getElementById("status"),
 };
@@ -153,6 +159,12 @@ function wireUp() {
 
   fillLanguages();
   els.language.addEventListener("change", onLanguageChange);
+
+  els.qr.addEventListener("click", showQr);
+  els.qrClose.addEventListener("click", hideQr);
+  els.qrOverlay.addEventListener("click", (event) => {
+    if (event.target === els.qrOverlay) hideQr();
+  });
 
   els.signin.addEventListener("click", onSignIn);
   els.signout.addEventListener("click", () => signOutHost());
@@ -708,6 +720,37 @@ function showView(name) {
 
 function toOption(label) {
   return { label, votes: 0 };
+}
+
+/**
+ * Draws the audience address as a QR code, big enough to be read from a few
+ * rows back. Forty people typing an address is forty chances to mistype it.
+ */
+function showQr() {
+  const url = audienceUrl();
+  const modules = encode(url);
+  const quiet = 4;
+  const span = modules.length + quiet * 2;
+
+  const rects = [];
+  modules.forEach((row, r) => {
+    row.forEach((dark, c) => {
+      if (dark) rects.push(`<rect x="${c + quiet}" y="${r + quiet}" width="1" height="1"/>`);
+    });
+  });
+
+  els.qrArt.innerHTML =
+    `<svg viewBox="0 0 ${span} ${span}" shape-rendering="crispEdges" ` +
+    `role="img" aria-label="${url}">` +
+    `<rect width="${span}" height="${span}" fill="#fff"/>` +
+    `<g fill="#000">${rects.join("")}</g></svg>`;
+
+  els.qrUrl.textContent = url;
+  els.qrOverlay.hidden = false;
+}
+
+function hideQr() {
+  els.qrOverlay.hidden = true;
 }
 
 /**
