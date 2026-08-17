@@ -72,11 +72,13 @@ function render(event) {
 
   if (!question) {
     shownQuestionId = null;
-    questionEl.textContent = t("nothingOnScreen");
+    questionEl.hidden = true;
     noteEl.textContent = t("oneVotePerQuestion");
     showWaiting();
     return;
   }
+
+  questionEl.hidden = false;
 
   questionEl.textContent = question.text;
   noteEl.textContent = event.revealed
@@ -162,19 +164,20 @@ async function submitVote(questionId, optionId) {
 
 /**
  * The blank state is where a phone sits while the speaker is talking, so it
- * should look deliberate rather than empty. The bubble is the one from the
- * wordmark, with the three dots resting — something is coming, just not here.
+ * should look deliberate rather than empty. The magnifying glass is the one
+ * from the wordmark, with its bars breathing — something is being measured,
+ * just not here.
  */
 function showWaiting() {
   optionsEl.innerHTML = `
     <div class="waiting">
-      <svg class="waiting-art" viewBox="0 0 120 104" role="img"
-           aria-label="${t("nothingOnScreen")}">
-        <path class="waiting-bubble"
-              d="M60 8a44 40 0 1 1-27 78l-19 9 6-19A40 40 0 0 1 60 8Z"/>
-        <circle class="waiting-dot" cx="42" cy="48" r="6"/>
-        <circle class="waiting-dot" cx="60" cy="48" r="6"/>
-        <circle class="waiting-dot" cx="78" cy="48" r="6"/>
+      <svg class="waiting-art" viewBox="0 0 100 100" role="img"
+           aria-label="${t("waitingForHost")}">
+        <line class="waiting-handle" x1="33" y1="65" x2="15" y2="84"/>
+        <circle class="waiting-lens" cx="57" cy="41" r="30"/>
+        <rect class="waiting-bar" x="45" y="44" width="6" height="12" rx="3"/>
+        <rect class="waiting-bar" x="54" y="34" width="6" height="22" rx="3"/>
+        <rect class="waiting-bar" x="63" y="39" width="6" height="17" rx="3"/>
       </svg>
       <p class="panel-message">${t("waitingForHost")}</p>
     </div>
