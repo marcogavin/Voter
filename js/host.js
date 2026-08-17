@@ -213,9 +213,11 @@ function render(event) {
 
   els.signin.hidden = signedIn;
   els.signout.hidden = !signedIn;
-  els.account.textContent = signedIn
-    ? t("signedInAs", { name: accountName() ?? "—" })
-    : t("signInPrompt");
+  if (!els.account.classList.contains("is-error")) {
+    els.account.textContent = signedIn
+      ? t("signedInAs", { name: accountName() ?? "—" })
+      : t("signInPrompt");
+  }
 
   // The language belongs to the event, so a change made on any device
   // re-renders every string here, including rows already on screen.
@@ -529,12 +531,32 @@ async function go(index) {
 }
 
 async function onSignIn() {
+  // Report next to the button that was pressed. The status badge and hint sit
+  // in the footer, which on a phone is below the fold exactly when sign-in
+  // fails — so a failure looked like nothing happening at all.
+  els.account.textContent = "…";
+
   try {
     await signInWithGoogle();
   } catch (error) {
     setStatus("refused", "error");
-    els.hint.textContent = error.message;
+    els.account.textContent = explain(error);
+    els.account.classList.add("is-error");
     console.error(error);
+  }
+}
+
+/** Firebase's own messages don't say which console setting is missing. */
+function explain(error) {
+  switch (error.code) {
+    case "auth/unauthorized-domain":
+      return `This site isn't on the Firebase allow-list. Add ${location.hostname} under Authentication → Settings → Authorized domains.`;
+    case "auth/operation-not-allowed":
+      return "Google sign-in isn't switched on. Enable it under Authentication → Sign-in method.";
+    case "auth/network-request-failed":
+      return "Couldn't reach Google. Check the connection and try again.";
+    default:
+      return `${error.code || "Sign-in failed"} — ${error.message}`;
   }
 }
 

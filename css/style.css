@@ -929,3 +929,8 @@ body.host .correct-choice {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+.hostbar-who.is-error {
+  color: var(--wrong);
+  font-weight: 600;
+}
