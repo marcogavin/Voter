@@ -146,7 +146,7 @@ const strings = {
     voteFor: "Votar em {label}",
 
     connecting: "A ligar",
-    live: "Em direto",
+    live: "Live",
     offline: "Sem ligação",
     setupNeeded: "Falta configurar",
     broken: "Erro",
@@ -219,7 +219,7 @@ const strings = {
     voteFor: "Votar por {label}",
 
     connecting: "Conectando",
-    live: "En directo",
+    live: "Live",
     offline: "Sin conexión",
     setupNeeded: "Falta configurar",
     broken: "Error",
@@ -292,7 +292,7 @@ const strings = {
     voteFor: "Voter pour {label}",
 
     connecting: "Connexion",
-    live: "En direct",
+    live: "Live",
     offline: "Hors ligne",
     setupNeeded: "Configuration requise",
     broken: "Erreur",
