@@ -70,7 +70,7 @@ const strings = {
     voteCountOne: "1 vote in",
     votingClosedSuffix: " · voting closed",
 
-    waitingForHost: "Waiting for the host to put a question up.",
+    waitingForHost: "Nothing here… the action is happening off your screen right now!",
     oneVotePerQuestion: "One vote per question",
     questionNofM: "Question {n} of {m}",
     votingClosed: "Voting closed",
@@ -153,7 +153,7 @@ const strings = {
     voteCountOne: "1 voto",
     votingClosedSuffix: " · votação encerrada",
 
-    waitingForHost: "A aguardar que o apresentador mostre uma pergunta.",
+    waitingForHost: "Nada aqui… a ação está a acontecer fora do teu ecrã neste momento!",
     oneVotePerQuestion: "Um voto por pergunta",
     questionNofM: "Pergunta {n} de {m}",
     votingClosed: "Votação encerrada",
@@ -236,7 +236,7 @@ const strings = {
     voteCountOne: "1 voto",
     votingClosedSuffix: " · votación cerrada",
 
-    waitingForHost: "Esperando a que el anfitrión muestre una pregunta.",
+    waitingForHost: "Nada por aquí… ¡la acción está ocurriendo fuera de tu pantalla ahora mismo!",
     oneVotePerQuestion: "Un voto por pregunta",
     questionNofM: "Pregunta {n} de {m}",
     votingClosed: "Votación cerrada",
@@ -319,7 +319,7 @@ const strings = {
     voteCountOne: "1 vote",
     votingClosedSuffix: " · vote clos",
 
-    waitingForHost: "En attente d'une question.",
+    waitingForHost: "Rien ici… l'action se passe en dehors de ton écran en ce moment !",
     oneVotePerQuestion: "Un vote par question",
     questionNofM: "Question {n} sur {m}",
     votingClosed: "Vote clos",
@@ -402,7 +402,7 @@ const strings = {
     voteCountOne: "1 Stimme",
     votingClosedSuffix: " · Abstimmung beendet",
 
-    waitingForHost: "Warten auf die nächste Frage.",
+    waitingForHost: "Hier ist nichts… die Action passiert gerade außerhalb deines Bildschirms!",
     oneVotePerQuestion: "Eine Stimme pro Frage",
     questionNofM: "Frage {n} von {m}",
     votingClosed: "Abstimmung beendet",
