@@ -71,6 +71,8 @@ const strings = {
     questionNofM: "Question {n} of {m}",
     votingClosed: "Voting closed",
     voteFor: "Vote for {label}",
+    cantConnect: "Can't connect",
+    tryAgain: "Try again",
 
     connecting: "Connecting",
     live: "Live",
@@ -144,6 +146,8 @@ const strings = {
     questionNofM: "Pergunta {n} de {m}",
     votingClosed: "Votação encerrada",
     voteFor: "Votar em {label}",
+    cantConnect: "Sem ligação",
+    tryAgain: "Tentar de novo",
 
     connecting: "A ligar",
     live: "Live",
@@ -217,6 +221,8 @@ const strings = {
     questionNofM: "Pregunta {n} de {m}",
     votingClosed: "Votación cerrada",
     voteFor: "Votar por {label}",
+    cantConnect: "Sin conexión",
+    tryAgain: "Reintentar",
 
     connecting: "Conectando",
     live: "Live",
@@ -290,6 +296,8 @@ const strings = {
     questionNofM: "Question {n} sur {m}",
     votingClosed: "Vote clos",
     voteFor: "Voter pour {label}",
+    cantConnect: "Connexion impossible",
+    tryAgain: "Réessayer",
 
     connecting: "Connexion",
     live: "Live",
@@ -363,6 +371,8 @@ const strings = {
     questionNofM: "Frage {n} von {m}",
     votingClosed: "Abstimmung beendet",
     voteFor: "Für {label} stimmen",
+    cantConnect: "Keine Verbindung",
+    tryAgain: "Erneut versuchen",
 
     connecting: "Verbinden",
     live: "Live",

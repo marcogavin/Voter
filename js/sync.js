@@ -57,7 +57,18 @@ export async function connect() {
   const auth = authModule.getAuth(app);
   database = dbModule;
 
-  const credential = await authModule.signInAnonymously(auth);
+  // Sign-in can hang rather than fail — a slow connection, or a phone
+  // browser restricting the storage Firebase keeps its session in. Without a
+  // deadline the page waits on "Connecting" forever with no way out.
+  const credential = await Promise.race([
+    authModule.signInAnonymously(auth),
+    new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("Couldn't reach the server. Check your connection.")),
+        15000,
+      ),
+    ),
+  ]);
   uid = credential.user.uid;
 
   eventRef = dbModule.ref(dbModule.getDatabase(app), `events/${EVENT_ID}`);

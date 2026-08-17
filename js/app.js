@@ -29,7 +29,7 @@ async function start() {
     await connect();
   } catch (error) {
     setStatus("offline", "error");
-    showMessage(error.message);
+    showRetry(error.message);
     return;
   }
 
@@ -162,6 +162,22 @@ async function submitVote(questionId, optionId) {
 
 function showMessage(text) {
   optionsEl.innerHTML = `<p class="panel-message">${text}</p>`;
+}
+
+/**
+ * A failed connection needs a way out that doesn't involve knowing to reload,
+ * or asking the host to change anything.
+ */
+function showRetry(text) {
+  questionEl.textContent = t("cantConnect");
+  optionsEl.innerHTML = `<p class="panel-message">${text}</p>`;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "btn btn--primary";
+  button.textContent = t("tryAgain");
+  button.addEventListener("click", () => location.reload());
+  optionsEl.appendChild(button);
 }
 
 /** Takes a translation key, so the badge can be re-rendered on a language change. */
