@@ -167,20 +167,25 @@ function wireUp() {
  * discovered as a refusal after pressing the button.
  */
 function drawCounts() {
-  const used = els.questionInput.value.length;
-  els.questionCount.textContent = t("charCount", { n: used, max: QUESTION_MAX });
-  mark(els.questionCount, used, QUESTION_MAX);
+  const left = QUESTION_MAX - els.questionInput.value.length;
+  els.questionCount.textContent = format(left);
+  els.questionCount.classList.toggle("is-over", left < 0);
 
-  const longest = parseOptions().reduce((max, line) => Math.max(max, line.length), 0);
-  els.optionsCount.textContent = longest
-    ? t("longestOption", { n: longest, max: OPTION_MAX })
-    : "";
-  mark(els.optionsCount, longest, OPTION_MAX);
+  // One count per answer rather than a single worst-case number: a summary
+  // says something is too long without saying which one to shorten.
+  els.optionsCount.innerHTML = "";
+  parseOptions().forEach((line, index) => {
+    const remaining = OPTION_MAX - line.length;
+    const chip = document.createElement("span");
+    chip.className = "charchip" + (remaining < 0 ? " is-over" : "");
+    chip.textContent = `${index + 1} · ${format(remaining)}`;
+    els.optionsCount.appendChild(chip);
+  });
 }
 
-function mark(element, used, max) {
-  element.classList.toggle("is-over", used > max);
-  element.classList.toggle("is-close", used <= max && used > max * 0.85);
+/** Counts down, and goes negative once past the limit. */
+function format(remaining) {
+  return remaining < 0 ? `\u2212${Math.abs(remaining)}` : String(remaining);
 }
 
 function showFormError(text) {
