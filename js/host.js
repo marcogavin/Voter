@@ -17,6 +17,10 @@ import {
   setCurrentIndex,
   setRevealed,
   setBlanked,
+  isAnonymous,
+  accountName,
+  signInWithGoogle,
+  signOutHost,
   saveLanguage,
   resetVotes,
   getUid,
@@ -57,6 +61,9 @@ const els = {
   reset: document.getElementById("reset"),
   clear: document.getElementById("clear"),
 
+  account: document.getElementById("account"),
+  signin: document.getElementById("signin"),
+  signout: document.getElementById("signout"),
   hint: document.getElementById("hint"),
   status: document.getElementById("status"),
 };
@@ -135,6 +142,9 @@ function wireUp() {
   fillLanguages();
   els.language.addEventListener("change", onLanguageChange);
 
+  els.signin.addEventListener("click", onSignIn);
+  els.signout.addEventListener("click", () => signOutHost());
+
   drawCorrectChoices();
 }
 
@@ -196,7 +206,16 @@ function render(event) {
   currentIndex = event.currentIndex;
   revealed = event.revealed;
   blanked = event.blanked;
-  isOwner = !event.ownerUid || event.ownerUid === getUid();
+  // Only a signed-in account can hold or claim an event. An anonymous
+  // visitor watches; that's what stops an attendee who finds this page.
+  const signedIn = !isAnonymous();
+  isOwner = signedIn && (!event.ownerUid || event.ownerUid === getUid());
+
+  els.signin.hidden = signedIn;
+  els.signout.hidden = !signedIn;
+  els.account.textContent = signedIn
+    ? t("signedInAs", { name: accountName() ?? "—" })
+    : t("signInPrompt");
 
   // The language belongs to the event, so a change made on any device
   // re-renders every string here, including rows already on screen.
@@ -211,7 +230,9 @@ function render(event) {
 
   els.hint.textContent = isOwner
     ? t("attendeesHint")
-    : t("viewOnly");
+    : signedIn
+      ? t("viewOnly")
+      : t("signInPrompt");
 
   els.editor.classList.toggle("is-locked", !isOwner);
   for (const control of [els.questionInput, els.optionsInput, els.save]) {
@@ -503,6 +524,16 @@ async function go(index) {
     await setCurrentIndex(target);
   } catch (error) {
     setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+async function onSignIn() {
+  try {
+    await signInWithGoogle();
+  } catch (error) {
+    setStatus("refused", "error");
+    els.hint.textContent = error.message;
     console.error(error);
   }
 }

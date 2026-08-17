@@ -28,6 +28,8 @@ import {
 const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
 
 let database = null; // the Firebase database module namespace
+let authApi = null; // the Firebase auth module namespace
+let auth = null;
 let eventRef = null;
 let uid = null;
 
@@ -54,22 +56,44 @@ export async function connect() {
   ]);
 
   const app = appModule.initializeApp(firebaseConfig);
-  const auth = authModule.getAuth(app);
   database = dbModule;
+  authApi = authModule;
+  auth = authModule.getAuth(app);
 
-  // Sign-in can hang rather than fail — a slow connection, or a phone
-  // browser restricting the storage Firebase keeps its session in. Without a
-  // deadline the page waits on "Connecting" forever with no way out.
-  const credential = await Promise.race([
-    authModule.signInAnonymously(auth),
-    new Promise((_, reject) =>
-      setTimeout(
-        () => reject(new Error("Couldn't reach the server. Check your connection.")),
-        15000,
+  // Finish a Google sign-in that sent us away and back. Phones often block
+  // the popup, so the redirect route has to work.
+  try {
+    await authModule.getRedirectResult(auth);
+  } catch (error) {
+    console.error(error);
+  }
+
+  // An existing session — anonymous or Google — is restored asynchronously,
+  // so wait for the first answer before deciding whether to create one.
+  let user = await new Promise((resolve) => {
+    const stop = authModule.onAuthStateChanged(auth, (u) => {
+      stop();
+      resolve(u);
+    });
+  });
+
+  if (!user) {
+    // Sign-in can hang rather than fail — a slow connection, or a phone
+    // browser restricting the storage Firebase keeps its session in. Without
+    // a deadline the page waits on "Connecting" forever with no way out.
+    const credential = await Promise.race([
+      authModule.signInAnonymously(auth),
+      new Promise((_, reject) =>
+        setTimeout(
+          () => reject(new Error("Couldn't reach the server. Check your connection.")),
+          15000,
+        ),
       ),
-    ),
-  ]);
-  uid = credential.user.uid;
+    ]);
+    user = credential.user;
+  }
+
+  uid = user.uid;
 
   eventRef = dbModule.ref(dbModule.getDatabase(app), `events/${EVENT_ID}`);
   return uid;
@@ -77,6 +101,49 @@ export async function connect() {
 
 export function getUid() {
   return uid;
+}
+
+/** True while this device is only an anonymous visitor, not a signed-in host. */
+export function isAnonymous() {
+  return auth?.currentUser?.isAnonymous !== false;
+}
+
+export function accountName() {
+  return auth?.currentUser?.email ?? auth?.currentUser?.displayName ?? null;
+}
+
+/**
+ * Signs the host in with Google. Ownership then belongs to the account rather
+ * than to one browser, so the same person can present from any device.
+ *
+ * Reloads on success: the device's uid changes, and everything already drawn
+ * was drawn for the old one.
+ */
+export async function signInWithGoogle() {
+  const provider = new authApi.GoogleAuthProvider();
+
+  try {
+    await authApi.signInWithPopup(auth, provider);
+    location.reload();
+  } catch (error) {
+    // Popups are blocked by default in most phone browsers; the redirect
+    // route survives that, and returns through getRedirectResult above.
+    if (
+      error.code === "auth/popup-blocked" ||
+      error.code === "auth/popup-closed-by-user" ||
+      error.code === "auth/cancelled-popup-request" ||
+      error.code === "auth/operation-not-supported-in-this-environment"
+    ) {
+      await authApi.signInWithRedirect(auth, provider);
+      return;
+    }
+    throw error;
+  }
+}
+
+export async function signOutHost() {
+  await authApi.signOut(auth);
+  location.reload();
 }
 
 /**

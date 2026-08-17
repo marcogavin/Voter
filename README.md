@@ -126,9 +126,18 @@ Reorder with the arrows, fix wording with ✎, remove with ✕.
 **Reset votes** clears the current question only, so you can re-run one without
 disturbing the rest.
 
-The device that first saves questions owns the event. If you clear that browser's
-storage you lose ownership — delete the `events/live` node in the Firebase console
-to reclaim it.
+## Who can host
+
+The host signs in with Google; the first signed-in account to save questions
+owns the event. Only that account can write questions, move between them, or
+reveal an answer — enforced by the rules, not just hidden in the interface.
+
+Attendees stay anonymous and need no account. An anonymous device can vote and
+watch, and can't claim an event even when nobody owns it yet.
+
+To hand the event to a different account, delete the `ownerUid` field under
+`events/live` in the console's **Data** tab. The next signed-in account to save
+claims it; questions and votes are untouched.
 
 To run a second independent event, change `EVENT_ID` in `js/firebase-config.js`.
 

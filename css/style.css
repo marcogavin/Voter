@@ -908,3 +908,24 @@ body.host .correct-choice {
 .frame--host {
   max-width: 640px;
 }
+
+/* ─── Host account ─────────────────────────────────────────────────────── */
+
+.hostbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.hostbar-who {
+  font-size: 0.85rem;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
