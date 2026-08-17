@@ -76,13 +76,6 @@ body {
   gap: 0.4rem;
 }
 
-.mark .word {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  color: var(--ink);
-}
-
 .eyebrow {
   font-size: 0.6rem;
   letter-spacing: 0.1em;
@@ -642,10 +635,6 @@ body:not(.host) .eyebrow {
   font-size: 1rem;
 }
 
-body:not(.host) .mark .word {
-  font-size: 1.05rem;
-}
-
 body:not(.host) #question {
   font-size: clamp(1.55rem, 6.5vw, 2.1rem);
   margin: 1rem 0 1.5rem;
@@ -770,24 +759,15 @@ body:not(.host) .badge {
    than an image file: it stays crisp at any size and needs no extra
    request.                                                              */
 
+/* Sized by height so the wordmark's own proportions set its width. */
 .logo {
-  width: 1.15rem;
-  height: 1.15rem;
-  flex: none;
+  height: 1.05rem;
+  width: auto;
   display: block;
 }
 
-.logo-plate {
-  fill: var(--accent);
-}
-
-.logo-bar {
-  fill: var(--panel);
-}
-
 body:not(.host) .logo {
-  width: 1.6rem;
-  height: 1.6rem;
+  height: 1.5rem;
 }
 
 /* ─── Language picker ──────────────────────────────────────────────────── */
