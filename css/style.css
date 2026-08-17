@@ -761,13 +761,24 @@ body:not(.host) .badge {
 
 /* Sized by height so the wordmark's own proportions set its width. */
 .logo {
-  height: 1.05rem;
+  height: 2.2rem;
   width: auto;
   display: block;
 }
 
+/* On the audience page the mark is the header rather than a corner badge,
+   so it takes the panel's width. The wordmark is roughly 3:1, which is what
+   caps it here: a phone panel is about 330px across, and anything taller
+   would run off the side. */
+body:not(.host) .top-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
 body:not(.host) .logo {
-  height: 1.5rem;
+  height: auto;
+  width: min(100%, 300px);
 }
 
 /* ─── Language picker ──────────────────────────────────────────────────── */
