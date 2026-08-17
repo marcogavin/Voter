@@ -20,8 +20,8 @@ const strings = {
   en: {
     hostControl: "Host control",
     livePoll: "Live poll",
-    tabSetup: "Setup",
-    tabRun: "Run",
+    tabSetup: "Setup poll",
+    tabRun: "Run poll",
 
     questionN: "Question {n}",
     editingQuestionN: "Editing question {n}",
@@ -93,8 +93,8 @@ const strings = {
   pt: {
     hostControl: "Controlo",
     livePoll: "Votação em direto",
-    tabSetup: "Preparação",
-    tabRun: "Apresentar",
+    tabSetup: "Preparar votação",
+    tabRun: "Apresentar votação",
 
     questionN: "Pergunta {n}",
     editingQuestionN: "A editar pergunta {n}",
@@ -166,8 +166,8 @@ const strings = {
   es: {
     hostControl: "Control",
     livePoll: "Votación en directo",
-    tabSetup: "Preparación",
-    tabRun: "Presentar",
+    tabSetup: "Preparar votación",
+    tabRun: "Presentar votación",
 
     questionN: "Pregunta {n}",
     editingQuestionN: "Editando pregunta {n}",
@@ -239,8 +239,8 @@ const strings = {
   fr: {
     hostControl: "Contrôle",
     livePoll: "Vote en direct",
-    tabSetup: "Préparation",
-    tabRun: "Présenter",
+    tabSetup: "Préparer le vote",
+    tabRun: "Lancer le vote",
 
     questionN: "Question {n}",
     editingQuestionN: "Modification de la question {n}",
@@ -312,8 +312,8 @@ const strings = {
   de: {
     hostControl: "Steuerung",
     livePoll: "Live-Abstimmung",
-    tabSetup: "Vorbereitung",
-    tabRun: "Präsentieren",
+    tabSetup: "Umfrage vorbereiten",
+    tabRun: "Umfrage starten",
 
     questionN: "Frage {n}",
     editingQuestionN: "Frage {n} bearbeiten",

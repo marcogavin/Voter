@@ -376,6 +376,7 @@ body.host {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
   margin: 0.9rem 0 0.2rem;
 }
@@ -554,7 +555,20 @@ body.host {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* In Setup these rows sit inside a flex form that spaces them. The Run view
+   is plain flow, so they need their own separation — without it the button
+   rows crowd each other, and a fourth button appearing (Reopen voting) had
+   nowhere to go. */
+#view-run .actions {
+  margin-top: 0.6rem;
+}
+
+.runbar {
+  flex-wrap: wrap;
 }
 
 .btn {
@@ -778,7 +792,7 @@ body:not(.host) .top-row {
 
 body:not(.host) .logo {
   height: auto;
-  width: min(100%, 300px);
+  width: min(100%, 225px);
 }
 
 /* ─── Language picker ──────────────────────────────────────────────────── */
