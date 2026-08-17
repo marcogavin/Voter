@@ -17,9 +17,9 @@ different jobs:
   answer. Leave it on **No right answer** for opinion questions. Votes already
   cast survive an edit unless you change the options themselves, since a vote
   belongs to a specific option.
-- **Run** — one question on screen, live results, and **Clear screen** to put the
-  audience back to a waiting state between sections. Every attendee's phone
-  follows whatever you have up.
+- **Run** — one question on screen, live results, and **Start over** to take the
+  question down and return to the top of the set. Every attendee's phone follows
+  whatever you have up.
 
 ### Right answers and the reveal step
 
@@ -111,9 +111,10 @@ Reorder with the arrows, fix wording with ✎, remove with ✕.
 
 1. Open `host.html` and switch to **Run**
 2. Share the audience URL — a QR code on a slide works well
-3. **Next** puts the first question up; every phone follows within about a second
-4. Move through with **Prev** / **Next**, and **Clear screen** between sections so
-   nothing is on screen while you talk
+3. **Start** puts the first question up; every phone follows within about a second
+4. Move through with **Prev** / **Next**
+5. **Start over** takes the question down and returns to the top. Votes are kept —
+   use **Reset votes** to clear a question's results
 
 **Reset votes** clears the current question only, so you can re-run one without
 disturbing the rest.
