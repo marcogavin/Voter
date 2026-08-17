@@ -9,6 +9,8 @@
 //     currentIndex: which question is on screen, or -1 for none
 //     revealed:     true once the current question's answer is showing, which
 //                   also closes voting — enforced in the rules, not just here
+//     askedAt:      when the current question went up, on the server's clock,
+//                   so every device counts down from the same instant
 //     questions/
 //       q000: { text, correct: "b", options: { a: {label, votes} },
 //               voters: { uid: "a" } }
@@ -32,6 +34,7 @@ let authApi = null; // the Firebase auth module namespace
 let auth = null;
 let eventRef = null;
 let uid = null;
+let clockOffset = 0;
 
 /**
  * Loads the SDK, connects, and signs this device in anonymously.
@@ -105,12 +108,26 @@ export async function connect() {
 
   uid = user.uid;
 
-  eventRef = dbModule.ref(dbModule.getDatabase(app), `events/${EVENT_ID}`);
+  const db = dbModule.getDatabase(app);
+  eventRef = dbModule.ref(db, `events/${EVENT_ID}`);
+
+  // Phone clocks are wrong by seconds or minutes. Firebase reports how far
+  // this one is from its own, so every device counts the same thirty seconds
+  // from the same instant rather than from its own idea of now.
+  dbModule.onValue(dbModule.ref(db, ".info/serverTimeOffset"), (snapshot) => {
+    clockOffset = snapshot.val() || 0;
+  });
+
   return uid;
 }
 
 export function getUid() {
   return uid;
+}
+
+/** Now, corrected to the server's clock rather than this device's. */
+export function serverNow() {
+  return Date.now() + clockOffset;
 }
 
 /** True while this device is only an anonymous visitor, not a signed-in host. */
@@ -206,6 +223,7 @@ function normalise(raw) {
     ownerUid: raw?.ownerUid ?? null,
     currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
     revealed: raw?.revealed === true,
+    askedAt: typeof raw?.askedAt === "number" ? raw.askedAt : null,
     blanked: raw?.blanked === true,
     lang: typeof raw?.lang === "string" ? raw.lang : "en",
     questions,
@@ -261,6 +279,8 @@ export function setCurrentIndex(index) {
     ownerUid: uid,
     currentIndex: index,
     revealed: false,
+    // stamped by the server, so the countdown starts from one shared instant
+    askedAt: database.serverTimestamp(),
   });
 }
 
@@ -271,7 +291,12 @@ export function setCurrentIndex(index) {
  */
 export function setRevealed(revealed) {
   requireConnection();
-  return database.update(eventRef, { ownerUid: uid, revealed });
+  return database.update(eventRef, {
+    ownerUid: uid,
+    revealed,
+    // reopening restarts the clock; there'd be no time left otherwise
+    ...(revealed ? {} : { askedAt: database.serverTimestamp() }),
+  });
 }
 
 /**

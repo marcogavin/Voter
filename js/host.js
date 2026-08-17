@@ -25,8 +25,9 @@ import {
   resetVotes,
   resetAllVotes,
   getUid,
+  serverNow,
 } from "./sync.js";
-import { isConfigured } from "./firebase-config.js";
+import { isConfigured, SECONDS_PER_QUESTION } from "./firebase-config.js";
 import {
   t,
   setLanguage,
@@ -76,6 +77,9 @@ const els = {
 // the form refuses what the database would refuse, in a place you can see.
 const QUESTION_MAX = 200;
 const OPTION_MAX = 100;
+
+let askedAt = null;
+let ticker = null;
 
 let questions = []; // local mirror, in running order
 let currentIndex = -1;
@@ -252,6 +256,7 @@ function render(event) {
   currentIndex = event.currentIndex;
   revealed = event.revealed;
   blanked = event.blanked;
+  askedAt = event.askedAt;
 
   // The language belongs to the event, so a change made on any device
   // re-renders every string here. This has to run before anything below
@@ -426,6 +431,8 @@ function drawRun() {
       !revealed && option.id === question.correct,
     );
   }
+
+  watchClock();
 
   els.hint.textContent = blanked
     ? t("screenHiddenNote")
@@ -615,6 +622,31 @@ async function go(index) {
     setStatus("refused", "error");
     console.error(error);
   }
+}
+
+/**
+ * Closes the current question when its time runs out. Only the owner may
+ * write that, so the host's page is what actually ends it — the audience
+ * merely stops offering the buttons.
+ */
+function watchClock() {
+  clearInterval(ticker);
+  ticker = null;
+
+  const question = questions[currentIndex] ?? null;
+  if (!isOwner || !question || revealed || !askedAt) return;
+
+  ticker = setInterval(() => {
+    const gone = (serverNow() - askedAt) / 1000;
+    const left = Math.max(0, Math.ceil(SECONDS_PER_QUESTION - gone));
+
+    els.counter.textContent = `${currentIndex + 1} / ${questions.length} · ${left}s`;
+    if (left === 0) {
+      clearInterval(ticker);
+      ticker = null;
+      reveal(true);
+    }
+  }, 250);
 }
 
 async function onSignIn() {

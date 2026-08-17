@@ -22,6 +22,11 @@ export const firebaseConfig = {
 // Change it to run a second, separate event without disturbing the first.
 export const EVENT_ID = "live";
 
+// How long a question accepts votes before closing itself. The host can
+// always close sooner; this is the backstop so a question can't be left open
+// while the room moves on.
+export const SECONDS_PER_QUESTION = 30;
+
 // Version of the Firebase JS SDK loaded from Google's CDN.
 // Bump this if you ever need a newer release.
 export const FIREBASE_VERSION = "12.17.1";

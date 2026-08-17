@@ -1056,3 +1056,9 @@ body.host .correct-choice {
   font-weight: 700;
   overflow-wrap: anywhere;
 }
+
+/* The last few seconds, so a glance is enough. */
+.note.is-urgent {
+  color: var(--wrong);
+  font-weight: 700;
+}
