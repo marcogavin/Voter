@@ -132,6 +132,12 @@ export function accountName() {
 export async function signInWithGoogle() {
   const provider = new authApi.GoogleAuthProvider();
 
+  // Google skips its account chooser when the browser already holds exactly
+  // one session, so signing out and back in silently returned the same
+  // account. Asking for the chooser every time makes switching possible, and
+  // makes it visible which account is about to take the event.
+  provider.setCustomParameters({ prompt: "select_account" });
+
   try {
     await authApi.signInWithPopup(auth, provider);
     location.reload();
