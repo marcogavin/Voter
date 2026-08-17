@@ -6,20 +6,31 @@
 // Stored shape:
 //   /events/{EVENT_ID}
 //     ownerUid:     the device allowed to author questions and drive the event
-//     currentIndex: which question is on screen, or -1 for none
+//     currentDeck:  which survey is live; Setup edits it and Run presents it
+//     currentIndex: which question of that survey is on screen, or -1 for none
 //     revealed:     true once the current question's answer is showing, which
 //                   also closes voting — enforced in the rules, not just here
 //     askedAt:      when the current question went up, on the server's clock,
 //                   so every device counts down from the same instant
 //     seconds:      how long a question stays open, or 0 for no limit
-//     questions/
-//       q000: { text, correct: "b", options: { a: {label, votes} },
-//               voters: { uid: "a" } }
+//     decks/
+//       d000: { title: "Team offsite", questions/
+//                 q000: { text, correct: "b", options: { a: {label, votes} },
+//                         voters: { uid: "a" } } }
 //
 // `correct` is optional: plenty of questions have no right answer.
 //
-// Question keys are zero-padded and sort into presentation order, so the key
+// Keys at both levels are zero-padded and sort into presentation order, so key
 // order is the running order and no separate sort field is needed.
+//
+// Only one survey is live at a time, which is why currentIndex, revealed and
+// the rest stay on the event rather than moving inside a deck: they describe
+// the one screen the room is looking at, not a property of a saved survey.
+//
+// Before surveys existed the questions sat directly on the event, with no
+// decks node at all. That layout is still read — see readDecks — and the first
+// write that touches survey structure moves it across. Nothing has to be
+// migrated by hand, and nothing breaks in the meantime.
 
 import {
   firebaseConfig,
@@ -31,12 +42,28 @@ import {
 
 const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
 
+/** The survey that questions written before surveys existed belong to. */
+const FIRST_DECK = "d000";
+
+/** As many surveys as stay usable in one picker. */
+export const DECK_MAX = 20;
+
+export const TITLE_MAX = 60;
+
 let database = null; // the Firebase database module namespace
 let authApi = null; // the Firebase auth module namespace
 let auth = null;
 let eventRef = null;
 let uid = null;
 let clockOffset = 0;
+
+// Read from every snapshot, so writes land on the survey the reader is
+// actually looking at. Threading these through every call site instead would
+// mean the audience passing back state it was only ever given to display.
+let liveDeck = FIRST_DECK;
+let questionsPath = "questions";
+let unmigrated = true;
+let legacyQuestions = null;
 
 /**
  * Loads the SDK, connects, and signs this device in anonymously.
@@ -205,7 +232,61 @@ export function onEventChange(callback) {
 }
 
 function normalise(raw) {
-  const questions = Object.entries(raw?.questions || {})
+  const entries = readDecks(raw);
+
+  // A currentDeck naming a survey that's been deleted would otherwise leave
+  // the room staring at nothing with no way back.
+  const [deckId, deck] =
+    entries.find(([id]) => id === raw?.currentDeck) ?? entries[0];
+
+  liveDeck = deckId;
+  unmigrated = !raw?.decks;
+  legacyQuestions = raw?.questions ?? null;
+  // Where the live survey's questions are *right now*, which during the window
+  // between deploying this and the host's first save is still the old place.
+  // Votes have to go where the counters actually are.
+  questionsPath = unmigrated ? "questions" : `decks/${deckId}/questions`;
+
+  return {
+    ownerUid: raw?.ownerUid ?? null,
+    currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
+    revealed: raw?.revealed === true,
+    askedAt: typeof raw?.askedAt === "number" ? raw.askedAt : null,
+    // An event saved before the clock existed has no setting of its own, and
+    // should behave the way it did rather than suddenly run untimed.
+    seconds: typeof raw?.seconds === "number" ? raw.seconds : DEFAULT_SECONDS,
+    blanked: raw?.blanked === true,
+    lang: typeof raw?.lang === "string" ? raw.lang : "en",
+
+    // Only the live survey is unpacked. The rest are named and counted, which
+    // is all a picker needs, and all anyone not presenting them should cost.
+    currentDeck: deckId,
+    decks: entries.map(([id, entry]) => ({
+      id,
+      title: typeof entry?.title === "string" ? entry.title : "",
+      count: Object.keys(entry?.questions || {}).length,
+    })),
+    questions: readQuestions(deck?.questions),
+  };
+}
+
+/**
+ * Every survey, oldest first. There is always at least one: an event with no
+ * decks node is presented as a single survey holding whatever questions sit
+ * at the old top-level path, so the picker never has nothing to point at.
+ */
+function readDecks(raw) {
+  const entries = Object.entries(raw?.decks || {}).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+
+  return entries.length
+    ? entries
+    : [[FIRST_DECK, { title: "", questions: raw?.questions || {} }]];
+}
+
+function readQuestions(stored) {
+  return Object.entries(stored || {})
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([id, question]) => ({
       id,
@@ -220,19 +301,25 @@ function normalise(raw) {
           votes: option.votes || 0,
         })),
     }));
+}
 
-  return {
-    ownerUid: raw?.ownerUid ?? null,
-    currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
-    revealed: raw?.revealed === true,
-    askedAt: typeof raw?.askedAt === "number" ? raw.askedAt : null,
-    // An event saved before the clock existed has no setting of its own, and
-    // should behave the way it did rather than suddenly run untimed.
-    seconds: typeof raw?.seconds === "number" ? raw.seconds : DEFAULT_SECONDS,
-    blanked: raw?.blanked === true,
-    lang: typeof raw?.lang === "string" ? raw.lang : "en",
-    questions,
-  };
+/**
+ * The writes that move pre-survey questions into the first survey, to be
+ * folded into whichever update first touches survey structure. Doing it in
+ * that same update makes it atomic: either the questions arrive in their new
+ * home and leave the old one, or nothing moves at all.
+ *
+ * Empty once there's a decks node, which is what makes it run exactly once.
+ */
+function migration() {
+  if (!unmigrated) return {};
+
+  const writes = { [`decks/${FIRST_DECK}/title`]: "" };
+  if (legacyQuestions) {
+    writes[`decks/${FIRST_DECK}/questions`] = legacyQuestions;
+    writes.questions = null;
+  }
+  return writes;
 }
 
 /**
@@ -269,8 +356,94 @@ export function saveQuestions(questions) {
 
   return database.update(eventRef, {
     ownerUid: uid,
-    questions: Object.keys(stored).length ? stored : null,
+    // Spread first: on the migrating save this path is written twice, and the
+    // questions being saved now are the ones that should survive.
+    ...migration(),
+    [`decks/${liveDeck}/questions`]: Object.keys(stored).length ? stored : null,
   });
+}
+
+/**
+ * Creates a survey and switches to it. Returns its id.
+ *
+ * Switching is deliberate rather than a side effect: a new survey is empty, so
+ * leaving the old one live would mean adding questions to something the room
+ * isn't looking at.
+ */
+export function newDeck(title, existingIds) {
+  requireConnection();
+
+  const id = nextDeckKey(existingIds);
+  return database
+    .update(eventRef, {
+      ownerUid: uid,
+      ...migration(),
+      [`decks/${id}/title`]: title,
+      ...liveState(id),
+    })
+    .then(() => id);
+}
+
+export function renameDeck(id, title) {
+  requireConnection();
+  return database.update(eventRef, {
+    ownerUid: uid,
+    ...migration(),
+    [`decks/${id}/title`]: title,
+  });
+}
+
+/**
+ * Removes a survey and everything in it. Falls back to a survivor when the one
+ * being removed is live, so the room is never pointed at a survey that's gone.
+ */
+export function deleteDeck(id, remainingIds) {
+  requireConnection();
+
+  const fallback = remainingIds.find((other) => other !== id);
+  if (!fallback) {
+    throw new Error("An event has to keep at least one survey.");
+  }
+
+  return database.update(eventRef, {
+    ownerUid: uid,
+    ...migration(),
+    [`decks/${id}`]: null,
+    ...(id === liveDeck ? liveState(fallback) : {}),
+  });
+}
+
+/** Puts a different survey on screen, from the top with nothing showing. */
+export function setCurrentDeck(id) {
+  requireConnection();
+  return database.update(eventRef, {
+    ownerUid: uid,
+    ...migration(),
+    ...liveState(id),
+  });
+}
+
+/**
+ * Switching survey can't leave the old one's position behind: index 4 means
+ * something entirely different in a survey that has three questions.
+ */
+function liveState(deckId) {
+  return {
+    currentDeck: deckId,
+    currentIndex: -1,
+    revealed: false,
+    blanked: false,
+    askedAt: database.serverTimestamp(),
+  };
+}
+
+/** One past the highest key in use, so a deleted survey's id isn't reissued. */
+function nextDeckKey(existingIds) {
+  const highest = existingIds.reduce(
+    (top, id) => Math.max(top, Number(id.slice(1)) || 0),
+    -1,
+  );
+  return "d" + String(highest + 1).padStart(3, "0");
 }
 
 /**
@@ -350,20 +523,21 @@ export function saveSeconds(seconds) {
 export function castVote(questionId, optionId) {
   requireConnection();
   return database.update(eventRef, {
-    [`questions/${questionId}/options/${optionId}/votes`]: database.increment(1),
-    [`questions/${questionId}/voters/${uid}`]: optionId,
+    [`${questionsPath}/${questionId}/options/${optionId}/votes`]:
+      database.increment(1),
+    [`${questionsPath}/${questionId}/voters/${uid}`]: optionId,
   });
 }
 
-/** Clears every question's results, for running the whole set again. */
+/** Clears every question's results, for running the whole survey again. */
 export function resetAllVotes(questions) {
   requireConnection();
 
   const updates = {};
   for (const question of questions) {
-    updates[`questions/${question.id}/voters`] = null;
+    updates[`${questionsPath}/${question.id}/voters`] = null;
     for (const option of question.options) {
-      updates[`questions/${question.id}/options/${option.id}/votes`] = 0;
+      updates[`${questionsPath}/${question.id}/options/${option.id}/votes`] = 0;
     }
   }
   return database.update(eventRef, updates);
@@ -373,9 +547,9 @@ export function resetAllVotes(questions) {
 export function resetVotes(question) {
   requireConnection();
 
-  const updates = { [`questions/${question.id}/voters`]: null };
+  const updates = { [`${questionsPath}/${question.id}/voters`]: null };
   for (const option of question.options) {
-    updates[`questions/${question.id}/options/${option.id}/votes`] = 0;
+    updates[`${questionsPath}/${question.id}/options/${option.id}/votes`] = 0;
   }
   return database.update(eventRef, updates);
 }

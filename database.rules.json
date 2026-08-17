@@ -7,6 +7,10 @@
           ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)",
           ".validate": "newData.isString()"
         },
+        "currentDeck": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val().length <= 12"
+        },
         "currentIndex": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber()"
@@ -30,6 +34,50 @@
         "lang": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isString() && newData.val().length <= 5"
+        },
+        "decks": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          "$deckId": {
+            "title": {
+              ".validate": "newData.isString() && newData.val().length <= 60"
+            },
+            "questions": {
+              "$questionId": {
+                "text": {
+                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+                },
+                "correct": {
+                  ".validate": "newData.isString() && newData.val().length <= 4"
+                },
+                "options": {
+                  "$optionId": {
+                    "label": {
+                      ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+                    },
+                    "votes": {
+                      ".write": "auth != null && data.exists() && newData.isNumber() && newData.val() === data.val() + 1 && root.child('events').child($eventId).child('revealed').val() !== true",
+                      ".validate": "newData.isNumber() && newData.val() >= 0"
+                    },
+                    "$otherField": {
+                      ".validate": false
+                    }
+                  }
+                },
+                "voters": {
+                  "$voterUid": {
+                    ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
+                    ".validate": "newData.isString() && newData.val().length <= 4"
+                  }
+                },
+                "$otherField": {
+                  ".validate": false
+                }
+              }
+            },
+            "$otherField": {
+              ".validate": false
+            }
+          }
         },
         "questions": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
