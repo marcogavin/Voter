@@ -23,47 +23,59 @@ make once and then reuse, so two things that should look alike do.
 
 ## 1. Identity
 
-**The 1960s Braun direction stays.** The bezel, the cream panel, the inset
-shadows, the meters with their needles and ticked tracks, the terracotta — all
-of it is deliberate and stays as it is. Nothing in this document changes a
-colour or removes the frame.
+**Light, flat, and mostly out of the way.** The interface is a white card on a
+near-white page. Ink and one accent carry it; everything else is a shade of
+paper, there to separate things rather than to decorate them.
 
-What changes is only the system underneath: sizes, spacing, and the shape of
-the controls. The look is the same look, drawn consistently.
+There is no chrome. No bezel, no dark surround, no gradients, no inset
+shadows, no simulated materials. One elevation exists — a card is either on
+the page or it isn't.
+
+**What carried over from the 1960s Braun scheme:** the accent, `#c1481f`. The
+wordmark is drawn in it, so it stays, and it is the only colour in the
+interface that isn't grey. Everything a person can act on is either that
+colour or plain ink; nothing decorative is.
+
+**What went:** the bezel and its dark room, the cream panel, the VU-meter tick
+marks and their inset shadow, the bar gradients, and Futura at the head of the
+type stack. The two screenshots that prompted this are a reference for the
+feel — light, generous, one strong colour used sparingly — not a thing to copy.
 
 Revisiting the direction is a separate decision, taken separately.
 
----
-
 ## 2. Colour
 
-Unchanged. Documented here so the set is visible in one place.
-
-### Surfaces
+### Paper
 
 | Token | Value | Where |
 | :--- | :--- | :--- |
-| `--room` | `#201e1b` | The dark ground behind the frame |
-| `--room-edge` | `#0f0e0c` | Outer edge of that ground's gradient |
-| `--bezel-hi` | `#d9d6ce` | Bezel highlight; also the ground for controls |
-| `--bezel-lo` | `#aeaba3` | Bezel shadow; the unfilled meter track |
-| `--panel` | `#ece9e2` | The cream panel everything sits on |
-| `--panel-shadow` | `rgba(0,0,0,.28)` | The panel's inset shadow |
-| `--hairline` | `#cfccc3` | Every divider and control border |
+| `--bg` | `#f4f4f5` | The page behind the card |
+| `--surface` | `#ffffff` | The card, and anything raised off the page |
+| `--sunken` | `#f0f0f1` | Fields, and anything you type or choose into |
+| `--border` | `#e3e3e6` | Hairlines and control outlines |
+| `--scrim` | `rgba(23, 23, 26, 0.45)` | Behind an overlay |
+
+On a phone in portrait the card fills the screen, so `--bg` is redefined to
+`--surface` — none of the page shows, and two whites a shade apart would only
+look like a mistake.
 
 ### Ink
 
 | Token | Value | Where |
 | :--- | :--- | :--- |
-| `--ink` | `#2b2924` | All primary text |
-| `--muted` | `#8a8579` | Labels, meta, disabled, percentages |
+| `--ink` | `#17171a` | All primary text |
+| `--muted` | `#6c6c72` | Labels, meta, disabled, percentages |
 
 ### Accent
 
 | Token | Value | Where |
 | :--- | :--- | :--- |
-| `--accent` | `#c1481f` | Primary buttons, active tab, status badge, focus ring |
-| `--accent-glow` | `rgba(193,72,31,.35)` | Focus halo |
+| `--accent` | `#c1481f` | Primary buttons, the active segment, the status badge, focus rings |
+| `--accent-deep` | `#a63d19` | Pressed and hover |
+| `--on-accent` | `#ffffff` | Text and marks on any of the above |
+
+Used sparingly and only for things you can act on. If two accent-coloured
+things are on screen at once, one of them is wrong.
 
 ### Result colours
 
@@ -72,21 +84,34 @@ who can't separate red from green.
 
 | Token | Value | Meaning |
 | :--- | :--- | :--- |
-| `--vote` / `--vote-deep` | `#2f6690` / `#244f6f` | The option this phone voted for |
-| `--right` / `--right-deep` | `#3d7a4e` / `#2e6040` | The right answer, once revealed |
-| `--wrong` / `--wrong-deep` | `#a3312a` / `#82241f` | Wrong answers, once revealed |
+| `--vote` | `#2f6690` | The option this phone voted for |
+| `--right` | `#3d7a4e` | The right answer, once revealed |
+| `--wrong` | `#a3312a` | Wrong answers, once revealed |
 
-Each pair is a gradient: `--*-deep` on the left of a bar, `--*` on the right.
+Flat fills. The bars used a two-stop gradient per state, which is six colours
+maintained to express three.
 
----
+### Elevation
+
+| Token | Value |
+| :--- | :--- |
+| `--shadow-card` | `0 1px 2px rgba(20, 20, 26, 0.04), 0 4px 14px rgba(20, 20, 26, 0.06)` |
+
+The only shadow in the system.
 
 ## 3. Type
 
 One family, already set on `body` and inherited everywhere:
 
 ```
-"Futura", "Century Gothic", "Avenir Next", "Avenir", sans-serif
+"Avenir Next", "Avenir", system-ui, -apple-system, "Segoe UI", Roboto,
+"Helvetica Neue", Arial, sans-serif
 ```
+
+Avenir Next is what actually renders on the iPad and iPhone this is used on,
+and it is a modern face. Futura and Century Gothic used to lead the stack; they
+were the 1960s reference, and they went with it. Below Avenir each platform
+gets its own interface face rather than a revival.
 
 ### The scale
 
@@ -178,16 +203,9 @@ Three, plus a hairline.
 | `--radius-pill` | 999px | The tick box, the status badge |
 | — | 1px | The meter needle only. A hairline, not a corner. |
 
-The frame is outside the scales on purpose — it's a physical object, not a
-control or a piece of type — but its dimensions are still named:
-
-| Token | Value | Portrait phone |
-| :--- | ---: | ---: |
-| `--frame-pad` | 14px | 9px |
-| `--frame-radius` | 20px | 22px |
-
-The bezel thins in portrait to give the content its width back. Redefining the
-two tokens on the page is the whole of that change.
+There is no fourth. The bezel had its own padding and radius; both went with
+it. In portrait the card's radius goes to `0` — it is against the screen edge,
+and a rounded corner there would be a corner of nothing.
 
 ---
 
@@ -220,9 +238,16 @@ that screen and should feel like it.
 
 | Variant | Background | Border | Text | For |
 | :--- | :--- | :--- | :--- | :--- |
-| **Primary** | `--accent` | `--accent` | `--panel` | The one action that moves things on. One per screen. |
-| **Default** | `--bezel-hi` | `--hairline` | `--ink` | Everything else |
-| **Quiet** | transparent | `--hairline` | `--ink` | Icon buttons |
+| **Primary** | `--accent` | `--accent` | `--on-accent` | The one action that moves things on. One per screen. |
+| **Default** | `--sunken` | transparent | `--ink` | Everything else |
+| **Quiet** | transparent | transparent | `--ink` | Icon buttons; `--sunken` on hover |
+
+A default button's border is transparent rather than absent, so the primary can
+take one without changing the height by a hair.
+
+**Setup and Run are a segmented control**, not underlined tabs: with two modes,
+the one you are not in should look like somewhere you can go rather than like a
+heading. Active is `--accent` filled; inactive is `--surface`.
 
 Exactly one primary button is visible at a time. On the host's run view that's
 **Next** — which means **Hide screen**, **Reset votes** and **Start over** are
@@ -247,13 +272,17 @@ seventeen.
 **Group with tone and space first.** A card gets a background one step off the
 panel; it does not also get an outline.
 
-Keep a `--hairline` divider in only three places:
+Keep a `--border` divider in only two places:
 
 1. Above the footer
 2. Between the question list and the event settings
-3. Under the tab strip
 
-Controls keep their 1px border — that is what makes them read as controls.
+The tab strip used to be the third; the segmented control replaced it, and a
+rule under a bordered control would have been a line beside a line.
+
+Question rows are `--surface` with a `--border` outline, which is what separates
+them from the card they sit on. Fields are `--sunken` with no outline at all —
+the fill is what says "type here".
 
 ---
 
@@ -330,11 +359,7 @@ stylesheet.
   --control-h:    2.75rem;  /* 44px — the touch minimum */
   --control-h-lg: 3.25rem;  /* 52px — audience vote rows */
 
-  /* ── The faceplate ──────────────────────────────────── */
-  --frame-pad:    14px;
-  --frame-radius: 20px;
-
-  /* Colour tokens are unchanged; see section 2. */
+  /* Colour tokens: see section 2. */
 }
 ```
 
@@ -373,7 +398,7 @@ don't shift as they change.
 
 ---
 
-## 12. What this replaces
+## 12. What this replaced
 
 | | Before | After |
 | :--- | ---: | ---: |
@@ -384,6 +409,9 @@ don't shift as they change.
 | Screen-specific **layout** rules | — | 6 |
 | Duplicate selectors | 6 | 0 |
 | Controls meeting the 44px target | 0 | all |
+| Gradients | 4 | 0 |
+| Box shadows | 3 heavy, 2 of them inset | 1 |
+| Colour literals outside the token block | 15 | 0 |
 
 The six remaining page-scoped rules are arrangement, not sizing: the audience
 panel centres its content, its header stacks so the wordmark can be the banner,
