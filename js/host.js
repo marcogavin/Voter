@@ -44,6 +44,11 @@ import {
   getLanguage,
 } from "./i18n.js";
 
+// What this build of the app can do, read by the freshness check in the page.
+// A browser can serve a fresh page against a cached older script, and the only
+// symptom is controls that don't respond — so the script says what it is.
+window.VOTR_BUILD = ["surveys", "timer", "qr"];
+
 const els = {
   tabSetup: document.getElementById("tab-setup"),
   tabRun: document.getElementById("tab-run"),
@@ -179,6 +184,11 @@ function wireUp() {
   els.deckDelete.addEventListener("click", onDeckDelete);
 
   els.askForm.addEventListener("submit", onAskSubmit);
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    closeAsk(null);
+    hideQr();
+  });
   els.askCancel.addEventListener("click", () => closeAsk(null));
   els.askOverlay.addEventListener("click", (event) => {
     if (event.target === els.askOverlay) closeAsk(null);
@@ -531,10 +541,7 @@ function drawRun() {
  * survey you actually wrote.
  */
 function fillDecks() {
-  const signature =
-    getLanguage() +
-    ":" +
-    decks.map((deck) => `${deck.id}|${deck.title}|${deck.count}`).join(",");
+  const signature = JSON.stringify([getLanguage(), decks]);
 
   // Same reason as the duration picker: render() runs on every vote, and
   // rebuilding a <select> closes it under whoever is choosing.
@@ -681,9 +688,11 @@ function onAskSubmit(submitEvent) {
 
   if (els.askInput.hidden) return closeAsk(true);
 
-  // An unnamed survey can't be told apart from another unnamed one.
+  // An unnamed survey can't be told apart from another unnamed one. Refuse
+  // by putting the cursor back rather than by doing nothing at all.
   const typed = els.askInput.value.trim();
   if (typed) closeAsk(typed);
+  else els.askInput.focus();
 }
 
 function closeAsk(answer) {

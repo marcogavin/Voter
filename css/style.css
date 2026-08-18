@@ -1176,3 +1176,24 @@ body.host .correct-choice {
   text-align: center;
   overflow-wrap: anywhere;
 }
+
+/* ─── Running an older copy than the page ──────────────────────────────── */
+
+/* Only ever seen when the freshness check in the page has already tried a
+   refetch and the old script is still what's being served. It has to be
+   legible against whatever is behind it, hence its own colours. */
+.stale {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 0.9rem 1.1rem calc(0.9rem + env(safe-area-inset-bottom));
+  background: var(--wrong);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+}

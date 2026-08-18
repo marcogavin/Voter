@@ -397,10 +397,10 @@ export function renameDeck(id, title) {
  * Removes a survey and everything in it. Falls back to a survivor when the one
  * being removed is live, so the room is never pointed at a survey that's gone.
  */
-export function deleteDeck(id, remainingIds) {
+export function deleteDeck(id, allIds) {
   requireConnection();
 
-  const fallback = remainingIds.find((other) => other !== id);
+  const fallback = allIds.find((other) => other !== id);
   if (!fallback) {
     throw new Error("An event has to keep at least one survey.");
   }
