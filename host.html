@@ -16,7 +16,7 @@
         </div>
       </div>
 
-      <div class="hostbar">
+      <div class="hostbar group">
         <span class="hostbar-who" id="account"></span>
         <button type="button" class="btn" id="qr">
           <span class="btn-icon" data-icon="qr"></span>
@@ -36,14 +36,14 @@
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
-        <button type="button" class="btn btn--wide" id="deck-new">
+        <button type="button" class="btn btn--wide btn--outline" id="deck-new">
           <span class="btn-icon" data-icon="plus"></span>
           <span class="btn-label" data-i18n="newSurvey">Create a new survey</span>
         </button>
 
-        <div class="deckbar">
+        <div class="deckbar group">
           <label class="field field--pick deckbar-pick">
-            <span class="field-label" data-i18n="survey">Survey</span>
+            <span class="field-label" data-i18n="currentSurvey">Current survey</span>
             <select id="deck"></select>
           </label>
           <div class="deckbtns">
@@ -105,7 +105,7 @@
         <h1 id="run-question">Nothing on screen</h1>
         <div id="options"></div>
 
-        <div class="runbar">
+        <div class="runbar group">
           <button type="button" class="btn" id="prev">
             <span class="btn-icon" data-icon="prev"></span>
             <span class="btn-label" data-i18n="prev">Prev</span>
@@ -116,7 +116,7 @@
             <span class="btn-icon" data-icon="next"></span>
           </button>
         </div>
-        <div class="actions">
+        <div class="actions group">
           <button type="button" class="btn" id="blank">
             <span class="btn-icon" data-icon="hide"></span>
             <span class="btn-label" data-i18n="hideScreen">Hide screen</span>

@@ -220,7 +220,19 @@ h1 {
 .btn--wide {
   width: 100%;
   justify-content: center;
-  margin-bottom: var(--space-3);
+}
+
+/* Creating is a different kind of act from choosing, and an outline reads as
+   "make a new one" where another filled grey button would just read as one
+   more control in the row. */
+.btn--outline {
+  color: var(--accent);
+  background: none;
+  border-color: var(--accent);
+}
+
+.btn--outline .btn-icon {
+  color: currentColor;
 }
 
 /* One primary per screen: the single action that moves things on. */
@@ -267,6 +279,10 @@ h1 {
 @media (hover: hover) {
   .btn:hover:not(:disabled) {
     background: var(--border);
+  }
+
+  .btn--outline:hover:not(:disabled) {
+    background: var(--accent-soft);
   }
 
   /* Matches the specificity above, so the primary button keeps a background
@@ -345,7 +361,7 @@ h1 {
    the whole reason it went missing: unlabelled, it read as a stray word under
    the account bar rather than as the name of anything. */
 .deckname {
-  margin: var(--space-4) 0 0;
+  margin: 0;
   font-size: var(--text-label);
   color: var(--muted);
 }
@@ -545,6 +561,38 @@ h1 {
   opacity: 0.4;
 }
 
+/* ─── Grouping ─────────────────────────────────────────────────────────
+   Two devices, used for two different things.
+
+   A .group is a hairline box around a compact cluster of controls that do one
+   job — the account, the survey you are on, moving through a poll, operating
+   on it. Containment is what says "these belong together, and the next thing
+   doesn't", which a gap alone can't say once several gaps are the same size.
+
+   A .section-title is for the long, flowing parts — the questions, the
+   settings — where a box would be a border round half a screen.
+
+   The box is a hairline on white rather than a fill, so the fields inside it
+   keep their own sunken ground and don't dissolve into it.                 */
+
+.group {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+/* Both views stack their parts; one gap, set in one place. */
+#view-setup,
+#view-run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+#view-run > h1 {
+  margin: 0;
+}
+
 /* ─── Section headings ─────────────────────────────────────────────────
    The Setup screen is four different jobs stacked on one card. Naming them
    and ruling above each one is what turns a column of controls into a page
@@ -552,8 +600,8 @@ h1 {
    something to read.                                                       */
 
 .section-title {
-  margin: var(--space-4) 0 var(--space-3);
-  padding-top: var(--space-4);
+  margin: 0;
+  padding-top: var(--space-3);
   border-top: 1px solid var(--border);
   font-size: var(--text-label);
   font-weight: 700;
@@ -711,7 +759,6 @@ h1 {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-3);
 }
 
 .hostbar-who {
@@ -893,7 +940,7 @@ h1 {
 
 .qlist {
   list-style: none;
-  margin: var(--space-4) 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -968,7 +1015,6 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-top: var(--space-4);
 }
 
 .counter {
@@ -978,10 +1024,10 @@ h1 {
   color: var(--muted);
 }
 
-/* The destructive controls sit in their own row, below the one that moves
-   the event on. */
+/* Operating on a poll is a different job from moving through it, so the two
+   sit in separate boxes rather than in two rows that look like four buttons. */
 #view-run .actions {
-  margin-top: var(--space-3);
+  justify-content: center;
 }
 
 /* ─── Waiting for the next question ────────────────────────────────────
