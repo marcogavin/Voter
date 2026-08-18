@@ -23,22 +23,32 @@
 
       <div class="hostbar">
         <span class="hostbar-who" id="account"></span>
-        <button type="button" class="btn" id="qr" data-i18n="qrCode">QR code</button>
-        <button type="button" class="btn" id="signin" data-i18n="signIn">Sign in with Google</button>
-        <button type="button" class="btn" id="signout" data-i18n="signOut" hidden>Sign out</button>
+        <button type="button" class="btn" id="qr">
+          <span class="btn-icon" data-icon="qr"></span>
+          <span class="btn-label" data-i18n="qrCode">QR code</span>
+        </button>
+        <button type="button" class="btn" id="signin">
+          <span class="btn-icon" data-icon="signIn"></span>
+          <span class="btn-label" data-i18n="signIn">Sign in</span>
+        </button>
+        <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
       </div>
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
+        <button type="button" class="btn btn--wide" id="deck-new">
+          <span class="btn-icon" data-icon="plus"></span>
+          <span class="btn-label" data-i18n="newSurvey">Create a new survey</span>
+        </button>
+
         <div class="deckbar">
           <label class="field field--pick deckbar-pick">
             <span class="field-label" data-i18n="survey">Survey</span>
             <select id="deck"></select>
           </label>
           <div class="deckbtns">
-            <button type="button" class="btn" id="deck-new" data-i18n="newSurvey">New survey</button>
-            <button type="button" class="iconbtn" id="deck-rename">✎</button>
-            <button type="button" class="iconbtn" id="deck-delete">✕</button>
+            <button type="button" class="iconbtn" id="deck-rename" data-icon="edit"></button>
+            <button type="button" class="iconbtn" id="deck-delete" data-icon="remove"></button>
           </div>
         </div>
 
@@ -65,8 +75,8 @@
           </div>
           <p class="form-error" id="form-error" hidden></p>
           <div class="actions">
-            <button type="submit" class="btn btn--primary" id="save" data-i18n="addQuestion">Add question</button>
-            <button type="button" class="btn" id="cancel" data-i18n="cancel" hidden>Cancel</button>
+            <button type="submit" class="btn btn--primary" id="save"><span class="btn-label" data-i18n="addQuestion">Add question</span></button>
+            <button type="button" class="btn" id="cancel" hidden><span class="btn-label" data-i18n="cancel">Cancel</span></button>
           </div>
         </form>
 
@@ -87,20 +97,37 @@
 
       <!-- ── Run: drive the event ────────────────────────────────────────── -->
       <section id="view-run" hidden>
-        <p class="deckname" id="run-deck"></p>
         <h1 id="run-question">Nothing on screen</h1>
         <div id="options"></div>
 
         <div class="runbar">
-          <button type="button" class="btn" id="prev" data-i18n="prev">‹ Prev</button>
+          <button type="button" class="btn" id="prev">
+            <span class="btn-icon" data-icon="prev"></span>
+            <span class="btn-label" data-i18n="prev">Prev</span>
+          </button>
           <span class="counter" id="counter">—</span>
-          <button type="button" class="btn btn--primary" id="next" data-i18n="start">Start</button>
+          <button type="button" class="btn btn--primary" id="next">
+            <span class="btn-label" data-i18n="start">Start</span>
+            <span class="btn-icon" data-icon="next"></span>
+          </button>
         </div>
         <div class="actions">
-          <button type="button" class="btn" id="blank" data-i18n="hideScreen">Hide screen</button>
-          <button type="button" class="btn" id="reopen" data-i18n="reopenVoting" hidden>Reopen voting</button>
-          <button type="button" class="btn" id="reset" data-i18n="resetVotes">Reset votes</button>
-          <button type="button" class="btn" id="clear" data-i18n="startOver">Start over</button>
+          <button type="button" class="btn" id="blank">
+            <span class="btn-icon" data-icon="hide"></span>
+            <span class="btn-label" data-i18n="hideScreen">Hide screen</span>
+          </button>
+          <button type="button" class="btn" id="reopen" hidden>
+            <span class="btn-icon" data-icon="reopen"></span>
+            <span class="btn-label" data-i18n="reopenVoting">Reopen voting</span>
+          </button>
+          <button type="button" class="btn" id="reset">
+            <span class="btn-icon" data-icon="reset"></span>
+            <span class="btn-label" data-i18n="resetVotes">Reset votes</span>
+          </button>
+          <button type="button" class="btn" id="clear">
+            <span class="btn-icon" data-icon="startOver"></span>
+            <span class="btn-label" data-i18n="startOver">Start over</span>
+          </button>
         </div>
       </section>
 
@@ -118,8 +145,8 @@
       <p class="ask-title" id="ask-title"></p>
       <input type="text" id="ask-input" maxlength="60" autocomplete="off">
       <div class="actions">
-        <button type="submit" class="btn btn--primary" id="ask-ok">OK</button>
-        <button type="button" class="btn" id="ask-cancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="ask-ok"><span class="btn-label">OK</span></button>
+        <button type="button" class="btn" id="ask-cancel"><span class="btn-label" data-i18n="cancel">Cancel</span></button>
       </div>
     </form>
   </div>
@@ -128,7 +155,7 @@
     <div class="qr-card">
       <div id="qr-art"></div>
       <p class="qr-url" id="qr-url"></p>
-      <button type="button" class="btn btn--primary" id="qr-close" data-i18n="close">Close</button>
+      <button type="button" class="btn btn--primary" id="qr-close"><span class="btn-label" data-i18n="close">Close</span></button>
     </div>
   </div>
 
@@ -142,10 +169,10 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["surveys", "timer", "qr"];
+      var NEEDS = ["surveys", "timer", "qr", "icons"];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
-        "js/firebase-config.js", "css/style.css",
+        "js/firebase-config.js", "js/icons.js", "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

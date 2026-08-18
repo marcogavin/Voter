@@ -13,11 +13,15 @@
   --ink: #17171a;
   --muted: #6c6c72;
 
-  /* The wordmark's own colour, kept: it is the one thing carried over from
-     the old scheme, and the logo is drawn in it. */
-  --accent: #c1481f;
-  --accent-deep: #a63d19;
+  /* Royal blue, and nothing else in the interface is blue. The terracotta it
+     replaces sat a few degrees from the red that means "wrong answer", so the
+     one colour meaning "you can press this" and the one meaning "you got it
+     wrong" were neighbours. The wordmark is redrawn to match. */
+  --accent: #1d4ed8;
+  --accent-deep: #1a43bd;
   --on-accent: #ffffff;
+  --accent-soft: #e9eefc; /* the accent at a tint, for icon grounds */
+  --accent-soft-hover: #dbe4fa;
 
   /* Behind an overlay. Light enough that the card reads as being in front of
      the page rather than in a different room. */
@@ -25,9 +29,9 @@
 
   /* Result colours. Never the only signal — the tick box, ✓ and ✗ carry the
      same meaning for anyone who can't separate red from green. */
-  --vote: #2f6690;
-  --right: #3d7a4e;
-  --wrong: #a3312a;
+  --vote: #0b7d88; /* teal — your own pick */
+  --right: #17743c;
+  --wrong: #d0342c;
 
   /* One elevation. A card is either on the page or it isn't. */
   --shadow-card: 0 1px 2px rgba(20, 20, 26, 0.04),
@@ -66,6 +70,14 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* Components below set their own display, which outranks the browser's rule
+   for [hidden] and left every hidden button on screen — Sign in showed while
+   signed in, Reopen voting showed while voting was open. Nothing should have
+   to remember to opt out of being displayed. */
+[hidden] {
+  display: none !important;
 }
 
 body {
@@ -163,6 +175,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-2);
   height: var(--control-h);
   padding: 0 var(--space-4);
   font-family: inherit;
@@ -176,6 +189,38 @@ h1 {
   border: 1px solid transparent;
   border-radius: var(--radius-control);
   cursor: pointer;
+}
+
+/* A button is a fixed height, so its label can't be allowed a second line. */
+.btn-label {
+  white-space: nowrap;
+}
+
+/* An icon says what a control does before the label is read, which is most of
+   what makes a row of four buttons scannable rather than a wall of words. */
+.btn-icon {
+  display: inline-flex;
+  flex: none;
+  color: var(--accent);
+}
+
+.btn-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
+}
+
+/* On a filled button the icon is already on the accent; it takes the text's
+   colour instead so it doesn't disappear into the background. */
+.btn--primary .btn-icon {
+  color: currentColor;
+}
+
+/* The one action that starts something rather than continuing it. */
+.btn--wide {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: var(--space-5);
 }
 
 /* One primary per screen: the single action that moves things on. */
@@ -199,11 +244,17 @@ h1 {
   font-family: inherit;
   font-size: var(--text-lead);
   line-height: var(--leading-flat);
-  color: var(--ink);
-  background: none;
+  color: var(--accent);
+  background: var(--accent-soft);
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   cursor: pointer;
+}
+
+.iconbtn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  display: block;
 }
 
 .iconbtn:disabled {
@@ -225,7 +276,7 @@ h1 {
   }
 
   .iconbtn:hover:not(:disabled) {
-    background: var(--sunken);
+    background: var(--accent-soft-hover);
   }
 }
 
@@ -288,15 +339,6 @@ h1 {
    by one person at a desk rather than on a phone in a hand. */
 #question {
   font-size: var(--text-lead);
-}
-
-/* The survey being presented. Not an eyebrow: this is a name someone typed,
-   and shouting it back at them is not a typographic device. */
-.deckname {
-  margin: 0;
-  font-size: var(--text-label);
-  font-weight: 600;
-  color: var(--muted);
 }
 
 /* ─── Meters ───────────────────────────────────────────────────────────── */
@@ -489,6 +531,85 @@ h1 {
   opacity: 0.4;
 }
 
+/* ─── The closing screen ───────────────────────────────────────────────
+   A survey should finish somewhere rather than just stop responding. The
+   heart takes as many taps as anyone wants to give it: there is nothing to
+   win, so there is nothing to protect against.                            */
+
+.ending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) 0;
+  text-align: center;
+}
+
+.heart {
+  display: grid;
+  place-items: center;
+  width: 6rem;
+  height: 6rem;
+  padding: 0;
+  color: var(--wrong);
+  background: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  /* Nothing about a tap should feel like it might have missed. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.heart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ending-count,
+.tally-count {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* What the host sees: the same count, with no way to add to it. */
+.tally {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-5) 0 var(--space-2);
+}
+
+.tally-heart {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  color: var(--wrong);
+}
+
+.tally-heart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .heart.is-beating {
+    animation: heart-beat 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes heart-beat {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.28); }
+  100% { transform: scale(1); }
+}
+
 /* ─── Status badge ─────────────────────────────────────────────────────
    The second and last place uppercase survives.                           */
 
@@ -553,22 +674,25 @@ h1 {
   font-weight: 700;
 }
 
-/* ─── Host account ─────────────────────────────────────────────────────── */
+/* ─── Host account ─────────────────────────────────────────────────────
+   One line. The address is the part that can be any length, so it is the
+   part that gives way — the controls beside it never wrap below.         */
 
 .hostbar {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-2);
   margin-top: var(--space-4);
 }
 
 .hostbar-who {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: var(--text-label);
   color: var(--muted);
-  min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hostbar-who.is-error {
@@ -586,7 +710,7 @@ h1 {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-3);
-  margin: var(--space-5) 0 var(--space-6);
+  margin: 0 0 var(--space-6);
 }
 
 .deckbar-pick {
@@ -959,9 +1083,9 @@ body.audience .panel {
   justify-content: center;
 }
 
-body.audience .top-row {
+.top-row--centred {
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-2);
 }
 

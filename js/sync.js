@@ -14,7 +14,7 @@
 //                   so every device counts down from the same instant
 //     seconds:      how long a question stays open, or 0 for no limit
 //     decks/
-//       d000: { title: "Team offsite", questions/
+//       d000: { title: "Team offsite", likes: 12, questions/
 //                 q000: { text, correct: "b", options: { a: {label, votes} },
 //                         voters: { uid: "a" } } }
 //
@@ -266,6 +266,7 @@ function normalise(raw) {
       title: typeof entry?.title === "string" ? entry.title : "",
       count: Object.keys(entry?.questions || {}).length,
     })),
+    likes: typeof deck?.likes === "number" ? deck.likes : 0,
     questions: readQuestions(deck?.questions),
   };
 }
@@ -512,6 +513,18 @@ export function saveSeconds(seconds) {
     ownerUid: uid,
     seconds,
     askedAt: database.serverTimestamp(),
+  });
+}
+
+/**
+ * Adds one to the live survey's applause. Unlike a vote there is no limit and
+ * nothing to be gained by cheating, so the rules only check that it goes up by
+ * one at a time — which is enough to stop anyone setting it to a million.
+ */
+export function likeSurvey() {
+  requireConnection();
+  return database.update(eventRef, {
+    [`decks/${liveDeck}/likes`]: database.increment(1),
   });
 }
 

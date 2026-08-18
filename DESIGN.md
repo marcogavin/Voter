@@ -31,10 +31,11 @@ There is no chrome. No bezel, no dark surround, no gradients, no inset
 shadows, no simulated materials. One elevation exists — a card is either on
 the page or it isn't.
 
-**What carried over from the 1960s Braun scheme:** the accent, `#c1481f`. The
-wordmark is drawn in it, so it stays, and it is the only colour in the
-interface that isn't grey. Everything a person can act on is either that
-colour or plain ink; nothing decorative is.
+**One accent, and it is royal blue.** Everything a person can act on is either
+that colour or plain ink; nothing decorative is either. The terracotta it
+replaces sat a few degrees from the red that means "wrong answer", so the one
+colour meaning "you can press this" and the one meaning "you got this wrong"
+were neighbours. The wordmark is redrawn to match.
 
 **What went:** the bezel and its dark room, the cream panel, the VU-meter tick
 marks and their inset shadow, the bar gradients, and Futura at the head of the
@@ -70,8 +71,10 @@ look like a mistake.
 
 | Token | Value | Where |
 | :--- | :--- | :--- |
-| `--accent` | `#c1481f` | Primary buttons, the active segment, the status badge, focus rings |
-| `--accent-deep` | `#a63d19` | Pressed and hover |
+| `--accent` | `#1d4ed8` | Primary buttons, the active segment, icons, the status badge, focus rings |
+| `--accent-deep` | `#1a43bd` | Pressed and hover |
+| `--accent-soft` | `#e9eefc` | The ground under an icon button |
+| `--accent-soft-hover` | `#dbe4fa` | The same, hovered |
 | `--on-accent` | `#ffffff` | Text and marks on any of the above |
 
 Used sparingly and only for things you can act on. If two accent-coloured
@@ -84,12 +87,46 @@ who can't separate red from green.
 
 | Token | Value | Meaning |
 | :--- | :--- | :--- |
-| `--vote` | `#2f6690` | The option this phone voted for |
-| `--right` | `#3d7a4e` | The right answer, once revealed |
-| `--wrong` | `#a3312a` | Wrong answers, once revealed |
+| `--vote` | `#0b7d88` | The answer this phone voted for |
+| `--right` | `#17743c` | The right answer, once revealed |
+| `--wrong` | `#d0342c` | Wrong answers, once revealed; also the heart |
+
+Teal for "your pick" rather than another blue, so it can't be read as the
+accent. All four clear 4.5:1 against white **in both directions** — each is
+used as text on the card and as a ground under white marks:
+
+| | as text on white | white on it |
+| :--- | ---: | ---: |
+| `--accent` | 6.70:1 | 6.70:1 |
+| `--vote` | 4.88:1 | 4.88:1 |
+| `--right` | 5.83:1 | 5.83:1 |
+| `--wrong` | 4.99:1 | 4.99:1 |
 
 Flat fills. The bars used a two-stop gradient per state, which is six colours
 maintained to express three.
+
+### Icons
+
+Seventeen stroke icons live in `js/icons.js`, drawn there rather than pulled
+from a library: five files and no build step is the point of this app, and an
+icon font would cost more than the paths do. All 24×24, stroke not fill, so
+they take `currentColor` from the text beside them.
+
+A button holds its icon and its label in separate spans:
+
+```html
+<button class="btn">
+  <span class="btn-icon" data-icon="reset"></span>
+  <span class="btn-label">Reset votes</span>
+</button>
+```
+
+The label lives in its own span because writing `button.textContent` would
+otherwise delete the icon along with the old label. `setLabel()` in `host.js`
+is the only way a control's text should be changed.
+
+Icon-only buttons — rename, delete, sign out — sit on an `--accent-soft` disc.
+A bare glyph doesn't read as something you can press.
 
 ### Elevation
 
@@ -392,6 +429,7 @@ The implementation contract — every element, and the tokens it takes.
 | Panel message | `body` | 400 | sentence | — |
 | Footer note | `label` | 400 | sentence | — |
 | Overlay title | `lead` | 700 | sentence | — |
+| Closing-screen count | `title` | 700 | — | — |
 
 Percentages and counts take `font-variant-numeric: tabular-nums` so digits
 don't shift as they change.

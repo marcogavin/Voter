@@ -2,14 +2,22 @@
 // and takes one vote per question from this device.
 // All database work goes through sync.js.
 
-import { connect, onEventChange, castVote, getUid, serverNow } from "./sync.js";
+import {
+  connect,
+  onEventChange,
+  castVote,
+  likeSurvey,
+  getUid,
+  serverNow,
+} from "./sync.js";
+import { icons } from "./icons.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["surveys", "timer"];
+window.VOTR_BUILD = ["surveys", "timer", "ending"];
 
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
@@ -77,6 +85,19 @@ function render(event) {
   const question = event.blanked
     ? null
     : (event.questions[event.currentIndex] ?? null);
+
+  // One past the last question: the survey is over and the room gets a way to
+  // say what it thought, which is nicer than a screen that simply stops.
+  if (!event.blanked && event.questions.length &&
+      event.currentIndex === event.questions.length) {
+    shownQuestionId = null;
+    questionEl.hidden = false;
+    questionEl.textContent = t("likeVotr");
+    noteEl.textContent = "";
+    stopTicking();
+    showEnding(event.likes);
+    return;
+  }
 
   if (!question) {
     shownQuestionId = null;
@@ -149,6 +170,7 @@ function stopTicking() {
 }
 
 function buildRows(question) {
+  optionsEl.dataset.screen = "question";
   optionsEl.innerHTML = "";
 
   for (const option of question.options) {
@@ -221,18 +243,56 @@ async function submitVote(questionId, optionId) {
  * is being measured, just not here.
  */
 function showWaiting() {
+  optionsEl.dataset.screen = "waiting";
   optionsEl.innerHTML = `
     <div class="waiting">
       <svg class="waiting-art" viewBox="269 13 328 352" role="img"
            aria-label="${t("waitingForHost")}">
-        <path d="M 516,42 L 495,31 L 467,22 L 445,19 L 401,22 L 365,34 L 343,47 L 318,69 L 303,88 L 282,132 L 275,182 L 279,215 L 288,243 L 299,264 L 320,291 L 307,354 L 311,359 L 325,358 L 379,331 L 419,339 L 457,338 L 485,331 L 506,322 L 533,304 L 549,289 L 567,265 L 581,237 L 589,209 L 591,164 L 588,145 L 580,119 L 563,87 L 534,55 Z M 414,53 L 447,52 L 459,54 L 481,61 L 507,76 L 528,96 L 542,116 L 552,138 L 558,164 L 558,194 L 554,214 L 544,239 L 531,259 L 510,280 L 492,292 L 477,299 L 450,306 L 407,304 L 385,297 L 362,284 L 339,263 L 329,250 L 317,227 L 310,204 L 308,172 L 311,151 L 319,127 L 330,107 L 351,83 L 370,69 L 391,59 Z" fill="#C1481F" fill-rule="evenodd"/>
-        <path d="M 358,172 L 356,173 L 352,178 L 352,258 L 357,264 L 360,265 L 395,265 L 396,263 L 396,179 L 395,176 L 390,172 Z" fill="#A3312A" fill-rule="evenodd" class="waiting-bar waiting-bar--a"/>
-        <path d="M 420,106 L 415,108 L 412,113 L 412,263 L 414,265 L 453,265 L 455,263 L 455,113 L 453,109 L 450,107 L 439,107 L 438,106 L 422,107 Z" fill="#C1481F" fill-rule="evenodd" class="waiting-bar waiting-bar--b"/>
-        <path d="M 479,150 L 476,151 L 472,156 L 472,264 L 473,265 L 508,265 L 514,260 L 515,257 L 515,158 L 514,155 L 510,151 L 507,150 Z" fill="#3D7A4E" fill-rule="evenodd" class="waiting-bar waiting-bar--c"/>
+        <path d="M 516,42 L 495,31 L 467,22 L 445,19 L 401,22 L 365,34 L 343,47 L 318,69 L 303,88 L 282,132 L 275,182 L 279,215 L 288,243 L 299,264 L 320,291 L 307,354 L 311,359 L 325,358 L 379,331 L 419,339 L 457,338 L 485,331 L 506,322 L 533,304 L 549,289 L 567,265 L 581,237 L 589,209 L 591,164 L 588,145 L 580,119 L 563,87 L 534,55 Z M 414,53 L 447,52 L 459,54 L 481,61 L 507,76 L 528,96 L 542,116 L 552,138 L 558,164 L 558,194 L 554,214 L 544,239 L 531,259 L 510,280 L 492,292 L 477,299 L 450,306 L 407,304 L 385,297 L 362,284 L 339,263 L 329,250 L 317,227 L 310,204 L 308,172 L 311,151 L 319,127 L 330,107 L 351,83 L 370,69 L 391,59 Z" fill="#1D4ED8" fill-rule="evenodd"/>
+        <path d="M 358,172 L 356,173 L 352,178 L 352,258 L 357,264 L 360,265 L 395,265 L 396,263 L 396,179 L 395,176 L 390,172 Z" fill="#0B7D88" fill-rule="evenodd" class="waiting-bar waiting-bar--a"/>
+        <path d="M 420,106 L 415,108 L 412,113 L 412,263 L 414,265 L 453,265 L 455,263 L 455,113 L 453,109 L 450,107 L 439,107 L 438,106 L 422,107 Z" fill="#1D4ED8" fill-rule="evenodd" class="waiting-bar waiting-bar--b"/>
+        <path d="M 479,150 L 476,151 L 472,156 L 472,264 L 473,265 L 508,265 L 514,260 L 515,257 L 515,158 L 514,155 L 510,151 L 507,150 Z" fill="#17743C" fill-rule="evenodd" class="waiting-bar waiting-bar--c"/>
       </svg>
       <p class="panel-message">${t("waitingForHost")}</p>
     </div>
   `;
+}
+
+/**
+ * The closing screen. The heart takes as many taps as anyone wants to give it
+ * — there is nothing to win, so there is nothing to protect against, and a
+ * counter that only goes up is a friendlier ending than a rating out of five.
+ */
+function showEnding(count) {
+  if (optionsEl.dataset.screen !== "ending") {
+    optionsEl.dataset.screen = "ending";
+    optionsEl.innerHTML = `
+      <div class="ending">
+        <button type="button" class="heart" id="like" aria-label="${t("likeVotr")}">
+          ${icons.heart}
+        </button>
+        <p class="ending-count" id="like-count">0</p>
+        <p class="panel-message">${t("likeHint")}</p>
+      </div>
+    `;
+    optionsEl.querySelector("#like").addEventListener("click", onLike);
+  }
+  optionsEl.querySelector("#like-count").textContent = count;
+}
+
+async function onLike(clickEvent) {
+  // The count comes back from the database a moment later; the beat of
+  // feedback has to happen now or the tap feels like it missed.
+  const button = clickEvent.currentTarget;
+  button.classList.remove("is-beating");
+  void button.offsetWidth; // restart the animation on a repeated tap
+  button.classList.add("is-beating");
+
+  try {
+    await likeSurvey();
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function showMessage(text) {
