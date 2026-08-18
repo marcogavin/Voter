@@ -216,6 +216,11 @@ h1 {
   color: currentColor;
 }
 
+/* The closing screen is centred as a block, title and all. */
+h1.is-centred {
+  text-align: center;
+}
+
 /* The one action that starts something rather than continuing it. */
 .btn--wide {
   width: 100%;
@@ -622,6 +627,14 @@ h1 {
   text-align: center;
 }
 
+/* The hearts leave from here, so it has to be the thing they're measured
+   against rather than the whole column. */
+.heart-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
 .heart {
   display: grid;
   place-items: center;
@@ -673,6 +686,47 @@ h1 {
   width: 100%;
   height: 100%;
   display: block;
+}
+
+/* One per tap, drifting up and out. They overflow the stage on purpose:
+   nothing above them clips, and a heart that stops at a boundary reads as a
+   thing in a box rather than a thing leaving. */
+.heart-fly {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2);
+  color: var(--wrong);
+  pointer-events: none;
+  animation: heart-fly 1.5s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+
+.heart-fly svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes heart-fly {
+  0% {
+    transform: translate(0, 0) scale(0.5) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translate(var(--drift), -13rem) scale(1) rotate(var(--tilt));
+    opacity: 0;
+  }
+}
+
+/* A refusal has to be visible where the tap was, not only in the console. */
+.panel-message.is-error {
+  color: var(--wrong);
+  font-weight: 600;
 }
 
 @media (prefers-reduced-motion: no-preference) {
