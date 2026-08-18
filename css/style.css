@@ -3,27 +3,35 @@
    bug even when the number is right. */
 
 :root {
-  /* ── Colour: unchanged, the 1960s Braun palette ───────────────────── */
-  --room: #201e1b;
-  --room-edge: #0f0e0c;
-  --bezel-hi: #d9d6ce;
-  --bezel-lo: #aeaba3;
-  --panel: #ece9e2;
-  --panel-shadow: rgba(0, 0, 0, 0.28);
-  --ink: #2b2924;
-  --muted: #8a8579;
-  --hairline: #cfccc3;
+  /* ── Colour ─────────────────────────────────────────────────────────
+     Light and flat. Ink and one accent carry the interface; everything else
+     is a shade of paper, there to separate things rather than decorate them. */
+  --bg: #f4f4f5; /* the page behind the card */
+  --surface: #ffffff; /* the card, and anything raised off the page */
+  --sunken: #f0f0f1; /* fields, and anything you type or choose into */
+  --border: #e3e3e6; /* hairlines and control outlines */
+  --ink: #17171a;
+  --muted: #6c6c72;
+
+  /* The wordmark's own colour, kept: it is the one thing carried over from
+     the old scheme, and the logo is drawn in it. */
   --accent: #c1481f;
-  --accent-deep: #a8391a;
+  --accent-deep: #a63d19;
+  --on-accent: #ffffff;
+
+  /* Behind an overlay. Light enough that the card reads as being in front of
+     the page rather than in a different room. */
+  --scrim: rgba(23, 23, 26, 0.45);
 
   /* Result colours. Never the only signal — the tick box, ✓ and ✗ carry the
      same meaning for anyone who can't separate red from green. */
   --vote: #2f6690;
-  --vote-deep: #244f6f;
   --right: #3d7a4e;
-  --right-deep: #2e6040;
   --wrong: #a3312a;
-  --wrong-deep: #82241f;
+
+  /* One elevation. A card is either on the page or it isn't. */
+  --shadow-card: 0 1px 2px rgba(20, 20, 26, 0.04),
+    0 4px 14px rgba(20, 20, 26, 0.06);
 
   /* ── Type ─────────────────────────────────────────────────────────── */
   --text-micro: 0.6875rem; /* 11px */
@@ -54,13 +62,6 @@
   /* ── Controls ─────────────────────────────────────────────────────── */
   --control-h: 2.75rem; /* 44px — the touch minimum, not negotiable */
   --control-h-lg: 3.25rem; /* 52px — the audience's vote rows */
-
-  /* ── The faceplate ────────────────────────────────────────────────────
-     Outside the scales on purpose: this is a physical object, not a control
-     or a piece of type. Redefined for a phone in portrait, where the bezel
-     thins to give the content its width back. */
-  --frame-pad: 14px;
-  --frame-radius: 20px;
 }
 
 * {
@@ -74,25 +75,22 @@ body {
   align-items: flex-start;
   justify-content: center;
   padding: var(--space-6) var(--space-4);
-  background: radial-gradient(ellipse at 50% 35%, var(--room), var(--room-edge));
-  font-family: "Futura", "Century Gothic", "Avenir Next", "Avenir", sans-serif;
+  background: var(--bg);
+  font-family:
+    "Avenir Next", "Avenir", system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
   font-size: var(--text-body);
   line-height: var(--leading-body);
   color: var(--ink);
 }
 
-/* ─── The faceplate ────────────────────────────────────────────────────── */
+/* ─── The card ─────────────────────────────────────────────────────────
+   The bezel and its dark surround are gone. What's left is a plain wrapper
+   that sets the measure, and one white card on a near-white page.        */
 
 .frame {
   width: 100%;
   max-width: 640px;
-  border-radius: var(--frame-radius);
-  padding: var(--frame-pad);
-  background: linear-gradient(155deg, var(--bezel-hi), var(--bezel-lo));
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 -2px 4px rgba(0, 0, 0, 0.25) inset,
-    0 18px 40px rgba(0, 0, 0, 0.45);
   display: flex;
 }
 
@@ -101,12 +99,10 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  background: var(--panel);
+  background: var(--surface);
   border-radius: var(--radius-card);
   padding: var(--space-5);
-  box-shadow:
-    inset 0 2px 7px var(--panel-shadow),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow: var(--shadow-card);
 }
 
 .top-row {
@@ -174,8 +170,10 @@ h1 {
   font-weight: 600;
   line-height: var(--leading-flat);
   color: var(--ink);
-  background: var(--bezel-hi);
-  border: 1px solid var(--hairline);
+  background: var(--sunken);
+  /* Transparent rather than absent, so the primary can take a border without
+     changing the height a hair. */
+  border: 1px solid transparent;
   border-radius: var(--radius-control);
   cursor: pointer;
 }
@@ -184,7 +182,7 @@ h1 {
 .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: var(--panel);
+  color: var(--on-accent);
 }
 
 .btn:disabled {
@@ -217,7 +215,7 @@ h1 {
    in its hover colours, so only a real pointer gets hover styling. */
 @media (hover: hover) {
   .btn:hover:not(:disabled) {
-    background: var(--panel);
+    background: var(--border);
   }
 
   /* Matches the specificity above, so the primary button keeps a background
@@ -227,7 +225,7 @@ h1 {
   }
 
   .iconbtn:hover:not(:disabled) {
-    border-color: var(--hairline);
+    background: var(--sunken);
   }
 }
 
@@ -244,36 +242,46 @@ h1 {
   outline-offset: 2px;
 }
 
-/* ─── Setup / Run tabs ─────────────────────────────────────────────────
-   One of the three dividers the design keeps: it separates the mode switch
-   from the mode.                                                          */
+/* ─── Setup / Run ──────────────────────────────────────────────────────
+   A segmented control rather than an underline: with two modes, the one you
+   are not in should look like somewhere you can go, not like a heading.   */
 
 .tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  margin: var(--space-4) 0 0;
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid var(--hairline);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  margin: var(--space-5) 0 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
 }
 
 .tab {
   height: var(--control-h);
-  padding: 0;
+  padding: 0 var(--space-2);
   font-family: inherit;
   font-size: var(--text-body);
   font-weight: 600;
   line-height: var(--leading-flat);
   color: var(--muted);
-  background: none;
+  background: var(--surface);
   border: none;
-  border-bottom: 2px solid transparent;
+  border-left: 1px solid var(--border);
   cursor: pointer;
 }
 
+.tab:first-child {
+  border-left: none;
+}
+
 .tab.is-active {
-  color: var(--ink);
-  border-bottom-color: var(--accent);
+  color: var(--on-accent);
+  background: var(--accent);
+}
+
+/* The outline would be clipped by the control's own overflow. */
+.tab:focus-visible {
+  outline-offset: -3px;
 }
 
 /* The question the room is voting on. Smaller than the host's, which is read
@@ -294,7 +302,6 @@ h1 {
 /* ─── Meters ───────────────────────────────────────────────────────────── */
 
 .meter {
-  --bar-deep: var(--accent-deep);
   --bar: var(--accent);
   display: grid;
   align-items: center;
@@ -335,18 +342,9 @@ h1 {
 
 .meter-track {
   position: relative;
-  height: 12px;
+  height: 10px;
   border-radius: var(--radius-pill);
-  background:
-    repeating-linear-gradient(
-      90deg,
-      var(--hairline) 0,
-      var(--hairline) 1px,
-      transparent 1px,
-      transparent 10%
-    ),
-    var(--bezel-lo);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  background: var(--sunken);
   overflow: visible;
 }
 
@@ -355,7 +353,7 @@ h1 {
   inset: 0;
   width: 0%;
   border-radius: var(--radius-pill);
-  background: linear-gradient(90deg, var(--bar-deep), var(--bar));
+  background: var(--bar);
   transition:
     width 1.4s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.25s ease;
@@ -364,10 +362,10 @@ h1 {
 /* A hairline, not a corner — the one radius outside the scale. */
 .meter-needle {
   position: absolute;
-  top: -4px;
-  bottom: -4px;
+  top: -3px;
+  bottom: -3px;
   left: 0%;
-  width: 3px;
+  width: 2px;
   background: var(--ink);
   border-radius: 1px;
   transform: translateX(-1px);
@@ -385,7 +383,6 @@ h1 {
 
 /* Your own pick, before the answer is out. */
 .meter.is-mine {
-  --bar-deep: var(--vote-deep);
   --bar: var(--vote);
 }
 
@@ -395,7 +392,6 @@ h1 {
 
 /* Correctness wins over "mine" — declared after it on purpose. */
 .meter.is-right {
-  --bar-deep: var(--right-deep);
   --bar: var(--right);
 }
 
@@ -408,7 +404,6 @@ h1 {
 }
 
 .meter.is-wrong {
-  --bar-deep: var(--wrong-deep);
   --bar: var(--wrong);
 }
 
@@ -487,7 +482,7 @@ h1 {
 .meter.is-mine .tick {
   border-color: var(--vote);
   background: var(--vote);
-  color: var(--panel);
+  color: var(--on-accent);
 }
 
 .meter--vote:disabled:not(.is-mine) .tick {
@@ -504,7 +499,7 @@ h1 {
   text-transform: uppercase;
   color: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   padding: var(--space-1) var(--space-2);
   white-space: nowrap;
 }
@@ -535,7 +530,7 @@ h1 {
   gap: var(--space-3);
   margin-top: var(--space-5);
   padding-top: var(--space-3);
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--border);
 }
 
 .foot .note {
@@ -638,8 +633,8 @@ h1 {
   font-size: var(--text-lead);
   line-height: var(--leading-body);
   color: var(--ink);
-  background: var(--bezel-hi);
-  border: 1px solid var(--hairline);
+  background: var(--sunken);
+  border: 1px solid transparent;
   border-radius: var(--radius-control);
   padding: 0 var(--space-3);
   min-height: var(--control-h);
@@ -727,7 +722,7 @@ h1 {
 }
 
 .correct-choice.is-picked {
-  background: var(--bezel-hi);
+  background: var(--sunken);
   color: var(--right);
   font-weight: 600;
 }
@@ -759,7 +754,8 @@ h1 {
   gap: var(--space-3);
   padding: var(--space-2);
   border-radius: var(--radius-control);
-  background: var(--bezel-hi);
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .qitem.is-editing {
@@ -805,7 +801,7 @@ h1 {
   gap: var(--space-4);
   margin-top: var(--space-6);
   padding-top: var(--space-5);
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid var(--border);
 }
 
 .field--pick {
@@ -897,7 +893,7 @@ h1 {
   align-items: center;
   justify-content: center;
   padding: var(--space-5);
-  background: rgba(15, 14, 12, 0.82);
+  background: var(--scrim);
 }
 
 .overlay[hidden] {
@@ -913,7 +909,8 @@ h1 {
   max-width: min(90vw, 460px);
   padding: var(--space-5);
   border-radius: var(--radius-card);
-  background: var(--panel);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
 }
 
 .ask-card {
@@ -988,38 +985,38 @@ body.audience #options {
 
 /* ─── Portrait phone ───────────────────────────────────────────────────
    Where the audience actually reads this. A phone in portrait is tall and
-   narrow, so the panel fills the screen instead of floating in the middle of
-   it, and the bezel thins to give the content back its width.             */
+   narrow, so the card stops being a card: it fills the screen, and the page
+   behind it goes white because none of it is visible any more.            */
 
 @media (max-width: 700px) {
+  .panel {
+    padding: var(--space-4);
+  }
+
   body.audience {
+    /* Nothing of the page shows any more, so it stops being a different
+       colour from the card sitting on it. */
+    --bg: var(--surface);
     align-items: stretch;
+    padding: 0;
 
     /* iOS Safari's address bar collapses as you scroll, which makes 100vh
        taller than what you can actually see — the footer ends up behind the
        bar. dvh tracks the visible viewport; vh stays as the fallback. */
     min-height: 100vh;
     min-height: 100dvh;
-
-    /* Keep clear of the notch and the home indicator. */
-    padding:
-      max(var(--space-2), env(safe-area-inset-top))
-      max(var(--space-2), env(safe-area-inset-right))
-      max(var(--space-2), env(safe-area-inset-bottom))
-      max(var(--space-2), env(safe-area-inset-left));
-  }
-
-  body.audience {
-    --frame-pad: 9px;
-    --frame-radius: 22px;
   }
 
   body.audience .frame {
     max-width: none;
   }
 
-  .panel {
-    padding: var(--space-4);
+  /* Edge to edge, and clear of the notch and the home indicator. */
+  body.audience .panel {
+    border-radius: 0;
+    box-shadow: none;
+    padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4)
+      max(var(--space-4), env(safe-area-inset-bottom));
   }
 }
 
@@ -1038,7 +1035,7 @@ body.audience #options {
   padding: var(--space-3) var(--space-4)
     calc(var(--space-3) + env(safe-area-inset-bottom));
   background: var(--wrong);
-  color: #fff;
+  color: var(--on-accent);
   font-family: inherit;
   font-size: var(--text-body);
   line-height: var(--leading-body);
