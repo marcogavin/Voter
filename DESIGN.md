@@ -280,11 +280,14 @@ All of it sits behind `@media (prefers-reduced-motion: no-preference)`.
 | Panel padding | `--space-4` on phones, `--space-5` above 480px |
 | Portrait phones | `100dvh` and `env(safe-area-inset-*)` with `viewport-fit=cover` |
 
-Neither frame is locked to 16:9. The stylesheet carried a `16 / 9` on the base
-`.frame` that both pages then overrode, so it had never applied to anything;
-implementing this system removed it. Restoring it for the audience view on a
-wide screen — the projector case from the original brief — is a live question,
-not a decision this document has taken.
+**Neither frame is locked to 16:9, and that's settled.** The stylesheet carried
+a `16 / 9` on the base `.frame` that both pages overrode, so it had never
+applied to anything; removing it made the code say what was already true.
+
+It is not coming back. The audience reads this on a phone held in portrait —
+that is the shape the view is designed for, and a 16:9 letterbox on a tall
+narrow screen wastes the room the answers need. Height comes from content on
+both pages.
 
 Any column in a grid that holds text needs `min-width: 0`, and any text that
 can be pasted needs `overflow-wrap: anywhere`. A `1fr` column will not shrink
