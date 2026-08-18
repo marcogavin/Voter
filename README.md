@@ -213,6 +213,13 @@ Larger audiences need the pay-as-you-go Blaze plan.
 Anonymous auth identifies a browser, not a person: someone determined can vote
 again from a private tab. Fine for a friendly audience, not a ballot box.
 
+## Design
+
+Sizes, spacing, control heights and the rules behind them live in
+[`DESIGN.md`](DESIGN.md). One scale covers both screens — there is no host
+variant and no audience variant. A value that isn't in that file doesn't go in
+the stylesheet.
+
 ## How it's put together
 
 ```
