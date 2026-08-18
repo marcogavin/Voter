@@ -76,6 +76,7 @@ const els = {
   language: document.getElementById("language"),
   seconds: document.getElementById("seconds"),
 
+  runDeck: document.getElementById("run-deck"),
   runQuestion: document.getElementById("run-question"),
   options: document.getElementById("options"),
   prev: document.getElementById("prev"),
@@ -436,6 +437,14 @@ function drawList() {
 
 function drawRun() {
   const question = questions[currentIndex] ?? null;
+
+  // Named, so a host running several polls in one session can tell which is
+  // live at a glance rather than by recognising the questions. The name is
+  // written into a <b> rather than interpolated, so a poll called "<script>"
+  // stays a poll called "<script>".
+  els.runDeck.innerHTML = t("pollNamed", { name: "<b></b>" });
+  const slot = els.runDeck.querySelector("b");
+  if (slot) slot.textContent = deckTitle(liveDeck());
 
   // One past the last question is the closing screen rather than nothing at
   // all: a survey should finish somewhere rather than just stop responding.

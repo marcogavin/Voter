@@ -30,6 +30,7 @@ const strings = {
     tabSetup: "Setup poll",
 
     survey: "Survey",
+    pollNamed: "Poll: {name}",
     surveyN: "Survey {n}",
     newSurvey: "Create a new survey",
     renameSurvey: "Rename survey",
@@ -135,6 +136,7 @@ const strings = {
     tabSetup: "Preparar votação",
 
     survey: "Questionário",
+    pollNamed: "Votação: {name}",
     surveyN: "Questionário {n}",
     newSurvey: "Criar um novo questionário",
     renameSurvey: "Mudar o nome",
@@ -240,6 +242,7 @@ const strings = {
     tabSetup: "Preparar votación",
 
     survey: "Cuestionario",
+    pollNamed: "Votación: {name}",
     surveyN: "Cuestionario {n}",
     newSurvey: "Crear un nuevo cuestionario",
     renameSurvey: "Cambiar el nombre",
@@ -345,6 +348,7 @@ const strings = {
     tabSetup: "Préparer le vote",
 
     survey: "Questionnaire",
+    pollNamed: "Vote : {name}",
     surveyN: "Questionnaire {n}",
     newSurvey: "Créer un questionnaire",
     renameSurvey: "Renommer",
@@ -450,6 +454,7 @@ const strings = {
     tabSetup: "Umfrage vorbereiten",
 
     survey: "Fragebogen",
+    pollNamed: "Umfrage: {name}",
     surveyN: "Fragebogen {n}",
     newSurvey: "Neuen Fragebogen erstellen",
     renameSurvey: "Umbenennen",
