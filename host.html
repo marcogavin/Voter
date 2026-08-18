@@ -133,5 +133,52 @@
   </div>
 
   <script type="module" src="js/host.js"></script>
+
+  <!-- The page and its scripts are cached separately, so a browser can serve a
+       fresh host.html against yesterday's js/host.js: the new controls appear
+       and quietly do nothing, which looks like a broken feature rather than a
+       stale file. This runs from the page itself — the half that's fresh — and
+       fetches past the cache once before reloading. Deliberately not a module:
+       a stale module is the thing it exists to catch. -->
+  <script>
+    (function () {
+      var NEEDS = ["surveys", "timer", "qr"];
+      var FILES = [
+        "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
+        "js/firebase-config.js", "css/style.css",
+      ];
+      var TRIED = "votr-refetched";
+
+      addEventListener("load", function () { setTimeout(check, 1500); });
+
+      function check() {
+        var built = window.VOTR_BUILD || [];
+        var missing = NEEDS.filter(function (name) {
+          return built.indexOf(name) === -1;
+        });
+
+        if (!missing.length) return sessionStorage.removeItem(TRIED);
+
+        // Once only. If the refetch didn't help, the old copy is what's being
+        // served, and reloading again would just spin.
+        if (sessionStorage.getItem(TRIED)) return report(missing);
+        sessionStorage.setItem(TRIED, "1");
+
+        Promise.all(FILES.map(function (file) {
+          return fetch(file, { cache: "reload" }).catch(function () {});
+        })).then(function () { location.reload(); });
+      }
+
+      function report(missing) {
+        var note = document.createElement("p");
+        note.className = "stale";
+        note.textContent =
+          "This page is running an older copy of VOTR, so some controls " +
+          "won't respond (missing: " + missing.join(", ") + "). It updates " +
+          "itself within about ten minutes — or close this tab and open it again.";
+        document.body.appendChild(note);
+      }
+    })();
+  </script>
 </body>
 </html>

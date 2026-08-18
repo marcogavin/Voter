@@ -189,6 +189,19 @@ For a second set of questions, add a survey rather than a second event. Change
 `EVENT_ID` in `js/firebase-config.js` only to run two rooms *at the same time* —
 separate audiences, separate URLs, voting simultaneously.
 
+## If a control stops responding
+
+Pages and scripts are cached separately, so a browser can serve a freshly
+deployed page against a script it already had — the new controls appear and
+quietly do nothing. Both pages check for this a moment after loading, fetch
+past the cache once and reload themselves. If that doesn't help, a red bar
+appears saying so rather than leaving you guessing; GitHub Pages caches assets
+for ten minutes, so it clears on its own.
+
+When adding a feature that changes the markup, add its name to `VOTR_BUILD` in
+`js/host.js` or `js/app.js` and to `NEEDS` in the matching page. That's what
+makes an old script detectable.
+
 ## Limits worth knowing
 
 Firebase's free **Spark** plan allows **100 simultaneous connections** — that's

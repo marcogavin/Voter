@@ -6,6 +6,11 @@ import { connect, onEventChange, castVote, getUid, serverNow } from "./sync.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
+// What this build of the app can do, read by the freshness check in the page.
+// A browser can serve a fresh page against a cached older script, and the only
+// symptom is controls that don't respond — so the script says what it is.
+window.VOTR_BUILD = ["surveys", "timer"];
+
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
 const statusEl = document.getElementById("status");
