@@ -370,6 +370,7 @@ function render(event) {
   els.seconds.disabled = !isOwner;
 
   fillDecks();
+  els.deck.setAttribute("aria-label", t("currentSurvey"));
   els.deck.value = currentDeck;
   els.deck.disabled = !isOwner;
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;

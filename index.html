@@ -37,7 +37,7 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["surveys", "timer", "ending"];
+      var NEEDS = ["surveys", "timer", "ending", "groups", "sections"];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
         "js/firebase-config.js", "js/icons.js", "css/style.css",
@@ -47,7 +47,13 @@
       addEventListener("load", function () { setTimeout(check, 1500); });
 
       function check() {
-        var built = window.VOTR_BUILD || [];
+        // The stylesheet is cached separately from both the page and the
+        // script, and a stale one looks just as broken, so it says what it
+        // is too — through a custom property the page can read back.
+        var styled = getComputedStyle(document.documentElement)
+          .getPropertyValue("--build").replace(/["']/g, "").trim();
+        var built = (window.VOTR_BUILD || [])
+          .concat(styled ? styled.split(/\s+/) : []);
         var missing = NEEDS.filter(function (name) {
           return built.indexOf(name) === -1;
         });

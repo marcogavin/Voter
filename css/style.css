@@ -3,6 +3,13 @@
    bug even when the number is right. */
 
 :root {
+  /* What this build of the stylesheet can do, read by the freshness check in
+     the page. A stale stylesheet has exactly the same symptom as a stale
+     script — controls that look wrong or unstyled — and until now only the
+     scripts announced themselves. Add a word here when a change would look
+     broken against older markup. */
+  --build: "groups sections";
+
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
      is a shade of paper, there to separate things rather than decorate them. */
@@ -591,7 +598,7 @@ h1.is-centred {
 #view-run {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 #view-run > h1 {
@@ -605,8 +612,8 @@ h1.is-centred {
    something to read.                                                       */
 
 .section-title {
-  margin: 0;
-  padding-top: var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-4);
   border-top: 1px solid var(--border);
   font-size: var(--text-label);
   font-weight: 700;
@@ -1212,7 +1219,16 @@ body.audience .panel {
 .top-row--centred {
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
+  text-align: center;
+}
+
+/* The mark takes the full width and centres inside it, rather than being a
+   shrink-to-fit box that has to be centred by its parent. */
+.top-row--centred .mark {
+  width: 100%;
+  justify-content: center;
 }
 
 /* The wordmark is roughly 3:1, which is what caps it: a phone panel is about

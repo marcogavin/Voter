@@ -321,11 +321,15 @@ border round half a screen. `--text-label`, weight 700, in `--accent`, with a
 `--border` rule above. Coloured because a heading here is a landmark to find,
 not a line to read.
 
+Every heading that names a section is a `.section-title` — Current survey,
+Questions, Settings — so three labels doing the same job look the same. A
+`.field-label` names one control; it never names a section.
+
 | Part | Device |
 | :--- | :--- |
 | Account | `.group` |
 | Create a new survey | Neither — an outline button, distinct by treatment |
-| Current survey | `.group` |
+| Current survey | `.section-title`, then a `.group` |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
 | Run: Prev / counter / Next | `.group` |
