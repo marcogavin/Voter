@@ -278,6 +278,7 @@ that screen and should feel like it.
 | **Primary** | `--accent` | `--accent` | `--on-accent` | The one action that moves things on. One per screen. |
 | **Default** | `--sunken` | transparent | `--ink` | Everything else |
 | **Quiet** | transparent | transparent | `--ink` | Icon buttons; `--sunken` on hover |
+| **Outline** | transparent | `--accent` | `--accent` | Making a new thing, where a filled button would read as one more control |
 
 A default button's border is transparent rather than absent, so the primary can
 take one without changing the height by a hair.
@@ -309,13 +310,36 @@ seventeen.
 **Group with tone and space first.** A card gets a background one step off the
 panel; it does not also get an outline.
 
-Keep a `--border` divider in only two places:
+Two devices, for two different kinds of thing.
 
-1. Above the footer
-2. Between the question list and the event settings
+**`.group`** — a hairline box round a compact cluster of controls that do one
+job. Containment is what says *these belong together and the next thing
+doesn't*, which a gap alone stops saying once several gaps are the same size.
 
-The tab strip used to be the third; the segmented control replaced it, and a
-rule under a bordered control would have been a line beside a line.
+**`.section-title`** — for the long, flowing parts, where a box would be a
+border round half a screen. `--text-label`, weight 700, in `--accent`, with a
+`--border` rule above. Coloured because a heading here is a landmark to find,
+not a line to read.
+
+| Part | Device |
+| :--- | :--- |
+| Account | `.group` |
+| Create a new survey | Neither — an outline button, distinct by treatment |
+| Current survey | `.group` |
+| Questions | `.section-title` |
+| Settings | `.section-title` |
+| Run: Prev / counter / Next | `.group` |
+| Run: hide, reset, start over | `.group` |
+| Footer | A rule of its own |
+
+The box is a hairline on white rather than a fill, so the fields inside keep
+their own sunken ground instead of dissolving into it.
+
+`#view-setup` and `#view-run` are flex columns with one `--space-4` gap, so the
+parts don't carry their own margins and the rhythm is set in one place.
+
+The tab strip has no rule: the segmented control is already bordered, and a
+rule under a bordered control is a line beside a line.
 
 Question rows are `--surface` with a `--border` outline, which is what separates
 them from the card they sit on. Fields are `--sunken` with no outline at all —

@@ -93,11 +93,14 @@ function render(event) {
     shownQuestionId = null;
     questionEl.hidden = false;
     questionEl.textContent = t("likeVotr");
+    questionEl.classList.add("is-centred");
     noteEl.textContent = "";
     stopTicking();
     showEnding(event.likes);
     return;
   }
+
+  questionEl.classList.remove("is-centred");
 
   if (!question) {
     shownQuestionId = null;
@@ -268,29 +271,70 @@ function showEnding(count) {
     optionsEl.dataset.screen = "ending";
     optionsEl.innerHTML = `
       <div class="ending">
-        <button type="button" class="heart" id="like" aria-label="${t("likeVotr")}">
-          ${icons.heart}
-        </button>
+        <div class="heart-stage">
+          <button type="button" class="heart" id="like" aria-label="${t("likeVotr")}">
+            ${icons.heart}
+          </button>
+        </div>
         <p class="ending-count" id="like-count">0</p>
-        <p class="panel-message">${t("likeHint")}</p>
+        <p class="panel-message" id="like-hint">${t("likeHint")}</p>
       </div>
     `;
     optionsEl.querySelector("#like").addEventListener("click", onLike);
   }
-  optionsEl.querySelector("#like-count").textContent = count;
+
+  // Only when it changes: overwriting it on every snapshot would undo the
+  // optimistic bump between the tap and the database answering.
+  const shown = optionsEl.querySelector("#like-count");
+  if (Number(shown.textContent) !== count) shown.textContent = count;
+}
+
+/**
+ * One heart per tap, drifting up and out. Each gets its own drift, tilt and
+ * size, or a burst of taps leaves in a single column and reads as one heart
+ * stuttering rather than as a room clapping.
+ */
+function flyHeart(stage) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const fly = document.createElement("span");
+  fly.className = "heart-fly";
+  fly.innerHTML = icons.heart;
+  fly.style.setProperty("--drift", `${Math.round((Math.random() - 0.5) * 140)}px`);
+  fly.style.setProperty("--tilt", `${Math.round((Math.random() - 0.5) * 60)}deg`);
+  fly.style.setProperty("--size", `${(1.5 + Math.random() * 1.5).toFixed(2)}rem`);
+  fly.addEventListener("animationend", () => fly.remove());
+  stage.appendChild(fly);
 }
 
 async function onLike(clickEvent) {
-  // The count comes back from the database a moment later; the beat of
-  // feedback has to happen now or the tap feels like it missed.
+  // The database answers a moment later; the beat of feedback has to happen
+  // now, or the tap feels like it missed. The count is bumped here too and
+  // corrected by the next snapshot — which is almost always the same number.
   const button = clickEvent.currentTarget;
   button.classList.remove("is-beating");
   void button.offsetWidth; // restart the animation on a repeated tap
   button.classList.add("is-beating");
+  flyHeart(button.parentElement);
+
+  // A tap that works clears the last one's complaint.
+  const hint = optionsEl.querySelector("#like-hint");
+  hint.classList.remove("is-error");
+  hint.textContent = t("likeHint");
+
+  const shown = optionsEl.querySelector("#like-count");
+  const before = Number(shown.textContent) || 0;
+  shown.textContent = before + 1;
 
   try {
     await likeSurvey();
   } catch (error) {
+    // A refused write used to leave the count sitting at zero with nothing
+    // said, which looks exactly like a button that doesn't work.
+    shown.textContent = before;
+    hint.textContent = `${t("likeRefused")} ${error.message}`;
+    hint.classList.add("is-error");
+    setStatus("refused", "error");
     console.error(error);
   }
 }

@@ -16,12 +16,7 @@
         </div>
       </div>
 
-      <div class="tabs" role="tablist">
-        <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup poll</button>
-        <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run poll</button>
-      </div>
-
-      <div class="hostbar">
+      <div class="hostbar group">
         <span class="hostbar-who" id="account"></span>
         <button type="button" class="btn" id="qr">
           <span class="btn-icon" data-icon="qr"></span>
@@ -34,16 +29,21 @@
         <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
       </div>
 
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup poll</button>
+        <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run poll</button>
+      </div>
+
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
-        <button type="button" class="btn btn--wide" id="deck-new">
+        <button type="button" class="btn btn--wide btn--outline" id="deck-new">
           <span class="btn-icon" data-icon="plus"></span>
           <span class="btn-label" data-i18n="newSurvey">Create a new survey</span>
         </button>
 
-        <div class="deckbar">
+        <div class="deckbar group">
           <label class="field field--pick deckbar-pick">
-            <span class="field-label" data-i18n="survey">Survey</span>
+            <span class="field-label" data-i18n="currentSurvey">Current survey</span>
             <select id="deck"></select>
           </label>
           <div class="deckbtns">
@@ -51,6 +51,8 @@
             <button type="button" class="iconbtn" id="deck-delete" data-icon="remove"></button>
           </div>
         </div>
+
+        <h2 class="section-title" data-i18n="questionsSection">Questions</h2>
 
         <form id="editor" class="setup">
           <label class="field">
@@ -83,6 +85,8 @@
         <ol id="question-list" class="qlist"></ol>
         <p class="panel-message" id="setup-empty" data-i18n="noQuestionsYet">No questions yet — add your first above.</p>
 
+        <h2 class="section-title" data-i18n="settingsSection">Settings</h2>
+
         <div class="settings">
           <label class="field field--pick">
             <span class="field-label" data-i18n="language">Language</span>
@@ -101,7 +105,7 @@
         <h1 id="run-question">Nothing on screen</h1>
         <div id="options"></div>
 
-        <div class="runbar">
+        <div class="runbar group">
           <button type="button" class="btn" id="prev">
             <span class="btn-icon" data-icon="prev"></span>
             <span class="btn-label" data-i18n="prev">Prev</span>
@@ -112,7 +116,7 @@
             <span class="btn-icon" data-icon="next"></span>
           </button>
         </div>
-        <div class="actions">
+        <div class="actions group">
           <button type="button" class="btn" id="blank">
             <span class="btn-icon" data-icon="hide"></span>
             <span class="btn-label" data-i18n="hideScreen">Hide screen</span>
