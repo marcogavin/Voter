@@ -30,6 +30,8 @@ const strings = {
     tabSetup: "Setup poll",
 
     survey: "Survey",
+    questionsSection: "Questions",
+    settingsSection: "Settings",
     pollNamed: "Poll: {name}",
     surveyN: "Survey {n}",
     newSurvey: "Create a new survey",
@@ -136,6 +138,8 @@ const strings = {
     tabSetup: "Preparar votação",
 
     survey: "Questionário",
+    questionsSection: "Perguntas",
+    settingsSection: "Definições",
     pollNamed: "Votação: {name}",
     surveyN: "Questionário {n}",
     newSurvey: "Criar um novo questionário",
@@ -242,6 +246,8 @@ const strings = {
     tabSetup: "Preparar votación",
 
     survey: "Cuestionario",
+    questionsSection: "Preguntas",
+    settingsSection: "Ajustes",
     pollNamed: "Votación: {name}",
     surveyN: "Cuestionario {n}",
     newSurvey: "Crear un nuevo cuestionario",
@@ -348,6 +354,8 @@ const strings = {
     tabSetup: "Préparer le vote",
 
     survey: "Questionnaire",
+    questionsSection: "Questions",
+    settingsSection: "Réglages",
     pollNamed: "Vote : {name}",
     surveyN: "Questionnaire {n}",
     newSurvey: "Créer un questionnaire",
@@ -454,6 +462,8 @@ const strings = {
     tabSetup: "Umfrage vorbereiten",
 
     survey: "Fragebogen",
+    questionsSection: "Fragen",
+    settingsSection: "Einstellungen",
     pollNamed: "Umfrage: {name}",
     surveyN: "Fragebogen {n}",
     newSurvey: "Neuen Fragebogen erstellen",

@@ -150,7 +150,7 @@ body {
 }
 
 h1 {
-  margin: var(--space-4) 0;
+  margin: var(--space-3) 0 var(--space-4);
   font-size: var(--text-title);
   font-weight: 700;
   line-height: var(--leading-tight);
@@ -220,7 +220,7 @@ h1 {
 .btn--wide {
   width: 100%;
   justify-content: center;
-  margin-bottom: var(--space-5);
+  margin-bottom: var(--space-3);
 }
 
 /* One primary per screen: the single action that moves things on. */
@@ -301,7 +301,7 @@ h1 {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  margin: var(--space-5) 0 0;
+  margin: var(--space-4) 0 var(--space-5);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   overflow: hidden;
@@ -545,6 +545,21 @@ h1 {
   opacity: 0.4;
 }
 
+/* ─── Section headings ─────────────────────────────────────────────────
+   The Setup screen is four different jobs stacked on one card. Naming them
+   and ruling above each one is what turns a column of controls into a page
+   with parts. Accent-coloured, because a heading is a landmark rather than
+   something to read.                                                       */
+
+.section-title {
+  margin: var(--space-4) 0 var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--accent);
+}
+
 /* ─── The closing screen ───────────────────────────────────────────────
    A survey should finish somewhere rather than just stop responding. The
    heart takes as many taps as anyone wants to give it: there is nothing to
@@ -555,7 +570,7 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-6) 0;
+  padding: var(--space-5) 0;
   text-align: center;
 }
 
@@ -663,7 +678,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
@@ -696,7 +711,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-top: var(--space-4);
+  margin-top: var(--space-3);
 }
 
 .hostbar-who {
@@ -724,7 +739,7 @@ h1 {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-3);
-  margin: 0 0 var(--space-6);
+  margin: 0;
 }
 
 .deckbar-pick {
@@ -743,7 +758,7 @@ h1 {
 .setup {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .setup.is-locked {
@@ -878,7 +893,7 @@ h1 {
 
 .qlist {
   list-style: none;
-  margin: var(--space-5) 0 0;
+  margin: var(--space-4) 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -937,9 +952,6 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-4);
-  margin-top: var(--space-6);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--border);
 }
 
 .field--pick {
@@ -956,7 +968,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  margin-top: var(--space-5);
+  margin-top: var(--space-4);
 }
 
 .counter {
@@ -981,8 +993,8 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-6) 0;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
   text-align: center;
 }
 

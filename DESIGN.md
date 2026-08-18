@@ -309,13 +309,23 @@ seventeen.
 **Group with tone and space first.** A card gets a background one step off the
 panel; it does not also get an outline.
 
-Keep a `--border` divider in only two places:
+Dividers belong to **section headings**, not to individual blocks. Setup is
+four different jobs stacked on one card, and naming them is what turns a column
+of controls into a page with parts:
 
-1. Above the footer
-2. Between the question list and the event settings
+| Where | What separates it |
+| :--- | :--- |
+| Choose or create a poll | Nothing — it is the first thing under the tabs |
+| Questions | A `.section-title` with a rule above it |
+| Settings | A `.section-title` with a rule above it |
+| Footer | A rule of its own |
 
-The tab strip used to be the third; the segmented control replaced it, and a
-rule under a bordered control would have been a line beside a line.
+A `.section-title` is `--text-label`, weight 700, in `--accent`, with a
+`--border` rule above. Accent-coloured because a heading here is a landmark to
+find, not a line to read.
+
+Nothing else gets a rule. The tab strip used to have one; the segmented control
+replaced it, and a rule under a bordered control is a line beside a line.
 
 Question rows are `--surface` with a `--border` outline, which is what separates
 them from the card they sit on. Fields are `--sunken` with no outline at all —

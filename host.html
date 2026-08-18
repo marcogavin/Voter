@@ -16,11 +16,6 @@
         </div>
       </div>
 
-      <div class="tabs" role="tablist">
-        <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup poll</button>
-        <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run poll</button>
-      </div>
-
       <div class="hostbar">
         <span class="hostbar-who" id="account"></span>
         <button type="button" class="btn" id="qr">
@@ -32,6 +27,11 @@
           <span class="btn-label" data-i18n="signIn">Sign in</span>
         </button>
         <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
+      </div>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup poll</button>
+        <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run poll</button>
       </div>
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
@@ -51,6 +51,8 @@
             <button type="button" class="iconbtn" id="deck-delete" data-icon="remove"></button>
           </div>
         </div>
+
+        <h2 class="section-title" data-i18n="questionsSection">Questions</h2>
 
         <form id="editor" class="setup">
           <label class="field">
@@ -82,6 +84,8 @@
 
         <ol id="question-list" class="qlist"></ol>
         <p class="panel-message" id="setup-empty" data-i18n="noQuestionsYet">No questions yet — add your first above.</p>
+
+        <h2 class="section-title" data-i18n="settingsSection">Settings</h2>
 
         <div class="settings">
           <label class="field field--pick">
