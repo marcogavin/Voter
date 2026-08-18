@@ -178,8 +178,16 @@ Three, plus a hairline.
 | `--radius-pill` | 999px | The tick box, the status badge |
 | — | 1px | The meter needle only. A hairline, not a corner. |
 
-The frame's outer radius stays at 20px: it's the physical object, not a
-control.
+The frame is outside the scales on purpose — it's a physical object, not a
+control or a piece of type — but its dimensions are still named:
+
+| Token | Value | Portrait phone |
+| :--- | ---: | ---: |
+| `--frame-pad` | 14px | 9px |
+| `--frame-radius` | 20px | 22px |
+
+The bezel thins in portrait to give the content its width back. Redefining the
+two tokens on the page is the whole of that change.
 
 ---
 
@@ -268,10 +276,15 @@ All of it sits behind `@media (prefers-reduced-motion: no-preference)`.
 
 | | |
 | :--- | :--- |
-| Audience frame | 16:9, `max-width: 640px` — it may be on a projector |
-| Host frame | `aspect-ratio: auto`, `max-width: 640px` — it grows with content |
+| Both frames | `max-width: 640px`, height from content |
 | Panel padding | `--space-4` on phones, `--space-5` above 480px |
 | Portrait phones | `100dvh` and `env(safe-area-inset-*)` with `viewport-fit=cover` |
+
+Neither frame is locked to 16:9. The stylesheet carried a `16 / 9` on the base
+`.frame` that both pages then overrode, so it had never applied to anything;
+implementing this system removed it. Restoring it for the audience view on a
+wide screen — the projector case from the original brief — is a live question,
+not a decision this document has taken.
 
 Any column in a grid that holds text needs `min-width: 0`, and any text that
 can be pasted needs `overflow-wrap: anywhere`. A `1fr` column will not shrink
@@ -317,6 +330,10 @@ stylesheet.
   --control-h:    2.75rem;  /* 44px — the touch minimum */
   --control-h-lg: 3.25rem;  /* 52px — audience vote rows */
 
+  /* ── The faceplate ──────────────────────────────────── */
+  --frame-pad:    14px;
+  --frame-radius: 20px;
+
   /* Colour tokens are unchanged; see section 2. */
 }
 ```
@@ -335,7 +352,8 @@ The implementation contract — every element, and the tokens it takes.
 | Status badge | `micro` | 700 | UPPER | — |
 | Tab | `body` | 600 | sentence | `control-h` |
 | Button | `body` | 600 | sentence | `control-h` |
-| Icon button | `body` | 400 | — | `control-h` square |
+| Icon button | `lead` | 400 | — | `control-h` square |
+| Survey name (run view) | `label` | 600 | sentence | — |
 | Field label | `label` | 600 | sentence | — |
 | Input, textarea, select | `lead` | 400 | sentence | `control-h` |
 | Character count | `micro` | 400 | — | — |
@@ -362,9 +380,17 @@ don't shift as they change.
 | Font sizes | 24 | 6 |
 | Spacing values | 24 | 7 |
 | Corner radii | 15 | 3 |
-| Screen-specific override rules | 46 | 0 |
+| Screen-specific **size** overrides | 46 | 0 |
+| Screen-specific **layout** rules | — | 6 |
 | Duplicate selectors | 6 | 0 |
 | Controls meeting the 44px target | 0 | all |
+
+The six remaining page-scoped rules are arrangement, not sizing: the audience
+panel centres its content, its header stacks so the wordmark can be the banner,
+and a phone in portrait fills the screen. Where a part is genuinely different
+rather than differently sized it gets its own class — `.meter--vote` against
+`.meter--static`, `.logo--banner` against `.logo` — so the page class is never
+what makes something a different size.
 
 ### What each screen actually gains and loses
 
