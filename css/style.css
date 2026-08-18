@@ -1,4 +1,9 @@
+/* VOTR — see DESIGN.md. Sizes, spacing, radii and control heights come from
+   the tokens below and from nowhere else. A literal in a component rule is a
+   bug even when the number is right. */
+
 :root {
+  /* ── Colour: unchanged, the 1960s Braun palette ───────────────────── */
   --room: #201e1b;
   --room-edge: #0f0e0c;
   --bezel-hi: #d9d6ce;
@@ -9,17 +14,53 @@
   --muted: #8a8579;
   --hairline: #cfccc3;
   --accent: #c1481f;
-  --accent-glow: rgba(193, 72, 31, 0.35);
+  --accent-deep: #a8391a;
 
-  /* Result colours. Muted enough to sit on the cream panel, distinct enough
-     to read across a room. Never the only signal — the tick box, ✓ and ✗
-     carry the same meaning for anyone who can't separate red from green. */
+  /* Result colours. Never the only signal — the tick box, ✓ and ✗ carry the
+     same meaning for anyone who can't separate red from green. */
   --vote: #2f6690;
   --vote-deep: #244f6f;
   --right: #3d7a4e;
   --right-deep: #2e6040;
   --wrong: #a3312a;
   --wrong-deep: #82241f;
+
+  /* ── Type ─────────────────────────────────────────────────────────── */
+  --text-micro: 0.6875rem; /* 11px */
+  --text-label: 0.8125rem; /* 13px */
+  --text-body: 0.9375rem; /* 15px */
+  --text-lead: 1.125rem; /* 18px */
+  --text-title: 1.375rem; /* 22px */
+  --text-display: 1.75rem; /* 28px */
+
+  --leading-tight: 1.2;
+  --leading-body: 1.45;
+  --leading-flat: 1;
+
+  /* ── Space ────────────────────────────────────────────────────────── */
+  --space-1: 0.25rem; /*  4px */
+  --space-2: 0.5rem; /*  8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-5: 1.5rem; /* 24px */
+  --space-6: 2rem; /* 32px */
+  --space-7: 3rem; /* 48px */
+
+  /* ── Shape ────────────────────────────────────────────────────────── */
+  --radius-control: 8px;
+  --radius-card: 14px;
+  --radius-pill: 999px;
+
+  /* ── Controls ─────────────────────────────────────────────────────── */
+  --control-h: 2.75rem; /* 44px — the touch minimum, not negotiable */
+  --control-h-lg: 3.25rem; /* 52px — the audience's vote rows */
+
+  /* ── The faceplate ────────────────────────────────────────────────────
+     Outside the scales on purpose: this is a physical object, not a control
+     or a piece of type. Redefined for a phone in portrait, where the bezel
+     thins to give the content its width back. */
+  --frame-pad: 14px;
+  --frame-radius: 20px;
 }
 
 * {
@@ -30,20 +71,23 @@ body {
   margin: 0;
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 2.5rem 1.25rem;
+  padding: var(--space-6) var(--space-4);
   background: radial-gradient(ellipse at 50% 35%, var(--room), var(--room-edge));
   font-family: "Futura", "Century Gothic", "Avenir Next", "Avenir", sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   color: var(--ink);
 }
+
+/* ─── The faceplate ────────────────────────────────────────────────────── */
 
 .frame {
   width: 100%;
   max-width: 640px;
-  aspect-ratio: 16 / 9;
-  border-radius: 20px;
-  padding: 14px;
+  border-radius: var(--frame-radius);
+  padding: var(--frame-pad);
   background: linear-gradient(155deg, var(--bezel-hi), var(--bezel-lo));
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.5) inset,
@@ -58,8 +102,8 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--panel);
-  border-radius: 10px;
-  padding: 1.1rem 1.4rem;
+  border-radius: var(--radius-card);
+  padding: var(--space-5);
   box-shadow:
     inset 0 2px 7px var(--panel-shadow),
     inset 0 -1px 0 rgba(255, 255, 255, 0.5);
@@ -69,45 +113,191 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
 }
 
 .mark {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
 }
 
+/* Sized by height so the wordmark's own proportions set its width. */
+.logo {
+  height: 2.2rem;
+  width: auto;
+  display: block;
+}
+
+/* ─── Type ─────────────────────────────────────────────────────────────── */
+
+/* One of the two places uppercase survives: one or two words, and part of the
+   Braun language rather than emphasis. */
 .eyebrow {
-  font-size: 0.6rem;
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  font-weight: 600;
 }
 
 h1 {
-  overflow-wrap: anywhere;
-  font-size: clamp(0.95rem, 2.4vw, 1.25rem);
-  line-height: 1.28;
-  margin: 0.55rem 0 0.85rem;
+  margin: var(--space-4) 0;
+  font-size: var(--text-title);
   font-weight: 700;
-  letter-spacing: 0.005em;
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
   text-wrap: balance;
 }
 
-#options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  flex: 1;
-  justify-content: center;
+.panel-message {
+  margin: 0;
+  padding: var(--space-2) 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--muted);
 }
 
-.meter {
-  display: grid;
-  grid-template-columns: minmax(0, 30%) 1fr auto;
+/* ─── Buttons ──────────────────────────────────────────────────────────
+   One height for everything a finger touches. The old buttons set padding
+   and no height at all, so a button's height was whatever its text made it —
+   which is why a button and an icon button beside it never matched.        */
+
+.btn {
+  display: inline-flex;
   align-items: center;
-  gap: 0.7rem;
+  justify-content: center;
+  height: var(--control-h);
+  padding: 0 var(--space-4);
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: var(--leading-flat);
+  color: var(--ink);
+  background: var(--bezel-hi);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* One primary per screen: the single action that moves things on. */
+.btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--panel);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  font-family: inherit;
+  font-size: var(--text-lead);
+  line-height: var(--leading-flat);
+  color: var(--ink);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.iconbtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+/* Touch devices latch :hover after a tap, which would leave a control stuck
+   in its hover colours, so only a real pointer gets hover styling. */
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: var(--panel);
+  }
+
+  /* Matches the specificity above, so the primary button keeps a background
+     its cream text can be read against. */
+  .btn--primary:hover:not(:disabled) {
+    background: var(--accent-deep);
+  }
+
+  .iconbtn:hover:not(:disabled) {
+    border-color: var(--hairline);
+  }
+}
+
+/* Never removed. */
+.btn:focus-visible,
+.iconbtn:focus-visible,
+.tab:focus-visible,
+.meter:focus-visible,
+.setup input:focus-visible,
+.setup textarea:focus-visible,
+.field--pick select:focus-visible,
+.ask-card input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ─── Setup / Run tabs ─────────────────────────────────────────────────
+   One of the three dividers the design keeps: it separates the mode switch
+   from the mode.                                                          */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.tab {
+  height: var(--control-h);
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: var(--leading-flat);
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab.is-active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+/* The question the room is voting on. Smaller than the host's, which is read
+   by one person at a desk rather than on a phone in a hand. */
+#question {
+  font-size: var(--text-lead);
+}
+
+/* The survey being presented. Not an eyebrow: this is a name someone typed,
+   and shouting it back at them is not a typographic device. */
+.deckname {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ─── Meters ───────────────────────────────────────────────────────────── */
+
+.meter {
+  --bar-deep: var(--accent-deep);
+  --bar: var(--accent);
+  display: grid;
+  align-items: center;
   background: none;
   border: none;
   padding: 0;
@@ -117,13 +307,27 @@ h1 {
   text-align: left;
 }
 
+.meter:disabled {
+  cursor: default;
+}
+
+/* The host's read-only meters: label, bar and share on one line. */
+.meter--static {
+  cursor: default;
+  grid-template-columns: minmax(0, 30%) 1fr auto;
+  gap: var(--space-3);
+  min-height: var(--control-h);
+}
+
 .meter-label {
-  font-size: 0.66rem;
+  font-size: var(--text-body);
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   color: var(--ink);
   min-width: 0;
+}
+
+/* One line on the host, so a long answer can't push the panel wider. */
+.meter--static .meter-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -131,8 +335,8 @@ h1 {
 
 .meter-track {
   position: relative;
-  height: 10px;
-  border-radius: 5px;
+  height: 12px;
+  border-radius: var(--radius-pill);
   background:
     repeating-linear-gradient(
       90deg,
@@ -146,27 +350,24 @@ h1 {
   overflow: visible;
 }
 
-.meter {
-  --bar-deep: #a8391a;
-  --bar: var(--accent);
-}
-
 .meter-fill {
   position: absolute;
   inset: 0;
   width: 0%;
-  border-radius: 5px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--bar-deep), var(--bar));
-  transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.5s ease;
+  transition:
+    width 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.25s ease;
 }
 
+/* A hairline, not a corner — the one radius outside the scale. */
 .meter-needle {
   position: absolute;
-  top: -3px;
-  bottom: -3px;
+  top: -4px;
+  bottom: -4px;
   left: 0%;
-  width: 2px;
+  width: 3px;
   background: var(--ink);
   border-radius: 1px;
   transform: translateX(-1px);
@@ -174,80 +375,12 @@ h1 {
 }
 
 .meter-pct {
-  font-size: 0.72rem;
+  font-size: var(--text-body);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
   min-width: 2.4em;
   text-align: right;
-}
-
-.meter:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-
-.foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.9rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid var(--hairline);
-}
-
-.foot .note {
-  font-size: 0.6rem;
-  color: var(--muted);
-  letter-spacing: 0.02em;
-}
-
-.foot .badge {
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 3px;
-  padding: 0.12rem 0.4rem;
-}
-
-/* ─── Connection state ─────────────────────────────────────────────────── */
-
-.badge[data-state="pending"] {
-  color: var(--muted);
-  border-color: var(--muted);
-}
-
-.badge[data-state="live"] {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.badge[data-state="warn"],
-.badge[data-state="error"] {
-  color: var(--ink);
-  border-color: var(--ink);
-}
-
-.panel-message {
-  color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-  margin: 0;
-  padding: 0.5rem 0;
-}
-
-/* ─── Voted / read-only meters ─────────────────────────────────────────── */
-
-.meter:disabled {
-  cursor: default;
-}
-
-.meter--static {
-  cursor: default;
 }
 
 /* Your own pick, before the answer is out. */
@@ -258,44 +391,6 @@ h1 {
 
 .meter.is-mine .meter-label {
   color: var(--vote);
-}
-
-/* ─── Tick box (audience only) ─────────────────────────────────────────── */
-
-.meter--vote {
-  /* Extra column for the tick, and room around each row so neighbouring
-     options aren't a thumb-width apart. */
-  grid-template-columns: auto minmax(0, 32%) 1fr auto;
-  padding: 0.4rem 0.15rem;
-}
-
-.tick {
-  width: 1.2rem;
-  height: 1.2rem;
-  border: 2px solid var(--muted);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 0.72rem;
-  line-height: 1;
-  color: transparent;
-  transition: background 0.25s ease, border-color 0.25s ease;
-}
-
-.tick::after {
-  content: "✓";
-}
-
-/* Your pick, marked throughout — it stays findable after the reveal, when
-   correctness takes over the bar's colour. */
-.meter.is-mine .tick {
-  border-color: var(--vote);
-  background: var(--vote);
-  color: var(--panel);
-}
-
-.meter--vote:disabled:not(.is-mine) .tick {
-  opacity: 0.4;
 }
 
 /* Correctness wins over "mine" — declared after it on purpose. */
@@ -331,491 +426,172 @@ h1 {
   color: var(--muted);
 }
 
-/* ─── Marking the right answer in Setup ────────────────────────────────── */
+/* ─── The audience's vote rows ─────────────────────────────────────────
+   A different component, not a resized one: the answer and its share sit on
+   top, the bar runs the full width beneath. Side by side on a phone the
+   label column would be about seven characters wide.                      */
 
-.correct-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.correct-choice {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.5rem;
-  border-radius: 7px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  /* Thumb-sized, since these get tapped repeatedly during setup. */
-  min-height: 2.1rem;
-}
-
-.correct-choice.is-picked {
-  background: var(--bezel-hi);
-  color: var(--right);
-  font-weight: 600;
-}
-
-.correct-choice input {
-  accent-color: var(--right);
-  width: 1.05rem;
-  height: 1.05rem;
-  flex: none;
-}
-
-/* ─── Host view ────────────────────────────────────────────────────────── */
-
-body.host {
-  align-items: flex-start;
-}
-
-.frame--host {
-  aspect-ratio: auto;
-  max-width: 560px;
-}
-
-/* ─── Setup / Run tabs ─────────────────────────────────────────────────── */
-
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0.9rem 0 0.2rem;
-}
-
-.tab {
-  font-family: inherit;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 0.35rem 0.1rem;
-  margin-right: 0.9rem;
-  cursor: pointer;
-}
-
-.tab.is-active {
-  color: var(--ink);
-  border-bottom-color: var(--accent);
-}
-
-.tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ─── Question list ────────────────────────────────────────────────────── */
-
-.qlist {
-  list-style: none;
-  margin: 1rem 0 0;
-  padding: 0.9rem 0 0;
-  border-top: 1px solid var(--hairline);
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.qitem {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.55rem;
-  border-radius: 8px;
-  background: var(--bezel-hi);
-}
-
-.qitem.is-editing {
-  outline: 2px solid var(--accent);
-}
-
-.qnum {
-  font-size: 0.68rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  min-width: 1.4em;
-}
-
-.qtext {
-  font-size: 0.78rem;
-  line-height: 1.3;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.qtext small {
-  display: block;
-  font-size: 0.6rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 0.1rem;
-}
-
-.qbtns {
-  display: flex;
-  gap: 0.15rem;
-}
-
-.iconbtn {
-  font-family: inherit;
-  font-size: 0.85rem;
-  line-height: 1;
-  color: var(--ink);
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 6px;
-  /* Generous target: these get tapped with a thumb, repeatedly. */
-  min-width: 2rem;
-  min-height: 2rem;
-  cursor: pointer;
-}
-
-.iconbtn:hover:not(:disabled) {
-  border-color: var(--hairline);
-}
-
-.iconbtn:disabled {
-  opacity: 0.25;
-  cursor: default;
-}
-
-.iconbtn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-/* ─── Run controls ─────────────────────────────────────────────────────── */
-
-.runbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--hairline);
-}
-
-.counter {
-  font-size: 0.7rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-
-.setup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  margin-top: 1rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid var(--hairline);
-}
-
-.setup.is-locked {
-  opacity: 0.5;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.field-label {
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.setup input,
-.setup textarea {
-  font-family: inherit;
-  font-size: 0.85rem;
-  color: var(--ink);
-  background: var(--bezel-hi);
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
-  padding: 0.55rem 0.7rem;
-  resize: vertical;
-}
-
-.setup input:focus-visible,
-.setup textarea:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-/* In Setup these rows sit inside a flex form that spaces them. The Run view
-   is plain flow, so they need their own separation — without it the button
-   rows crowd each other, and a fourth button appearing (Reopen voting) had
-   nowhere to go. */
-#view-run .actions {
-  margin-top: 0.6rem;
-}
-
-.runbar {
-  flex-wrap: wrap;
-}
-
-.btn {
-  font-family: inherit;
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink);
-  background: var(--bezel-hi);
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
-  padding: 0.55rem 0.9rem;
-  cursor: pointer;
-}
-
-/* Touch devices latch :hover after a tap, which would leave a button stuck in
-   its hover colours, so only devices with a real pointer get hover styling. */
-@media (hover: hover) {
-  .btn:hover:not(:disabled) {
-    background: var(--panel);
-  }
-
-  /* Matches the specificity above, so the primary button keeps a background
-     its cream text can be read against. */
-  .btn--primary:hover:not(:disabled) {
-    background: #a8391a;
-  }
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.btn--primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--panel);
-}
-
-.btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .meter-fill,
-  .meter-needle {
-    transition: none;
-  }
-}
-
-/* ─── Audience view at arm's length ─────────────────────────────────────
-   The type scale above was drawn for the host's 640px faceplate on an iPad.
-   The audience reads the same markup on a phone held at arm's length, where
-   it came out roughly half the size it should be. Everything here is scaled
-   for that, and the 16:9 lock is dropped: at this size the frame has to grow
-   with its content instead of squashing it.                              */
-
-body:not(.host) {
-  padding: 1.25rem 1rem;
-}
-
-body:not(.host) .frame {
-  aspect-ratio: auto;
-  max-width: 560px;
-  padding: 18px;
-  border-radius: 26px;
-}
-
-body:not(.host) .panel {
-  padding: 1.15rem 1.1rem;
-  border-radius: 14px;
-}
-
-body:not(.host) .eyebrow {
-  font-size: 1rem;
-}
-
-body:not(.host) #question {
-  font-size: clamp(0.85rem, 3.3vw, 1.05rem);
-  margin: 0.7rem 0 0.9rem;
-}
-
-/* Each option becomes two rows: the answer and its share on top, the bar
-   across the full width beneath. At this size a side-by-side label column
-   would be about seven characters wide. */
-body:not(.host) .meter--vote {
+.meter--vote {
   grid-template-columns: auto 1fr auto;
   grid-template-areas:
     "tick label pct"
     "tick track track";
-  gap: 0.3rem 0.65rem;
-  padding: 0.25rem 0.15rem;
-  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  min-height: var(--control-h-lg);
+  padding: var(--space-1) 0;
 }
 
-body:not(.host) .tick {
+.meter--vote .tick {
   grid-area: tick;
+}
+.meter--vote .meter-label {
+  grid-area: label;
+}
+.meter--vote .meter-pct {
+  grid-area: pct;
+}
+.meter--vote .meter-track {
+  grid-area: track;
+}
+
+/* Long answers wrap, and a run of characters with no spaces breaks mid-word
+   rather than pushing the panel wider than the screen. */
+.meter--vote .meter-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: var(--leading-tight);
+}
+
+/* The tick box is what says this row is yours to press. */
+.tick {
   width: 1.5rem;
   height: 1.5rem;
-  font-size: 0.9rem;
-  border-width: 2px;
+  border: 2px solid var(--muted);
+  border-radius: var(--radius-pill);
+  display: grid;
+  place-items: center;
+  font-size: var(--text-body);
+  line-height: var(--leading-flat);
+  color: transparent;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease;
 }
 
-body:not(.host) .meter-label {
-  grid-area: label;
-  font-size: 0.86rem;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  /* Long answers wrap rather than being cut off — and a run of characters
-     with no spaces in it breaks mid-word rather than pushing the panel
-     wider than the screen. */
-  white-space: normal;
-  overflow: hidden;
-  text-overflow: clip;
+.tick::after {
+  content: "✓";
+}
+
+/* Marked throughout — your pick stays findable after the reveal, when
+   correctness takes over the bar's colour. */
+.meter.is-mine .tick {
+  border-color: var(--vote);
+  background: var(--vote);
+  color: var(--panel);
+}
+
+.meter--vote:disabled:not(.is-mine) .tick {
+  opacity: 0.4;
+}
+
+/* ─── Status badge ─────────────────────────────────────────────────────
+   The second and last place uppercase survives.                           */
+
+.badge {
+  font-size: var(--text-micro);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  padding: var(--space-1) var(--space-2);
+  white-space: nowrap;
+}
+
+.badge[data-state="pending"] {
+  color: var(--muted);
+  border-color: var(--muted);
+}
+
+.badge[data-state="live"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.badge[data-state="warn"],
+.badge[data-state="error"] {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* ─── Footer ───────────────────────────────────────────────────────────
+   The second of the three dividers.                                       */
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.foot .note {
+  margin: 0;
+  font-size: var(--text-label);
+  color: var(--muted);
+}
+
+/* The audience address is the one thing on the host screen someone reads out
+   or copies, so it gets weight the surrounding note doesn't. */
+.foot .note b {
+  color: var(--ink);
+  font-weight: 700;
   overflow-wrap: anywhere;
-  line-height: 1.25;
 }
 
-body:not(.host) .meter-track {
-  grid-area: track;
-  height: 13px;
-  border-radius: 7px;
+/* The last few seconds, so a glance is enough. */
+.note.is-urgent {
+  color: var(--wrong);
+  font-weight: 700;
 }
 
-body:not(.host) .meter-fill,
-body:not(.host) .meter-needle {
-  border-radius: 9px;
+/* ─── Host account ─────────────────────────────────────────────────────── */
+
+.hostbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
-body:not(.host) .meter-needle {
-  width: 3px;
-  top: -4px;
-  bottom: -4px;
+.hostbar-who {
+  font-size: var(--text-label);
+  color: var(--muted);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-body:not(.host) .meter-pct {
-  grid-area: pct;
-  font-size: 0.86rem;
+.hostbar-who.is-error {
+  color: var(--wrong);
+  font-weight: 600;
 }
 
-body:not(.host) #options {
-  gap: 0.55rem;
-}
+/* ─── Survey picker ────────────────────────────────────────────────────
+   Sits above the form because it's the context for everything below it: the
+   question being added belongs to whichever survey is named here. Separated
+   by space rather than a rule.                                            */
 
-body:not(.host) .panel-message {
-  font-size: 1.05rem;
-  line-height: 1.45;
-}
-
-body:not(.host) .foot {
-  margin-top: 1rem;
-  padding-top: 0.75rem;
-}
-
-body:not(.host) .foot .note {
-  font-size: 0.9rem;
-}
-
-body:not(.host) .badge {
-  font-size: 0.82rem;
-  padding: 0.25rem 0.6rem;
-}
-
-/* ─── Portrait phone ────────────────────────────────────────────────────
-   Where the audience actually reads this. A phone in portrait is tall and
-   narrow, so the panel fills the screen instead of floating in the middle
-   of it, and the bezel thins to give the content back its width.        */
-
-@media (max-width: 700px) {
-  body:not(.host) {
-    /* Stretch, so the faceplate fills the height rather than sitting as a
-       short card in a tall dark surround. */
-    align-items: stretch;
-
-    /* iOS Safari's address bar collapses as you scroll, which makes 100vh
-       taller than what you can actually see — the footer ends up behind the
-       bar. dvh tracks the visible viewport; vh stays as the fallback. */
-    min-height: 100vh;
-    min-height: 100dvh;
-
-    /* Keep clear of the notch and the home indicator. */
-    padding:
-      max(0.5rem, env(safe-area-inset-top))
-      max(0.5rem, env(safe-area-inset-right))
-      max(0.5rem, env(safe-area-inset-bottom))
-      max(0.5rem, env(safe-area-inset-left));
-  }
-
-  body:not(.host) .frame {
-    max-width: none;
-    padding: 9px;
-    border-radius: 22px;
-  }
-
-  body:not(.host) .panel {
-    padding: 1.4rem 1.15rem;
-  }
-}
-
-/* ─── VOTR mark ─────────────────────────────────────────────────────────
-   Rising bars, the same motif the results are drawn with. Inline SVG rather
-   than an image file: it stays crisp at any size and needs no extra
-   request.                                                              */
-
-/* Sized by height so the wordmark's own proportions set its width. */
-.logo {
-  height: 2.2rem;
-  width: auto;
-  display: block;
-}
-
-/* On the audience page the mark is the header rather than a corner badge,
-   so it takes the panel's width. The wordmark is roughly 3:1, which is what
-   caps it here: a phone panel is about 330px across, and anything taller
-   would run off the side. */
-body:not(.host) .top-row {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-body:not(.host) .logo {
-  height: auto;
-  width: min(100%, 225px);
-}
-
-/* ─── Survey picker ────────────────────────────────────────────────────── */
-
-/* Sits above the form because it's the context for everything below it: the
-   question being added belongs to whichever survey is named here. */
 .deckbar {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.6rem 0.9rem;
-  margin-bottom: 0.9rem;
-  padding-bottom: 0.9rem;
-  border-bottom: 1px solid var(--hairline);
+  gap: var(--space-3);
+  margin: var(--space-5) 0 var(--space-6);
 }
 
 .deckbar-pick {
@@ -826,19 +602,209 @@ body:not(.host) .logo {
 .deckbtns {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-2);
 }
 
-/* ─── Event settings: language and time limit ──────────────────────────── */
+/* ─── The question form ────────────────────────────────────────────────── */
 
-/* Both belong to the event rather than to a question, so they sit together
-   below the question list rather than inside the form. */
+.setup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.setup.is-locked {
+  opacity: 0.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field-label {
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Text you are composing wants to be larger than text you are scanning. */
+.setup input,
+.setup textarea,
+.field--pick select,
+.ask-card input {
+  font-family: inherit;
+  font-size: var(--text-lead);
+  line-height: var(--leading-body);
+  color: var(--ink);
+  background: var(--bezel-hi);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  padding: 0 var(--space-3);
+  min-height: var(--control-h);
+  width: 100%;
+}
+
+.setup textarea {
+  padding: var(--space-2) var(--space-3);
+  resize: vertical;
+}
+
+.field--pick select:disabled {
+  opacity: 0.5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ─── Character counts ─────────────────────────────────────────────────
+   Ink until it's a problem, then red. The accent was used for "getting
+   close", which is the colour the rest of the interface uses for ordinary
+   emphasis — so a warning read as decoration.                             */
+
+.counted {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.charcount,
+.charchip {
+  font-size: var(--text-micro);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.charcount.is-over,
+.charchip.is-over {
+  color: var(--wrong);
+  font-weight: 700;
+}
+
+/* One count per answer, in the order they're typed. */
+.charlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-1);
+}
+
+/* Sits directly above the button that was pressed — the status badge is in
+   the footer, which is exactly where a refusal goes unseen. */
+.form-error {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--wrong);
+  overflow-wrap: anywhere;
+}
+
+/* ─── Marking the right answer ─────────────────────────────────────────── */
+
+.correct-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.correct-choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-control);
+  font-size: var(--text-body);
+  min-width: 0;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.correct-choice.is-picked {
+  background: var(--bezel-hi);
+  color: var(--right);
+  font-weight: 600;
+}
+
+.correct-choice input {
+  accent-color: var(--right);
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+
+/* ─── Question list ────────────────────────────────────────────────────
+   Grouped by tone and space; the rows are cards, so they need no rule
+   above them.                                                             */
+
+.qlist {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.qitem {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  background: var(--bezel-hi);
+}
+
+.qitem.is-editing {
+  outline: 2px solid var(--accent);
+}
+
+.qnum {
+  font-size: var(--text-micro);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 1.4em;
+}
+
+.qtext {
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.qtext small {
+  display: block;
+  margin-top: var(--space-1);
+  font-size: var(--text-label);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.qbtns {
+  display: flex;
+  gap: var(--space-1);
+}
+
+/* ─── Event settings ───────────────────────────────────────────────────
+   The third and last divider: it separates the questions from the settings
+   that apply to all of them.                                              */
+
 .settings {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.9rem 1.4rem;
-  margin-top: 1rem;
-  padding-top: 0.9rem;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--hairline);
 }
 
@@ -848,206 +814,41 @@ body:not(.host) .logo {
   min-width: 0;
 }
 
-.field--pick select {
-  /* Match the column rather than the longest option, so the two pickers line
-     up and neither pushes the other out of the panel. */
-  width: 100%;
-  font-family: inherit;
-  font-size: 0.85rem;
-  color: var(--ink);
-  background: var(--bezel-hi);
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
-  padding: 0.55rem 0.7rem;
-  /* Comfortable to hit on a touchscreen. */
-  min-height: 2.4rem;
-}
+/* ─── Run controls ─────────────────────────────────────────────────────── */
 
-.field--pick select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.field--pick select:disabled {
-  opacity: 0.5;
-}
-
-/* ─── Host at a comfortable reading size ────────────────────────────────
-   The host screen was drawn dense, on the assumption of one person reading
-   it up close. That assumption fails for anyone whose eyes aren't what they
-   were, and a host squinting at a control panel in front of a room is worse
-   than a slightly fuller screen. Everything here is half again as large.
-
-   Scoped to body.host so none of it reaches the audience page, which has
-   its own sizes and was just made smaller.                              */
-
-body.host .eyebrow,
-body.host .tab,
-body.host .field-label,
-body.host .qtext small,
-body.host .foot .note {
-  font-size: 0.9rem;
-}
-
-body.host h1 {
-  font-size: clamp(1.4rem, 3.6vw, 1.9rem);
-  margin: 0.7rem 0 1rem;
-}
-
-body.host .meter-label {
-  font-size: 1rem;
-}
-
-body.host .meter-pct {
-  font-size: 1.08rem;
-}
-
-body.host .meter-track {
-  height: 14px;
-  border-radius: 7px;
-}
-
-body.host .qnum {
-  font-size: 1.02rem;
-}
-
-body.host .qtext,
-body.host .correct-choice {
-  font-size: 1.17rem;
-}
-
-body.host .panel-message {
-  font-size: 1.08rem;
-}
-
-body.host .setup input,
-body.host .setup textarea,
-body.host .field--pick select {
-  font-size: 1.28rem;
-}
-
-body.host .btn {
-  font-size: 0.93rem;
-  padding: 0.7rem 1.1rem;
-}
-
-body.host .counter {
-  font-size: 1.05rem;
-}
-
-body.host .badge {
-  font-size: 0.87rem;
-  padding: 0.2rem 0.55rem;
-}
-
-/* Targets grow with the text — a bigger label above a small button helps
-   nobody. */
-body.host .iconbtn {
-  font-size: 1.28rem;
-  min-width: 2.6rem;
-  min-height: 2.6rem;
-}
-
-body.host .correct-choice {
-  min-height: 2.6rem;
-}
-
-/* More type needs more room before it starts wrapping awkwardly. */
-.frame--host {
-  max-width: 640px;
-}
-
-/* ─── Host account ─────────────────────────────────────────────────────── */
-
-.hostbar {
+.runbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 0.8rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--hairline);
+  gap: var(--space-2);
+  margin-top: var(--space-5);
 }
 
-.hostbar-who {
-  font-size: 0.85rem;
+.counter {
+  font-size: var(--text-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
   color: var(--muted);
-  letter-spacing: 0.01em;
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
-.hostbar-who.is-error {
-  color: var(--wrong);
-  font-weight: 600;
+/* The destructive controls sit in their own row, below the one that moves
+   the event on. */
+#view-run .actions {
+  margin-top: var(--space-3);
 }
 
-/* ─── Character counts ─────────────────────────────────────────────────── */
-
-.counted {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-/* Ink until it's a problem, then red. The accent was used for "getting
-   close", which is the colour the rest of the interface uses for ordinary
-   emphasis — so a warning read as decoration. */
-.charcount {
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.charcount.is-over {
-  color: var(--wrong);
-  font-weight: 700;
-}
-
-/* One count per answer, in the order they're typed. */
-.charlist {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 0.7rem;
-  margin-top: 0.35rem;
-}
-
-.charchip {
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-.charchip.is-over {
-  color: var(--wrong);
-  font-weight: 700;
-}
-
-/* Sits directly above the button that was pressed — the status badge is in
-   the footer, which is exactly where a refusal goes unseen. */
-.form-error {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--wrong);
-  overflow-wrap: anywhere;
-}
-
-/* ─── Waiting for the next question ─────────────────────────────────────
+/* ─── Waiting for the next question ────────────────────────────────────
    A phone sits on this while the speaker is talking, so it should look
    deliberate rather than blank. The glass is the wordmark's own, with its
-   bars breathing gently.                                                 */
+   bars breathing gently.                                                  */
 
 .waiting {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.1rem;
-  padding: 1.75rem 0;
+  gap: var(--space-5);
+  padding: var(--space-6) 0;
   text-align: center;
 }
 
@@ -1067,32 +868,23 @@ body.host .correct-choice {
   animation: waiting-breathe 2.4s ease-in-out infinite;
 }
 
-.waiting-bar--b { animation-delay: 0.3s; }
-.waiting-bar--c { animation-delay: 0.6s; }
+.waiting-bar--b {
+  animation-delay: 0.3s;
+}
+.waiting-bar--c {
+  animation-delay: 0.6s;
+}
 
 @keyframes waiting-breathe {
-  0%, 100% { transform: scaleY(0.55); opacity: 0.65; }
-  50% { transform: scaleY(1); opacity: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .waiting-bar {
-    animation: none;
+  0%,
+  100% {
+    transform: scaleY(0.55);
+    opacity: 0.65;
   }
-}
-
-/* The audience address is the one thing on the host screen someone will read
-   out or copy, so it gets weight the surrounding note doesn't. */
-.foot .note b {
-  color: var(--ink);
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-/* The last few seconds, so a glance is enough. */
-.note.is-urgent {
-  color: var(--wrong);
-  font-weight: 700;
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
 }
 
 /* ─── Overlays: the QR code, and asking for a name ─────────────────────── */
@@ -1104,7 +896,7 @@ body.host .correct-choice {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: var(--space-5);
   background: rgba(15, 14, 12, 0.82);
 }
 
@@ -1117,10 +909,10 @@ body.host .correct-choice {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-4);
   max-width: min(90vw, 460px);
-  padding: 1.4rem;
-  border-radius: 16px;
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
   background: var(--panel);
 }
 
@@ -1131,27 +923,11 @@ body.host .correct-choice {
 
 .ask-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-lead);
   font-weight: 700;
-  line-height: 1.35;
+  line-height: var(--leading-tight);
   color: var(--ink);
   overflow-wrap: anywhere;
-}
-
-.ask-card input {
-  font-family: inherit;
-  font-size: 1.05rem;
-  color: var(--ink);
-  background: var(--bezel-hi);
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
-  padding: 0.6rem 0.7rem;
-  width: 100%;
-}
-
-.ask-card input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
 }
 
 /* A confirmation has nothing to type into. */
@@ -1165,23 +941,93 @@ body.host .correct-choice {
   display: block;
   width: min(70vw, 340px);
   height: auto;
-  border-radius: 6px;
+  border-radius: var(--radius-control);
 }
 
 .qr-url {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--ink);
   text-align: center;
   overflow-wrap: anywhere;
 }
 
-/* ─── Running an older copy than the page ──────────────────────────────── */
+/* ─── The audience page ────────────────────────────────────────────────
+   Not a resized host page — a different arrangement of the same parts. The
+   mark is the header rather than a corner badge, the question fills the
+   panel, and the frame grows with its content.                            */
 
-/* Only ever seen when the freshness check in the page has already tried a
+body.audience .panel {
+  justify-content: center;
+}
+
+body.audience .top-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* The wordmark is roughly 3:1, which is what caps it: a phone panel is about
+   330px across, and anything taller would run off the side. */
+.logo--banner {
+  height: auto;
+  width: min(100%, 225px);
+}
+
+#options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+body.audience #options {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ─── Portrait phone ───────────────────────────────────────────────────
+   Where the audience actually reads this. A phone in portrait is tall and
+   narrow, so the panel fills the screen instead of floating in the middle of
+   it, and the bezel thins to give the content back its width.             */
+
+@media (max-width: 700px) {
+  body.audience {
+    align-items: stretch;
+
+    /* iOS Safari's address bar collapses as you scroll, which makes 100vh
+       taller than what you can actually see — the footer ends up behind the
+       bar. dvh tracks the visible viewport; vh stays as the fallback. */
+    min-height: 100vh;
+    min-height: 100dvh;
+
+    /* Keep clear of the notch and the home indicator. */
+    padding:
+      max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-2), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-2), env(safe-area-inset-left));
+  }
+
+  body.audience {
+    --frame-pad: 9px;
+    --frame-radius: 22px;
+  }
+
+  body.audience .frame {
+    max-width: none;
+  }
+
+  .panel {
+    padding: var(--space-4);
+  }
+}
+
+/* ─── Running an older copy than the page ──────────────────────────────
+   Only ever seen when the freshness check in the page has already tried a
    refetch and the old script is still what's being served. It has to be
-   legible against whatever is behind it, hence its own colours. */
+   legible against whatever is behind it, hence its own colours.           */
+
 .stale {
   position: fixed;
   left: 0;
@@ -1189,11 +1035,35 @@ body.host .correct-choice {
   bottom: 0;
   z-index: 20;
   margin: 0;
-  padding: 0.9rem 1.1rem calc(0.9rem + env(safe-area-inset-bottom));
+  padding: var(--space-3) var(--space-4)
+    calc(var(--space-3) + env(safe-area-inset-bottom));
   background: var(--wrong);
   color: #fff;
   font-family: inherit;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
   text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter-fill,
+  .meter-needle {
+    transition: none;
+  }
+
+  .waiting-bar {
+    animation: none;
+  }
+}
+
+/* Four 44px targets and the question text don't fit one line on a phone. */
+@media (max-width: 560px) {
+  .qitem {
+    grid-template-columns: auto 1fr;
+  }
+
+  .qbtns {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
 }
