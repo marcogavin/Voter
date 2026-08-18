@@ -804,6 +804,31 @@ body:not(.host) .logo {
   width: min(100%, 225px);
 }
 
+/* ─── Survey picker ────────────────────────────────────────────────────── */
+
+/* Sits above the form because it's the context for everything below it: the
+   question being added belongs to whichever survey is named here. */
+.deckbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem 0.9rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.deckbar-pick {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.deckbtns {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 /* ─── Event settings: language and time limit ──────────────────────────── */
 
 /* Both belong to the event rather than to a question, so they sit together
@@ -1070,7 +1095,7 @@ body.host .correct-choice {
   font-weight: 700;
 }
 
-/* ─── QR overlay ───────────────────────────────────────────────────────── */
+/* ─── Overlays: the QR code, and asking for a name ─────────────────────── */
 
 .overlay {
   position: fixed;
@@ -1087,7 +1112,8 @@ body.host .correct-choice {
   display: none;
 }
 
-.qr-card {
+.qr-card,
+.ask-card {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1096,6 +1122,41 @@ body.host .correct-choice {
   padding: 1.4rem;
   border-radius: 16px;
   background: var(--panel);
+}
+
+.ask-card {
+  align-items: stretch;
+  width: min(90vw, 420px);
+}
+
+.ask-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ask-card input {
+  font-family: inherit;
+  font-size: 1.05rem;
+  color: var(--ink);
+  background: var(--bezel-hi);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 0.6rem 0.7rem;
+  width: 100%;
+}
+
+.ask-card input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* A confirmation has nothing to type into. */
+.ask-card input[hidden] {
+  display: none;
 }
 
 /* White behind the code rather than the panel's cream: scanners cope with

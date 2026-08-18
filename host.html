@@ -30,6 +30,18 @@
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
+        <div class="deckbar">
+          <label class="field field--pick deckbar-pick">
+            <span class="field-label" data-i18n="survey">Survey</span>
+            <select id="deck"></select>
+          </label>
+          <div class="deckbtns">
+            <button type="button" class="btn" id="deck-new" data-i18n="newSurvey">New survey</button>
+            <button type="button" class="iconbtn" id="deck-rename">✎</button>
+            <button type="button" class="iconbtn" id="deck-delete">✕</button>
+          </div>
+        </div>
+
         <form id="editor" class="setup">
           <label class="field">
             <span class="counted">
@@ -75,6 +87,7 @@
 
       <!-- ── Run: drive the event ────────────────────────────────────────── -->
       <section id="view-run" hidden>
+        <p class="eyebrow" id="run-deck"></p>
         <h1 id="run-question">Nothing on screen</h1>
         <div id="options"></div>
 
@@ -96,6 +109,19 @@
         <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
       </div>
     </div>
+  </div>
+
+  <!-- Naming a survey and confirming a delete. A native prompt() would do the
+       job, but it arrives in the browser's language and its own styling. -->
+  <div class="overlay" id="ask-overlay" hidden>
+    <form class="ask-card" id="ask-form">
+      <p class="ask-title" id="ask-title"></p>
+      <input type="text" id="ask-input" maxlength="60" autocomplete="off">
+      <div class="actions">
+        <button type="submit" class="btn btn--primary" id="ask-ok">OK</button>
+        <button type="button" class="btn" id="ask-cancel" data-i18n="cancel">Cancel</button>
+      </div>
+    </form>
   </div>
 
   <div class="overlay" id="qr-overlay" hidden>

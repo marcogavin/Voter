@@ -19,10 +19,28 @@ different jobs:
   cast survive an edit unless you change the options themselves, since a vote
   belongs to a specific option.
 - **Run** — one question on screen, live results, and the controls to move
-  through the set. Every attendee's phone follows whatever you have up.
+  through the survey. Every attendee's phone follows whatever you have up.
+
+### Surveys
+
+Questions are kept in named **surveys**, so a set written for one talk stays
+intact when you write the next. The picker at the top of Setup chooses which
+one you're editing, and **New survey**, ✎ and ✕ beside it add, rename and
+delete. Up to 20.
+
+One survey is live at a time — the one named in the picker is both the one you
+edit and the one the room sees, and Run shows its name above the question. That
+means switching survey switches what's on screen, so it asks first if a question
+is up.
+
+Each survey keeps its own votes. Running one doesn't disturb the results of
+another, and deleting a survey deletes its votes with it.
+
+Questions written before surveys existed become your first survey automatically,
+with their votes. Nothing needs moving by hand.
 
 Setup also holds the **Language** and **Time limit** pickers. Both belong to the
-event rather than to a device: the language applies to the host screen *and*
+event as a whole rather than to a survey or a device: the language applies to the host screen *and*
 every attendee's phone, because the room should read one language rather than
 each person hunting for a setting. Available in English, Portuguese, Spanish,
 French and German.
@@ -113,8 +131,8 @@ They enforce:
 - an attendee can add their own vote **once**, and can't change it afterwards
 - vote counters only move up by one at a time — nobody can set them to 900
 - no votes at all once the answer has been revealed
-- questions and option labels are writable **only by the device that created
-  the event**
+- surveys, questions and option labels are writable **only by the account that
+  owns the event**
 
 Check them with the **Rules Playground** tab before a real event.
 
@@ -135,18 +153,20 @@ https://<username>.github.io/Voter/host.html ← you
 
 ## Running an event
 
-**Beforehand**, in **Setup**: add each question with its options, one per line.
-Reorder with the arrows, fix wording with ✎, remove with ✕.
+**Beforehand**, in **Setup**: pick or create the survey, then add each question
+with its options, one per line. Reorder with the arrows, fix wording with ✎,
+remove with ✕.
 
 **On the day:**
 
-1. Open `host.html` and switch to **Run**
-2. Share the audience URL — a QR code on a slide works well
+1. Open `host.html`, check the survey named at the top of Setup, and switch to
+   **Run**
+2. Share the audience URL — the **QR code** button puts it on screen
 3. **Start** puts the first question up; every phone follows within about a second
 4. Move through with **Prev** / **Next**
 5. **Hide screen** blanks every phone while keeping your place, for talking
    between questions. **Show screen** brings it back
-6. **Start over** takes the question down and returns to the top of the set.
+6. **Start over** takes the question down and returns to the top of the survey.
    Votes are kept — use **Reset votes** to clear a question's results
 
 **Reset votes** clears the current question only, so you can re-run one without
@@ -165,7 +185,9 @@ To hand the event to a different account, delete the `ownerUid` field under
 `events/live` in the console's **Data** tab. The next signed-in account to save
 claims it; questions and votes are untouched.
 
-To run a second independent event, change `EVENT_ID` in `js/firebase-config.js`.
+For a second set of questions, add a survey rather than a second event. Change
+`EVENT_ID` in `js/firebase-config.js` only to run two rooms *at the same time* —
+separate audiences, separate URLs, voting simultaneously.
 
 ## Limits worth knowing
 

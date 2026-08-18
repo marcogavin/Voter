@@ -23,10 +23,16 @@ import {
   signOutHost,
   saveLanguage,
   saveSeconds,
+  newDeck,
+  renameDeck,
+  deleteDeck,
+  setCurrentDeck,
   resetVotes,
   resetAllVotes,
   getUid,
   serverNow,
+  DECK_MAX,
+  TITLE_MAX,
 } from "./sync.js";
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
@@ -44,6 +50,11 @@ const els = {
   viewSetup: document.getElementById("view-setup"),
   viewRun: document.getElementById("view-run"),
 
+  deck: document.getElementById("deck"),
+  deckNew: document.getElementById("deck-new"),
+  deckRename: document.getElementById("deck-rename"),
+  deckDelete: document.getElementById("deck-delete"),
+
   editor: document.getElementById("editor"),
   editorLabel: document.getElementById("editor-label"),
   questionInput: document.getElementById("question-input"),
@@ -59,6 +70,7 @@ const els = {
   language: document.getElementById("language"),
   seconds: document.getElementById("seconds"),
 
+  runDeck: document.getElementById("run-deck"),
   runQuestion: document.getElementById("run-question"),
   options: document.getElementById("options"),
   prev: document.getElementById("prev"),
@@ -72,6 +84,13 @@ const els = {
   account: document.getElementById("account"),
   signin: document.getElementById("signin"),
   signout: document.getElementById("signout"),
+  askOverlay: document.getElementById("ask-overlay"),
+  askForm: document.getElementById("ask-form"),
+  askTitle: document.getElementById("ask-title"),
+  askInput: document.getElementById("ask-input"),
+  askOk: document.getElementById("ask-ok"),
+  askCancel: document.getElementById("ask-cancel"),
+
   qr: document.getElementById("qr"),
   qrOverlay: document.getElementById("qr-overlay"),
   qrArt: document.getElementById("qr-art"),
@@ -91,7 +110,12 @@ let seconds = 0; // how long a question stays open; 0 for no limit
 let secondsMenu = null; // signature of what the duration picker currently offers
 let ticker = null;
 
-let questions = []; // local mirror, in running order
+let decks = []; // every saved survey: { id, title, count }
+let currentDeck = null; // the one being edited here and presented to the room
+let deckMenu = null; // signature of what the survey picker currently offers
+let askResolve = null; // settles the promise the ask overlay is standing in for
+
+let questions = []; // the live survey's questions, in running order
 let currentIndex = -1;
 let revealed = false;
 let blanked = false;
@@ -148,6 +172,17 @@ function wireUp() {
 
   els.tabSetup.addEventListener("click", () => showView("setup"));
   els.tabRun.addEventListener("click", () => showView("run"));
+
+  els.deck.addEventListener("change", onDeckChange);
+  els.deckNew.addEventListener("click", onDeckNew);
+  els.deckRename.addEventListener("click", onDeckRename);
+  els.deckDelete.addEventListener("click", onDeckDelete);
+
+  els.askForm.addEventListener("submit", onAskSubmit);
+  els.askCancel.addEventListener("click", () => closeAsk(null));
+  els.askOverlay.addEventListener("click", (event) => {
+    if (event.target === els.askOverlay) closeAsk(null);
+  });
 
   els.editor.addEventListener("submit", onSubmit);
   els.cancel.addEventListener("click", stopEditing);
@@ -272,6 +307,15 @@ function onCorrectChange(changeEvent) {
 
 function render(event) {
   questions = event.questions;
+  decks = event.decks;
+
+  // A half-written question belongs to the survey it was started in, and its
+  // index means something different in the one being switched to. Acted on
+  // below, once the language and ownership this render is drawing with settle.
+  const switchedDeck = event.currentDeck !== currentDeck;
+  currentDeck = event.currentDeck;
+  if (switchedDeck) shownQuestionId = null;
+
   currentIndex = event.currentIndex;
   revealed = event.revealed;
   blanked = event.blanked;
@@ -310,6 +354,16 @@ function render(event) {
   els.seconds.value = String(seconds);
   els.seconds.disabled = !isOwner;
 
+  fillDecks();
+  els.deck.value = currentDeck;
+  els.deck.disabled = !isOwner;
+  els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
+  els.deckRename.disabled = !isOwner;
+  // An event always keeps one survey; there'd be nothing to fall back to.
+  els.deckDelete.disabled = !isOwner || decks.length < 2;
+  nameButton(els.deckRename, t("renameSurvey"));
+  nameButton(els.deckDelete, t("deleteSurvey"));
+
   if (isOwner) {
     els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });
     const slot = els.hint.querySelector("b");
@@ -324,8 +378,9 @@ function render(event) {
   }
 
   // The question being edited can disappear under us — another device could
-  // delete it, or this one could while the save is still in flight.
-  if (editingIndex !== null && editingIndex >= questions.length) {
+  // delete it, or this one could while the save is still in flight. Switching
+  // survey does the same thing to it, less visibly.
+  if (switchedDeck || (editingIndex !== null && editingIndex >= questions.length)) {
     stopEditing();
   }
 
@@ -367,6 +422,10 @@ function drawList() {
 
 function drawRun() {
   const question = questions[currentIndex] ?? null;
+
+  // Which survey is being presented, so a host running several in one session
+  // can tell at a glance rather than by recognising the questions.
+  els.runDeck.textContent = deckTitle(liveDeck());
 
   els.counter.textContent = questions.length
     ? `${question ? currentIndex + 1 : "—"} / ${questions.length}`
@@ -462,6 +521,178 @@ function drawRun() {
     ? t("screenHiddenNote")
     : (total === 1 ? t("voteCountOne") : t("voteCount", { n: total })) +
       (revealed ? t("votingClosedSuffix") : "");
+}
+
+/* ── Surveys ───────────────────────────────────────────────────────────── */
+
+/**
+ * The picker carries the question count as well as the name, because the one
+ * thing you want to know before switching is whether you're switching to the
+ * survey you actually wrote.
+ */
+function fillDecks() {
+  const signature =
+    getLanguage() +
+    ":" +
+    decks.map((deck) => `${deck.id}|${deck.title}|${deck.count}`).join(",");
+
+  // Same reason as the duration picker: render() runs on every vote, and
+  // rebuilding a <select> closes it under whoever is choosing.
+  if (signature === deckMenu) return;
+  deckMenu = signature;
+
+  els.deck.innerHTML = "";
+  for (const deck of decks) {
+    const option = document.createElement("option");
+    option.value = deck.id;
+    option.textContent = `${deckTitle(deck)} · ${t("questionsCount", {
+      n: deck.count,
+    })}`;
+    els.deck.appendChild(option);
+  }
+}
+
+/** Falls back to the survey's position, so an unnamed one is still findable. */
+function deckTitle(deck) {
+  if (!deck) return "";
+  const index = decks.findIndex((other) => other.id === deck.id);
+  return deck.title || t("surveyN", { n: index + 1 });
+}
+
+function liveDeck() {
+  return decks.find((deck) => deck.id === currentDeck) ?? null;
+}
+
+async function onDeckChange(changeEvent) {
+  const id = changeEvent.target.value;
+  if (id === currentDeck) return;
+
+  // Switching moves the whole room, so it shouldn't be something a stray tap
+  // in Setup does while a question is up in front of an audience.
+  if (currentIndex >= 0 && !(await ask({ title: t("switchSurveyWarn") }))) {
+    els.deck.value = currentDeck;
+    return;
+  }
+
+  try {
+    await setCurrentDeck(id);
+    setStatus("switched", "live");
+  } catch (error) {
+    els.deck.value = currentDeck;
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+async function onDeckNew() {
+  if (decks.length >= DECK_MAX) return;
+
+  const title = await ask({
+    title: t("nameSurvey"),
+    value: t("surveyN", { n: decks.length + 1 }),
+  });
+  if (title === null) return;
+
+  try {
+    await newDeck(
+      title.slice(0, TITLE_MAX),
+      decks.map((deck) => deck.id),
+    );
+    setStatus("added", "live");
+  } catch (error) {
+    setStatus("refused", "error");
+    els.hint.textContent = `Database refused the write: ${error.message}`;
+    console.error(error);
+  }
+}
+
+async function onDeckRename() {
+  const deck = liveDeck();
+  if (!deck) return;
+
+  const title = await ask({ title: t("nameSurvey"), value: deckTitle(deck) });
+  if (title === null) return;
+
+  try {
+    await renameDeck(deck.id, title.slice(0, TITLE_MAX));
+    setStatus("saved", "live");
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+async function onDeckDelete() {
+  const deck = liveDeck();
+  if (!deck || decks.length < 2) return;
+
+  const confirmed = await ask({
+    title: t("deleteSurveyWarn", { title: deckTitle(deck), n: deck.count }),
+    ok: t("delete"),
+  });
+  if (!confirmed) return;
+
+  try {
+    await deleteDeck(
+      deck.id,
+      decks.map((other) => other.id),
+    );
+    setStatus("deleted", "live");
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+/* ── Asking for a name, or for a confirmation ──────────────────────────── */
+
+/**
+ * Stands in for prompt() and confirm(), which arrive in the browser's own
+ * language and styling rather than the room's.
+ *
+ * Resolves with the typed string, or with true for a confirmation, or with
+ * null if it was dismissed. Pass `value` to ask for text; leave it out and
+ * the field is hidden, which is what makes this a confirmation.
+ */
+function ask({ title, value = null, ok = null }) {
+  closeAsk(null); // settle an earlier one rather than leaving it hanging
+
+  els.askTitle.textContent = title;
+  els.askInput.hidden = value === null;
+  els.askInput.value = value ?? "";
+  els.askInput.setAttribute("maxlength", String(TITLE_MAX));
+  els.askOk.textContent = ok ?? t("ok");
+  els.askOverlay.hidden = false;
+
+  if (value !== null) {
+    els.askInput.focus();
+    els.askInput.select();
+  } else {
+    els.askOk.focus();
+  }
+
+  return new Promise((resolve) => {
+    askResolve = resolve;
+  });
+}
+
+function onAskSubmit(submitEvent) {
+  submitEvent.preventDefault();
+
+  if (els.askInput.hidden) return closeAsk(true);
+
+  // An unnamed survey can't be told apart from another unnamed one.
+  const typed = els.askInput.value.trim();
+  if (typed) closeAsk(typed);
+}
+
+function closeAsk(answer) {
+  if (!askResolve) return;
+
+  const resolve = askResolve;
+  askResolve = null;
+  els.askOverlay.hidden = true;
+  resolve(answer);
 }
 
 /* ── Setup actions ─────────────────────────────────────────────────────── */
@@ -804,6 +1035,12 @@ function showView(name) {
 
 function toOption(label) {
   return { label, votes: 0 };
+}
+
+/** Names an icon-only button, for a screen reader and for a long press. */
+function nameButton(element, text) {
+  element.setAttribute("aria-label", text);
+  element.title = text;
 }
 
 /**
