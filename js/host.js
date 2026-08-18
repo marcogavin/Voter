@@ -36,6 +36,7 @@ import {
 } from "./sync.js";
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
+import { drawIcons, icons } from "./icons.js";
 import {
   t,
   setLanguage,
@@ -47,7 +48,7 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["surveys", "timer", "qr"];
+window.VOTR_BUILD = ["surveys", "timer", "qr", "icons"];
 
 const els = {
   tabSetup: document.getElementById("tab-setup"),
@@ -75,7 +76,6 @@ const els = {
   language: document.getElementById("language"),
   seconds: document.getElementById("seconds"),
 
-  runDeck: document.getElementById("run-deck"),
   runQuestion: document.getElementById("run-question"),
   options: document.getElementById("options"),
   prev: document.getElementById("prev"),
@@ -120,6 +120,7 @@ let currentDeck = null; // the one being edited here and presented to the room
 let deckMenu = null; // signature of what the survey picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
+let likes = 0; // applause on the closing screen
 let questions = []; // the live survey's questions, in running order
 let currentIndex = -1;
 let revealed = false;
@@ -209,6 +210,8 @@ function wireUp() {
   els.clear.addEventListener("click", () => go(-1));
   els.blank.addEventListener("click", () => blank(!blanked));
   els.reset.addEventListener("click", onReset);
+
+  drawIcons();
 
   fillLanguages();
   els.language.addEventListener("change", onLanguageChange);
@@ -331,6 +334,7 @@ function render(event) {
   blanked = event.blanked;
   askedAt = event.askedAt;
   seconds = event.seconds;
+  likes = event.likes;
 
   // The language belongs to the event, so a change made on any device
   // re-renders every string here. This has to run before anything below
@@ -433,41 +437,54 @@ function drawList() {
 function drawRun() {
   const question = questions[currentIndex] ?? null;
 
-  // Which survey is being presented, so a host running several in one session
-  // can tell at a glance rather than by recognising the questions.
-  els.runDeck.textContent = deckTitle(liveDeck());
+  // One past the last question is the closing screen rather than nothing at
+  // all: a survey should finish somewhere rather than just stop responding.
+  const atEnd = questions.length > 0 && currentIndex === questions.length;
 
-  els.counter.textContent = questions.length
-    ? `${question ? currentIndex + 1 : "—"} / ${questions.length}`
-    : "—";
+  els.counter.textContent = !questions.length
+    ? "—"
+    : atEnd
+      ? t("theEnd")
+      : `${question ? currentIndex + 1 : "—"} / ${questions.length}`;
 
   // Next does double duty, but only where there's something to reveal:
   // questions with no right answer advance on a single press. And with
   // nothing up yet it isn't a "next" at all — it's what begins the run.
   const willReveal = Boolean(question) && !revealed && Boolean(question.correct);
-  els.next.textContent = !question
-    ? t("start")
-    : willReveal
-      ? t("revealAnswer")
-      : t("next");
+  setLabel(
+    els.next,
+    atEnd ? t("next") : !question ? t("start") : willReveal ? t("revealAnswer") : t("next"),
+  );
 
   els.prev.disabled = !isOwner || currentIndex <= 0;
   els.next.disabled =
-    !isOwner ||
-    !questions.length ||
-    (!willReveal && currentIndex >= questions.length - 1);
+    !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
   // With nothing on screen there's no single question to clear, but wanting a
   // clean slate before running the set again is exactly when this is needed.
-  els.reset.textContent = question ? t("resetVotes") : t("resetAllVotes");
+  setLabel(els.reset, question ? t("resetVotes") : t("resetAllVotes"));
   els.reset.disabled = !isOwner || !questions.length;
-  els.clear.disabled = !isOwner || !question;
+  els.clear.disabled = !isOwner || (!question && !atEnd);
 
   // Blanking only means anything while something is up.
-  els.blank.textContent = blanked ? t("showScreen") : t("hideScreen");
+  setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
+  els.blank.querySelector(".btn-icon").dataset.icon = blanked ? "show" : "hide";
+  drawIcons(els.blank);
   els.blank.classList.toggle("btn--primary", blanked);
-  els.blank.disabled = !isOwner || (!question && !blanked);
+  els.blank.disabled = !isOwner || (!question && !atEnd && !blanked);
+
+  if (atEnd) {
+    shownQuestionId = null;
+    els.runQuestion.textContent = t("likeVotr");
+    // The host watches the applause arrive; only the audience can add to it.
+    els.options.innerHTML =
+      `<p class="tally"><span class="tally-heart" aria-hidden="true"></span>` +
+      `<span class="tally-count">${likes}</span></p>` +
+      `<p class="panel-message">${t("likeHostNote")}</p>`;
+    els.options.querySelector(".tally-heart").innerHTML = icons.heart;
+    return;
+  }
 
   if (!question) {
     shownQuestionId = null;
@@ -668,7 +685,7 @@ function ask({ title, value = null, ok = null }) {
   els.askInput.hidden = value === null;
   els.askInput.value = value ?? "";
   els.askInput.setAttribute("maxlength", String(TITLE_MAX));
-  els.askOk.textContent = ok ?? t("ok");
+  setLabel(els.askOk, ok ?? t("ok"));
   els.askOverlay.hidden = false;
 
   if (value !== null) {
@@ -825,7 +842,7 @@ function drawEditorLabels() {
   els.editorLabel.textContent = adding
     ? t("questionN", { n: questions.length + 1 })
     : t("editingQuestionN", { n: editingIndex + 1 });
-  els.save.textContent = adding ? t("addQuestion") : t("saveChanges");
+  setLabel(els.save, adding ? t("addQuestion") : t("saveChanges"));
   els.cancel.hidden = adding;
 }
 
@@ -879,7 +896,8 @@ async function reveal(show) {
 }
 
 async function go(index) {
-  const target = index < 0 || index >= questions.length ? -1 : index;
+  // questions.length is the closing screen; anything past it is nothing.
+  const target = index < 0 || index > questions.length ? -1 : index;
   try {
     await setCurrentIndex(target);
   } catch (error) {
@@ -1044,6 +1062,16 @@ function showView(name) {
 
 function toOption(label) {
   return { label, votes: 0 };
+}
+
+/**
+ * Writes a control's visible text. Buttons keep their label in a span beside
+ * the icon, so assigning textContent to the button itself would delete the
+ * icon along with the old label.
+ */
+function setLabel(element, text) {
+  const slot = element.querySelector(".btn-label");
+  (slot ?? element).textContent = text;
 }
 
 /** Names an icon-only button, for a screen reader and for a long press. */
