@@ -13,6 +13,7 @@
 //     askedAt:      when the current question went up, on the server's clock,
 //                   so every device counts down from the same instant
 //     seconds:      how long a question stays open, or 0 for no limit
+//     players/      { uid: "Marco" } — who is in the room, by their own name
 //     decks/
 //       d000: { title: "Team offsite", likes: 12, questions/
 //                 q000: { text, correct: "b", options: { a: {label, votes} },
@@ -49,6 +50,9 @@ const FIRST_DECK = "d000";
 export const DECK_MAX = 20;
 
 export const TITLE_MAX = 60;
+
+/** Long enough for a name, short enough for a leaderboard row. */
+export const NAME_MAX = 24;
 
 let database = null; // the Firebase database module namespace
 let authApi = null; // the Firebase auth module namespace
@@ -256,6 +260,9 @@ function normalise(raw) {
     // should behave the way it did rather than suddenly run untimed.
     seconds: typeof raw?.seconds === "number" ? raw.seconds : DEFAULT_SECONDS,
     blanked: raw?.blanked === true,
+    // Everyone in the room, by the name they gave. Readable by every device,
+    // which is what a shared leaderboard needs.
+    players: raw?.players || {},
     lang: typeof raw?.lang === "string" ? raw.lang : "en",
 
     // Only the live survey is unpacked. The rest are named and counted, which
@@ -514,6 +521,16 @@ export function saveSeconds(seconds) {
     seconds,
     askedAt: database.serverTimestamp(),
   });
+}
+
+/**
+ * Records this device's name for the event. Writable only by the device it
+ * belongs to, and re-writable — people mistype their own name on a phone, and
+ * being stuck with it until the event ends would be worse than the risk.
+ */
+export function saveName(name) {
+  requireConnection();
+  return database.update(eventRef, { [`players/${uid}`]: name });
 }
 
 /**

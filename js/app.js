@@ -7,20 +7,23 @@ import {
   onEventChange,
   castVote,
   likeSurvey,
+  saveName,
   getUid,
   serverNow,
+  NAME_MAX,
 } from "./sync.js";
-import { icons } from "./icons.js";
+import { icons, drawIcons } from "./icons.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["surveys", "timer", "ending"];
+window.VOTR_BUILD = ["surveys", "timer", "ending", "names"];
 
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
+const whoamiEl = document.getElementById("whoami");
 const statusEl = document.getElementById("status");
 const noteEl = document.getElementById("note");
 
@@ -28,6 +31,7 @@ let shownQuestionId = null; // so we only rebuild rows when the question changes
 let busy = false; // guards against double-taps while a write is in flight
 let latest = null; // the last event seen, so the ticker can redraw from it
 let ticker = null;
+let renaming = false; // true while someone is changing a name they already gave
 
 start();
 
@@ -67,6 +71,10 @@ async function start() {
   }
 
   setStatus("live", "live");
+  whoamiEl.addEventListener("click", () => {
+    renaming = true;
+    render(latest);
+  });
   onEventChange(render);
 }
 
@@ -83,6 +91,15 @@ function render(event) {
     delete optionsEl.dataset.screen;
   }
   setStatus(statusEl.dataset.key, statusEl.dataset.state);
+
+  // Nobody votes anonymously any more: the name is what puts a person on the
+  // leaderboard, so it is asked for once, before anything else is shown.
+  const myName = event.players[getUid()] ?? null;
+  if (!myName || renaming) {
+    showJoin(myName);
+    return;
+  }
+  drawWhoami(myName);
 
   // Blanked hides the question but keeps the host's place, so this looks the
   // same to the audience as nothing being up at all.
@@ -270,6 +287,77 @@ function showWaiting() {
  * — there is nothing to win, so there is nothing to protect against, and a
  * counter that only goes up is a friendlier ending than a rating out of five.
  */
+/** Shown on every screen but the join one — this phone's own name, changeable. */
+function drawWhoami(name) {
+  whoamiEl.hidden = false;
+  whoamiEl.querySelector(".whoami-name").textContent = name;
+  whoamiEl.setAttribute("aria-label", t("changeName"));
+  drawIcons(whoamiEl);
+}
+
+/**
+ * The first thing anyone sees. Asking before the first question rather than
+ * after it means nobody is half-way through a quiz before finding out their
+ * answers are about to be attributed to them.
+ */
+function showJoin(existing) {
+  whoamiEl.hidden = true;
+  questionEl.hidden = false;
+  questionEl.textContent = t("whatsYourName");
+  questionEl.classList.add("is-centred");
+  noteEl.textContent = "";
+  stopTicking();
+
+  // The rows that were on screen are gone now, so the guard that remembers
+  // them has to go too, or they never come back.
+  shownQuestionId = null;
+
+  if (optionsEl.dataset.screen !== "join") {
+    optionsEl.dataset.screen = "join";
+    optionsEl.innerHTML = `
+      <form class="join" id="join">
+        <input type="text" id="join-name" class="join-name" required
+               maxlength="${NAME_MAX}" autocomplete="name"
+               enterkeyhint="go" aria-label="${t("whatsYourName")}">
+        <button type="submit" class="btn btn--primary btn--wide">
+          <span class="btn-label">${t("join")}</span>
+        </button>
+        <p class="panel-message" id="join-note">${t("joinNote")}</p>
+      </form>
+    `;
+    optionsEl.querySelector("#join").addEventListener("submit", onJoin);
+    const field = optionsEl.querySelector("#join-name");
+    field.value = existing ?? "";
+    field.focus();
+    field.select();
+  }
+}
+
+async function onJoin(submitEvent) {
+  submitEvent.preventDefault();
+
+  const field = optionsEl.querySelector("#join-name");
+  const note = optionsEl.querySelector("#join-note");
+  const name = field.value.trim();
+
+  // A blank name puts a blank row on the leaderboard. Refuse by putting the
+  // cursor back rather than by doing nothing at all.
+  if (!name) return field.focus();
+
+  try {
+    await saveName(name.slice(0, NAME_MAX));
+    renaming = false;
+    // Re-typing the same name is not a change, so no snapshot follows it.
+    // Waiting for one would leave this screen up for good.
+    render(latest);
+  } catch (error) {
+    note.textContent = `${t("joinRefused")} ${error.message}`;
+    note.classList.add("is-error");
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
 function showEnding(count) {
   if (optionsEl.dataset.screen !== "ending") {
     optionsEl.dataset.screen = "ending";
