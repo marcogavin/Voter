@@ -395,12 +395,12 @@ Questions, Settings — so three labels doing the same job look the same. A
 | Signed in as… | A quiet line under the tabs, Setup only |
 | My polls | `.section-title` |
 | Create a new poll / Open an existing poll | Two outline buttons of one size |
-| Which poll is open | A `--text-label` line under them. Not a control |
 | The poll picker | `.overlay--sheet`, one row per poll |
+| Which poll is open | Heads **Questions**, name in ink, rest muted |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
-| Run: Prev / counter / Next | Sticky to the bottom, one rule above it |
-| Run: hide, reset, start over | An even grid, above the sticky bar |
+| Run: count, then Prev / Next | Sticky to the bottom, one rule above it |
+| Run: hide, reset, start over | `.toolbar` — equal cells, icon over label |
 | Writing a question | `.overlay--sheet` — it takes the screen |
 | Footer | A rule of its own |
 
@@ -416,6 +416,23 @@ rule under a bordered control is a line beside a line.
 Question rows are `--surface` with a `--border` outline, which is what separates
 them from the card they sit on. Fields are `--sunken` with no outline at all —
 the fill is what says "type here".
+
+---
+
+### Rows of controls
+
+Two rules, both learned from the same screen looking like an accident:
+
+**A row of things that do the same kind of job is a grid of equal cells**, not
+a flex row that hands each one whatever its label needs. Four buttons of four
+widths, one of them orphaned onto a second line, reads as something that
+happened rather than something that was decided. `grid-auto-flow: column` with
+`grid-auto-columns: 1fr` is the whole fix.
+
+**A label that doesn't fit gets shorter, not smaller.** Under an icon in a
+70px cell there is room for two short words. The sentence the button really
+means goes on `aria-label` and `title`, where it is still said — and still
+read out — without being drawn.
 
 ---
 

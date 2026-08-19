@@ -77,9 +77,11 @@
           </button>
         </div>
 
-        <p class="deckopen" id="deck-open-name"></p>
-
         <h2 class="section-title" data-i18n="questionsSection">Questions</h2>
+
+        <!-- Whose questions these are. It heads the list rather than sitting
+             up with the two buttons, because this is the section it governs. -->
+        <p class="deckopen" id="deck-open-name"></p>
 
         <div class="actions">
           <button type="button" class="btn btn--primary" id="add-question">
@@ -112,20 +114,23 @@
         <h1 id="run-question">Nothing on screen</h1>
         <div id="options" class="choices"></div>
 
-        <div class="actions group">
-          <button type="button" class="btn" id="blank">
+        <!-- Equal cells in one row: three or four things you can do to what
+             is on screen, none of them more important than another. Each
+             carries its full sentence as its accessible name. -->
+        <div class="toolbar">
+          <button type="button" class="btn btn--stack" id="blank">
             <span class="btn-icon" data-icon="hide"></span>
             <span class="btn-label" data-i18n="hideScreen">Hide screen</span>
           </button>
-          <button type="button" class="btn" id="reopen" hidden>
+          <button type="button" class="btn btn--stack" id="reopen" hidden>
             <span class="btn-icon" data-icon="reopen"></span>
             <span class="btn-label" data-i18n="reopenVoting">Reopen voting</span>
           </button>
-          <button type="button" class="btn" id="reset">
+          <button type="button" class="btn btn--stack" id="reset">
             <span class="btn-icon" data-icon="reset"></span>
-            <span class="btn-label" data-i18n="resetVotes">Reset this question’s votes</span>
+            <span class="btn-label" data-i18n="resetVotesShort">Reset votes</span>
           </button>
-          <button type="button" class="btn" id="clear">
+          <button type="button" class="btn btn--stack" id="clear">
             <span class="btn-icon" data-icon="startOver"></span>
             <span class="btn-label" data-i18n="startOver">Start over</span>
           </button>

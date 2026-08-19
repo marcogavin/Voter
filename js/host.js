@@ -507,14 +507,18 @@ function drawRun() {
     !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
-  // One question's votes, and it says so: clearing the whole poll is what
-  // Start over does, and two buttons that both meant "reset" were the reason
-  // it wasn't obvious which one had the wider reach.
+  // Two short labels in a row of equal cells, each carrying its full
+  // sentence as its accessible name — the whole of "Reset this question's
+  // votes" doesn't fit under an icon on a phone, and it is the difference
+  // between this button and Start over beside it.
+  nameButton(els.reset, t("resetVotes"));
+  nameButton(els.clear, t("startOver"));
   els.reset.disabled = !isOwner || !question;
   els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast());
 
   // Blanking only means anything while something is up.
   setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
+  nameButton(els.blank, blanked ? t("showScreen") : t("hideScreen"));
   els.blank.querySelector(".btn-icon").dataset.icon = blanked ? "show" : "hide";
   drawIcons(els.blank);
   els.blank.classList.toggle("btn--primary", blanked);
@@ -619,12 +623,27 @@ function drawRun() {
  * thing you want to know before switching is whether you're switching to the
  * poll you actually wrote.
  */
-/** Which poll is open, under the two buttons that change that. */
+/**
+ * Whose questions are below. The name is the part that identifies the poll,
+ * so it carries the weight; the rest is the same summary the picker shows,
+ * minus the count that the list underneath already makes plain.
+ */
 function drawPolls() {
   const deck = liveDeck();
-  els.deckOpenName.textContent = deck
-    ? `${deckTitle(deck)} · ${describeDeck(deck)}`
-    : "";
+  els.deckOpenName.innerHTML = "";
+  if (!deck) return;
+
+  const name = document.createElement("b");
+  name.textContent = deckTitle(deck);
+  els.deckOpenName.append(name);
+
+  const when = deck.lastRunAt
+    ? t("lastRun", { when: whenText(deck.lastRunAt) })
+    : deck.createdAt
+      ? t("createdOn", { when: whenText(deck.createdAt) })
+      : "";
+  if (when) els.deckOpenName.append(` · ${when}`);
+
   if (!els.pollSheet.hidden) fillPollList();
 }
 
@@ -675,8 +694,10 @@ function fillPollList() {
 /** "3 questions · last run 2 days ago", in as much of it as is known. */
 function describeDeck(deck) {
   const parts = [t("questionsCount", { n: deck.count })];
-  if (deck.lastRunAt) parts.push(t("lastRun", { when: when(deck.lastRunAt) }));
-  else if (deck.createdAt) parts.push(t("createdOn", { when: when(deck.createdAt) }));
+  if (deck.lastRunAt) parts.push(t("lastRun", { when: whenText(deck.lastRunAt) }));
+  else if (deck.createdAt) {
+    parts.push(t("createdOn", { when: whenText(deck.createdAt) }));
+  }
   else if (deck.count) parts.push(t("neverRun"));
   return parts.join(" · ");
 }
@@ -686,7 +707,7 @@ function describeDeck(deck) {
  * useful answer, and a date once it isn't. Both come from Intl, so both are
  * already in the language the room is reading.
  */
-function when(stamp) {
+function whenText(stamp) {
   const days = Math.round((stamp - Date.now()) / 86400000);
   const language = getLanguage();
 
