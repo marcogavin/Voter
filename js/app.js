@@ -6,7 +6,7 @@ import {
   connect,
   onEventChange,
   castVote,
-  likeSurvey,
+  likePoll,
   saveName,
   getUid,
   serverNow,
@@ -19,7 +19,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["surveys", "timer", "ending", "names"];
+window.VOTR_BUILD = ["polls", "timer", "ending", "names"];
 
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
@@ -107,7 +107,7 @@ function render(event) {
     ? null
     : (event.questions[event.currentIndex] ?? null);
 
-  // One past the last question: the survey is over and the room gets a way to
+  // One past the last question: the poll is over and the room gets a way to
   // say what it thought, which is nicer than a screen that simply stops.
   if (!event.blanked && event.questions.length &&
       event.currentIndex === event.questions.length) {
@@ -419,7 +419,7 @@ async function onLike(clickEvent) {
   shown.textContent = before + 1;
 
   try {
-    await likeSurvey();
+    await likePoll();
   } catch (error) {
     // A refused write used to leave the count sitting at zero with nothing
     // said, which looks exactly like a button that doesn't work.

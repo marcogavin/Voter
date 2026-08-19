@@ -334,15 +334,15 @@ border round half a screen. `--text-label`, weight 700, in `--accent`, with a
 `--border` rule above. Coloured because a heading here is a landmark to find,
 not a line to read.
 
-Every heading that names a section is a `.section-title` — Current survey,
+Every heading that names a section is a `.section-title` — Pick a poll,
 Questions, Settings — so three labels doing the same job look the same. A
 `.field-label` names one control; it never names a section.
 
 | Part | Device |
 | :--- | :--- |
 | Account | `.group` |
-| Create a new survey | Neither — an outline button, distinct by treatment |
-| Current survey | `.section-title`, then a `.group` |
+| Create a new poll | Neither — an outline button, distinct by treatment |
+| Pick an existing poll… | `.section-title`, then a `.group` |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
 | Run: Prev / counter / Next | `.group` |
@@ -459,7 +459,7 @@ The implementation contract — every element, and the tokens it takes.
 | Tab | `body` | 600 | sentence | `control-h` |
 | Button | `body` | 600 | sentence | `control-h` |
 | Icon button | `lead` | 400 | — | `control-h` square |
-| Survey name (run view) | `label` | 600 | sentence | — |
+| Poll name (run view) | `label` | 600 | sentence | — |
 | Field label | `label` | 600 | sentence | — |
 | Input, textarea, select | `lead` | 400 | sentence | `control-h` |
 | Character count | `micro` | 400 | — | — |

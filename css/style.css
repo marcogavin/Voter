@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names";
+  --build: "groups sections names hint";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -582,11 +582,18 @@ h1.is-centred {
   opacity: 0.4;
 }
 
+/* The first heading in a view sits straight under the tab strip, which is
+   already a bordered control — a rule there would be a line beside a line. */
+.section-title--first {
+  padding-top: 0;
+  border-top: none;
+}
+
 /* ─── Grouping ─────────────────────────────────────────────────────────
    Two devices, used for two different things.
 
    A .group is a hairline box around a compact cluster of controls that do one
-   job — the account, the survey you are on, moving through a poll, operating
+   job — the account, the poll you are on, moving through it, operating
    on it. Containment is what says "these belong together, and the next thing
    doesn't", which a gap alone can't say once several gaps are the same size.
 
@@ -699,7 +706,7 @@ h1.is-centred {
 }
 
 /* ─── The closing screen ───────────────────────────────────────────────
-   A survey should finish somewhere rather than just stop responding. The
+   A poll should finish somewhere rather than just stop responding. The
    heart takes as many taps as anyone wants to give it: there is nothing to
    win, so there is nothing to protect against.                            */
 
@@ -947,9 +954,9 @@ h1.is-centred {
   font-weight: 600;
 }
 
-/* ─── Survey picker ────────────────────────────────────────────────────
+/* ─── Poll picker ──────────────────────────────────────────────────────
    Sits above the form because it's the context for everything below it: the
-   question being added belongs to whichever survey is named here. Separated
+   question being added belongs to whichever poll is named here. Separated
    by space rather than a rule.                                            */
 
 .deckbar {
@@ -1024,7 +1031,17 @@ h1.is-centred {
 .actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
+}
+
+/* A quiet note that sits beside the buttons rather than under them, and
+   drops to its own line when the row runs out of width. */
+.actions-note {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: var(--text-label);
+  color: var(--muted);
 }
 
 /* ─── Character counts ─────────────────────────────────────────────────
