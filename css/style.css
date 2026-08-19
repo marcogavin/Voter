@@ -216,12 +216,18 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: var(--control-h);
-  padding: 0 var(--space-4);
+  /* A floor, not a fixed height. German needs half as many words again as
+     English for the same button, and on a 320px phone "Stimmen dieser Frage
+     löschen" ran straight out of the card. A long label now makes its button
+     taller instead; a short one still measures exactly 44px, so nothing that
+     lines up with an icon button stops lining up. */
+  min-height: var(--control-h);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
   font-family: inherit;
   font-size: var(--text-body);
   font-weight: 600;
-  line-height: var(--leading-flat);
+  line-height: var(--leading-tight);
   color: var(--ink);
   background: var(--sunken);
   /* Transparent rather than absent, so the primary can take a border without
@@ -232,8 +238,11 @@ h1 {
 }
 
 /* A button is a fixed height, so its label can't be allowed a second line. */
+/* Free to wrap: with the button's height a floor rather than a fixed number,
+   a label that outgrows a narrow phone makes its button taller instead of
+   pushing out of the card. Nothing else in here is allowed to overflow. */
 .btn-label {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* An icon says what a control does before the label is read, which is most of

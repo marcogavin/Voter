@@ -114,7 +114,7 @@ interface — a vote arriving after the reveal is rejected by the database.
 
 **Reopen voting** puts the current question back in play, and stepping back with
 **Prev** reopens it too. Anyone who already voted still can't vote twice; use
-**Reset votes** to clear a question and start it over.
+**Reset this question's votes** to clear it and start it over.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
@@ -191,11 +191,14 @@ remove with ✕.
 4. Move through with **Prev** / **Next**
 5. **Hide screen** blanks every phone while keeping your place, for talking
    between questions. **Show screen** brings it back
-6. **Start over** takes the question down and returns to the top of the poll.
-   Votes are kept — use **Reset votes** to clear a question's results
+6. **Start over** clears every answer in the poll and returns to the top, with
+   nothing on screen — so the room doesn't get question 1 before you're ready.
+   One press of **Start** begins the run
 
-**Reset votes** clears the current question only, so you can re-run one without
-disturbing the rest.
+**Start over** asks first, but only when there is something to lose: a poll
+nobody has answered yet just goes back to the top. **Reset this question's
+votes** clears the one on screen and nothing else, for re-running a single
+question without disturbing the rest.
 
 ## What attendees can see
 

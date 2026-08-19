@@ -292,6 +292,12 @@ operated on phones and an iPad. **Set it explicitly.** The old buttons had no
 height at all; their height was whatever their padding and font produced, which
 is why a button and an icon button next to each other never matched.
 
+For buttons it is a **floor**, not a fixed number: `min-height`, so a label
+that outgrows a narrow phone makes its own button taller instead of pushing
+out of the card. German is the test — it needs half as many words again as
+English for the same button. A short label still measures exactly 44px, so
+anything lined up beside an icon button still lines up.
+
 `min-height` is not enough on a `<select>`: a native one is laid out from the
 browser's own menulist metrics, and Safari ignores the property entirely, so
 the picker sat shorter than the round buttons beside it. Selects take

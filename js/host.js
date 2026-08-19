@@ -223,7 +223,7 @@ function wireUp() {
   els.prev.addEventListener("click", () => go(currentIndex - 1));
   els.next.addEventListener("click", onNext);
   els.reopen.addEventListener("click", () => reveal(false));
-  els.clear.addEventListener("click", () => go(-1));
+  els.clear.addEventListener("click", onStartOver);
   els.blank.addEventListener("click", () => blank(!blanked));
   els.reset.addEventListener("click", onReset);
 
@@ -488,11 +488,11 @@ function drawRun() {
     !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
-  // With nothing on screen there's no single question to clear, but wanting a
-  // clean slate before running the set again is exactly when this is needed.
-  setLabel(els.reset, question ? t("resetVotes") : t("resetAllVotes"));
-  els.reset.disabled = !isOwner || !questions.length;
-  els.clear.disabled = !isOwner || (!question && !atEnd);
+  // One question's votes, and it says so: clearing the whole poll is what
+  // Start over does, and two buttons that both meant "reset" were the reason
+  // it wasn't obvious which one had the wider reach.
+  els.reset.disabled = !isOwner || !question;
+  els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast());
 
   // Blanking only means anything while something is up.
   setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
@@ -1084,15 +1084,51 @@ async function onSecondsChange(changeEvent) {
 
 async function onReset() {
   const question = questions[currentIndex] ?? null;
-  if (!question && !questions.length) return;
+  if (!question) return;
 
   try {
-    await (question ? resetVotes(question) : resetAllVotes(questions));
+    await resetVotes(question);
     setStatus("reset", "live");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
   }
+}
+
+/**
+ * Back to the top with a clean sheet — which is what starting over means, and
+ * it used to leave every answer from the last run in place.
+ *
+ * It asks first, but only when there is something to lose: a poll nobody has
+ * answered yet has nothing to confirm, and a confirmation people always say
+ * yes to stops being read.
+ *
+ * The screen goes blank rather than straight to the first question, so the
+ * room doesn't get it before the presenter is ready. Next puts it up.
+ */
+async function onStartOver() {
+  const cast = votesCast();
+  if (cast && !(await ask({ title: t("startOverWarn", { n: cast }) }))) return;
+
+  try {
+    if (cast) await resetAllVotes(questions);
+    setStatus("reset", "live");
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+    return;
+  }
+
+  await go(-1);
+}
+
+/** Every answer given in this poll, across all its questions. */
+function votesCast() {
+  return questions.reduce(
+    (all, question) =>
+      all + question.options.reduce((sum, option) => sum + option.votes, 0),
+    0,
+  );
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────────── */
