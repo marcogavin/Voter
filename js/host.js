@@ -49,11 +49,15 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate", "picker", "applause"];
+window.VOTR_BUILD = [
+  "polls", "timer", "qr", "icons", "gate", "picker", "applause", "sheet",
+];
 
 const els = {
   tabs: document.getElementById("tabs"),
   signedOut: document.getElementById("signed-out"),
+  editorSheet: document.getElementById("editor-sheet"),
+  addQuestion: document.getElementById("add-question"),
   tabSetup: document.getElementById("tab-setup"),
   tabRun: document.getElementById("tab-run"),
   viewSetup: document.getElementById("view-setup"),
@@ -205,6 +209,7 @@ function wireUp() {
     if (event.key !== "Escape") return;
     closeAsk(null);
     hideQr();
+    if (!els.editorSheet.hidden) stopEditing();
   });
   els.askCancel.addEventListener("click", () => closeAsk(null));
   els.askOverlay.addEventListener("click", (event) => {
@@ -212,7 +217,14 @@ function wireUp() {
   });
 
   els.editor.addEventListener("submit", onSubmit);
+  els.addQuestion.addEventListener("click", () => {
+    stopEditing();
+    openEditor();
+  });
   els.cancel.addEventListener("click", stopEditing);
+  els.editorSheet.addEventListener("click", (event) => {
+    if (event.target === els.editorSheet) stopEditing();
+  });
   els.list.addEventListener("click", onListClick);
   els.questionInput.setAttribute("maxlength", String(QUESTION_MAX));
   els.questionInput.addEventListener("input", drawCounts);
@@ -250,13 +262,18 @@ function wireUp() {
 
 /* ── Character counts ──────────────────────────────────────────────────── */
 
+/** How close to a limit is close enough to be worth saying so. */
+const NEAR_LIMIT = 40;
+
 /**
  * Counts down as you type, so a limit is visible before it's hit rather than
- * discovered as a refusal after pressing the button.
+ * discovered as a refusal after pressing the button — but only once it is
+ * near. "200" beside an empty field is a number nobody needs, and a screen
+ * of numbers nobody needs is what makes a tool feel like a form.
  */
 function drawCounts() {
   const left = QUESTION_MAX - els.questionInput.value.length;
-  els.questionCount.textContent = format(left);
+  els.questionCount.textContent = left <= NEAR_LIMIT ? format(left) : "";
   els.questionCount.classList.toggle("is-over", left < 0);
 
   // One count per answer rather than a single worst-case number: a summary
@@ -264,6 +281,7 @@ function drawCounts() {
   els.optionsCount.innerHTML = "";
   parseOptions().forEach((line, index) => {
     const remaining = OPTION_MAX - line.length;
+    if (remaining > NEAR_LIMIT) return;
     const chip = document.createElement("span");
     chip.className = "charchip" + (remaining < 0 ? " is-over" : "");
     chip.textContent = `${index + 1} · ${format(remaining)}`;
@@ -370,8 +388,6 @@ function render(event) {
   applyViews();
   isOwner = signedIn && (!event.ownerUid || event.ownerUid === getUid());
 
-  els.signin.hidden = signedIn;
-  els.signout.hidden = !signedIn;
   if (!els.account.classList.contains("is-error")) {
     els.account.textContent = signedIn
       ? t("signedInAs", { name: accountName() ?? "—" })
@@ -550,15 +566,14 @@ function drawRun() {
     els.options.innerHTML = "";
     for (const option of question.options) {
       const row = document.createElement("div");
-      row.className = "meter meter--static";
+      row.className = "choice choice--static";
       row.dataset.id = option.id;
       row.innerHTML = `
-        <span class="meter-label"></span>
-        <span class="meter-track">
-          <span class="meter-fill"></span>
-          <span class="meter-needle"></span>
+        <span class="choice-fill"></span>
+        <span class="choice-body">
+          <span class="choice-label"></span>
+          <span class="choice-pct"></span>
         </span>
-        <span class="meter-pct"></span>
       `;
       els.options.appendChild(row);
     }
@@ -569,17 +584,16 @@ function drawRun() {
   const scored = revealed && question.correct !== null;
 
   for (const option of question.options) {
-    const row = els.options.querySelector(`.meter[data-id="${option.id}"]`);
+    const row = els.options.querySelector(`.choice[data-id="${option.id}"]`);
     if (!row) continue;
 
     const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
-    row.querySelector(".meter-label").textContent = option.label;
-    row.querySelector(".meter-fill").style.width = pct + "%";
-    row.querySelector(".meter-needle").style.left = pct + "%";
-    row.querySelector(".meter-pct").textContent = `${pct}%`;
+    row.querySelector(".choice-label").textContent = option.label;
+    row.querySelector(".choice-fill").style.width = pct + "%";
+    row.querySelector(".choice-pct").textContent = `${pct}%`;
 
+    row.classList.add("is-counted");
     row.classList.toggle("is-right", scored && option.id === question.correct);
-    row.classList.toggle("is-wrong", scored && option.id !== question.correct);
     // Before revealing, the presenter still needs to know which one it is.
     row.classList.toggle(
       "is-key",
@@ -860,6 +874,16 @@ function onListClick(clickEvent) {
   }
 }
 
+/**
+ * The form takes the screen while it is being used, and gives it back after.
+ * It used to sit open and empty above the list, so the first thing anyone saw
+ * in Setup was an empty form rather than the questions they had written.
+ */
+function openEditor() {
+  els.editorSheet.hidden = false;
+  els.questionInput.focus();
+}
+
 function startEditing(index) {
   const question = questions[index];
   editingIndex = index;
@@ -873,7 +897,7 @@ function startEditing(index) {
   drawCounts();
   drawEditorLabels();
   drawList();
-  els.questionInput.focus();
+  openEditor();
 }
 
 /**
@@ -888,12 +912,12 @@ function drawEditorLabels() {
     ? t("questionN", { n: questions.length + 1 })
     : t("editingQuestionN", { n: editingIndex + 1 });
   setLabel(els.save, adding ? t("addQuestion") : t("saveChanges"));
-  els.cancel.hidden = adding;
 }
 
 function stopEditing() {
   editingIndex = null;
   correctIndex = null;
+  els.editorSheet.hidden = true;
   els.editor.reset();
   showFormError(null);
   drawCorrectChoices();
@@ -1149,6 +1173,16 @@ function showView(name) {
  */
 function applyViews() {
   const setup = mode === "setup";
+  // Nobody in the room needs the host's email address, and Run is the view
+  // most likely to be held up, handed over or photographed.
+  els.account.hidden = !setup || !signedIn;
+  // Everything in the app bar follows from whether an account is signed in,
+  // and is set here rather than on the next snapshot — the bar is on screen
+  // from the first paint, and a Sign in button beside a signed-in account is
+  // exactly the sort of thing that reads as an app not knowing its own state.
+  els.signin.hidden = signedIn;
+  els.signout.hidden = !signedIn;
+  els.qr.hidden = !signedIn; // nothing to share until there's an event to run
   els.tabs.hidden = !signedIn;
   els.signedOut.hidden = signedIn;
   els.viewSetup.hidden = !signedIn || !setup;

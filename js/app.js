@@ -20,9 +20,13 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "ending", "names", "applause"];
+window.VOTR_BUILD = ["polls", "timer", "ending", "names", "applause", "stage"];
 
 const optionsEl = document.getElementById("options");
+const progressEl = document.getElementById("progress");
+const clockEl = document.getElementById("clock");
+const clockFillEl = document.getElementById("clock-fill");
+const clockTimeEl = document.getElementById("clock-time");
 const questionEl = document.getElementById("question");
 const whoamiEl = document.getElementById("whoami");
 const statusEl = document.getElementById("status");
@@ -116,6 +120,7 @@ function render(event) {
   if (!event.blanked && event.questions.length &&
       event.currentIndex === event.questions.length) {
     shownQuestionId = null;
+    drawProgress(null);
     questionEl.hidden = false;
     questionEl.textContent = t("likeVotr");
     questionEl.classList.add("is-centred");
@@ -129,6 +134,7 @@ function render(event) {
 
   if (!question) {
     shownQuestionId = null;
+    drawProgress(null);
     questionEl.hidden = true;
     noteEl.textContent = "";
     stopTicking();
@@ -137,7 +143,7 @@ function render(event) {
   }
 
   questionEl.hidden = false;
-
+  drawProgress(event.currentIndex + 1, event.questions.length);
   questionEl.textContent = question.text;
 
   if (question.id !== shownQuestionId) {
@@ -166,16 +172,32 @@ function secondsLeft() {
   return Math.max(0, Math.ceil(latest.seconds - gone));
 }
 
+/** "Question 2 of 3", or nothing at all when no question is up. */
+function drawProgress(index, total) {
+  const show = index !== null;
+  progressEl.hidden = !show;
+  if (show) progressEl.textContent = t("questionProgress", { n: index, of: total });
+}
+
+/**
+ * The clock is a bar that empties, with the seconds beside it. As a number
+ * alone in the footer it was both too small to glance at and nowhere near
+ * the question it was counting down.
+ */
 function drawTime() {
   const left = secondsLeft();
   const closed = latest?.revealed || left === 0;
+  const urgent = !closed && left !== null && left <= 5;
 
-  noteEl.textContent = closed
-    ? t("votingClosed")
-    : left === null
-      ? ""
-      : t("secondsLeft", { n: left });
-  noteEl.classList.toggle("is-urgent", !closed && left !== null && left <= 5);
+  clockEl.hidden = left === null || closed;
+  if (!clockEl.hidden) {
+    clockFillEl.style.width = `${(left / latest.seconds) * 100}%`;
+    clockTimeEl.textContent = t("secondsLeft", { n: left });
+    clockEl.classList.toggle("is-urgent", urgent);
+  }
+
+  noteEl.textContent = closed ? t("votingClosed") : "";
+  noteEl.classList.toggle("is-urgent", false);
 }
 
 function startTicking() {
@@ -204,19 +226,18 @@ function buildRows(question) {
   for (const option of question.options) {
     const row = document.createElement("button");
     row.type = "button";
-    row.className = "meter meter--vote";
+    row.className = "choice";
     row.dataset.id = option.id;
     row.setAttribute("aria-label", t("voteFor", { label: option.label }));
-    // The tick box is what tells people this row is theirs to press — tapping
-    // anywhere on the row still works, but nothing else says "choose one".
+    // The mark is what tells people this row is theirs to press — tapping
+    // anywhere on the card still works, but nothing else says "choose one".
     row.innerHTML = `
-      <span class="tick" aria-hidden="true"></span>
-      <span class="meter-label"></span>
-      <span class="meter-track">
-        <span class="meter-fill"></span>
-        <span class="meter-needle"></span>
+      <span class="choice-fill"></span>
+      <span class="choice-body">
+        <span class="choice-mark" aria-hidden="true"></span>
+        <span class="choice-label"></span>
+        <span class="choice-pct"></span>
       </span>
-      <span class="meter-pct"></span>
     `;
     row.addEventListener("click", () => submitVote(question.id, option.id));
     optionsEl.appendChild(row);
@@ -233,19 +254,25 @@ function updateRows(question, revealed) {
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
 
   for (const option of question.options) {
-    const row = optionsEl.querySelector(`.meter[data-id="${option.id}"]`);
+    const row = optionsEl.querySelector(`.choice[data-id="${option.id}"]`);
     if (!row) continue;
 
     const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
 
-    row.querySelector(".meter-label").textContent = option.label;
-    row.querySelector(".meter-fill").style.width = showResults ? pct + "%" : "0%";
-    row.querySelector(".meter-needle").style.left = showResults ? pct + "%" : "0%";
-    row.querySelector(".meter-pct").textContent = showResults ? pct + "%" : "";
+    row.querySelector(".choice-label").textContent = option.label;
+    row.querySelector(".choice-fill").style.width = showResults ? pct + "%" : "0%";
+    row.querySelector(".choice-pct").textContent = pct + "%";
 
+    row.classList.toggle("is-counted", showResults);
     row.classList.toggle("is-mine", option.id === myVote);
     row.classList.toggle("is-right", scored && option.id === question.correct);
-    row.classList.toggle("is-wrong", scored && option.id !== question.correct);
+    // Only your own wrong answer is marked wrong. Painting every other option
+    // red as well says "all of this was wrong", when the one thing worth
+    // seeing is which one wasn't.
+    row.classList.toggle(
+      "is-missed",
+      scored && option.id === myVote && option.id !== question.correct,
+    );
     row.disabled = revealed || myVote !== null;
   }
 }

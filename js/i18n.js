@@ -21,16 +21,15 @@ export const DEFAULT_LANGUAGE = "en";
 
 const strings = {
   en: {
-    hostControl: "Host control",
     likeVotr: "Like VOTR?",
-    whatsYourName: "What's your name?",
+    whatsYourName: "What’s your name?",
     join: "Join",
     joinNote: "Everyone in the room can see this.",
-    joinRefused: "Couldn't save that — the database refused it. The security rules may need republishing.",
+    joinRefused: "Couldn’t save that — the database refused it. The security rules may need republishing.",
     changeName: "Change your name",
-    likeRefused: "Couldn't count that — the database refused it. The security rules may need republishing.",
+    likeRefused: "Couldn’t count that — the database refused it. The security rules may need republishing.",
     likeHint: "Tap the heart as often as you like",
-    likeHostNote: "The taps come from the audience — you can't add to this.",
+    likeHostNote: "The taps come from the audience — you can’t add to this.",
     theEnd: "The end",
     tabSetup: "Setup poll",
 
@@ -91,7 +90,7 @@ const strings = {
     noQuestions: "No questions yet",
     pressStart: "Press Start to put the first question up.",
     addInSetup: "Add questions in Setup poll first.",
-    screenHiddenNote: "The audience sees a waiting screen. Show it again when you're ready.",
+    screenHiddenNote: "The audience sees a waiting screen. Show it again when you’re ready.",
     attendeesHint: "Attendees open {url}",
     viewOnly: "Another account is running this poll — view only",
     voteCount: "{n} votes in",
@@ -101,8 +100,9 @@ const strings = {
     waitingForHost: "Nothing here… the action is happening off your screen right now!",
     votingClosed: "Voting closed",
     secondsLeft: "{n}s",
+    questionProgress: "Question {n} of {of}",
     voteFor: "Vote for {label}",
-    cantConnect: "Can't connect",
+    cantConnect: "Can’t connect",
     tryAgain: "Try again",
     signIn: "Sign in with Google",
     signOut: "Sign out",
@@ -132,7 +132,6 @@ const strings = {
   },
 
   pt: {
-    hostControl: "Anfitrião",
     likeVotr: "Gostaste do VOTR?",
     whatsYourName: "Como te chamas?",
     join: "Entrar",
@@ -212,6 +211,7 @@ const strings = {
     waitingForHost: "Nada aqui… a ação está a acontecer fora do teu ecrã neste momento!",
     votingClosed: "Votação encerrada",
     secondsLeft: "{n}s",
+    questionProgress: "Pergunta {n} de {of}",
     voteFor: "Votar em {label}",
     cantConnect: "Não foi possível ligar",
     tryAgain: "Tentar de novo",
@@ -243,7 +243,6 @@ const strings = {
   },
 
   es: {
-    hostControl: "Anfitrión",
     likeVotr: "¿Te gusta VOTR?",
     whatsYourName: "¿Cómo te llamas?",
     join: "Entrar",
@@ -323,6 +322,7 @@ const strings = {
     waitingForHost: "Nada por aquí… ¡la acción está ocurriendo fuera de tu pantalla ahora mismo!",
     votingClosed: "Votación cerrada",
     secondsLeft: "{n}s",
+    questionProgress: "Pregunta {n} de {of}",
     voteFor: "Votar por {label}",
     cantConnect: "No se pudo conectar",
     tryAgain: "Reintentar",
@@ -354,7 +354,6 @@ const strings = {
   },
 
   fr: {
-    hostControl: "Animateur",
     likeVotr: "Tu aimes VOTR ?",
     whatsYourName: "Comment t'appelles-tu ?",
     join: "Rejoindre",
@@ -434,6 +433,7 @@ const strings = {
     waitingForHost: "Rien ici… l'action se passe en dehors de ton écran en ce moment !",
     votingClosed: "Vote clos",
     secondsLeft: "{n}s",
+    questionProgress: "Question {n} sur {of}",
     voteFor: "Voter pour {label}",
     cantConnect: "Connexion impossible",
     tryAgain: "Réessayer",
@@ -465,7 +465,6 @@ const strings = {
   },
 
   de: {
-    hostControl: "Moderation",
     likeVotr: "Gefällt dir VOTR?",
     whatsYourName: "Wie heißt du?",
     join: "Mitmachen",
@@ -545,6 +544,7 @@ const strings = {
     waitingForHost: "Hier ist gerade nichts los … die Action passiert außerhalb deines Bildschirms!",
     votingClosed: "Abstimmung beendet",
     secondsLeft: "{n}s",
+    questionProgress: "Frage {n} von {of}",
     voteFor: "Für {label} stimmen",
     cantConnect: "Keine Verbindung",
     tryAgain: "Erneut versuchen",

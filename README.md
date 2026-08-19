@@ -100,14 +100,18 @@ For a question with a right answer, **Next** does two things in turn: the first
 press **reveals the answer** and closes voting, the second moves on. Questions
 with no right answer advance on a single press.
 
-Colours carry the result, alongside the tick, ✓ and ✗ so the meaning survives
-for anyone who can't separate red from green:
+Each answer is a card, and its share of the vote is the ground it sits on.
+Colour carries the result alongside a mark, so it survives for anyone who
+can't separate red from green:
 
 | | |
 | :--- | :--- |
-| **Blue tick** | the option this phone voted for |
+| **Teal ✓** | the answer this phone voted for |
 | **Green ✓** | the right answer, once revealed |
-| **Red ✗** | the wrong answers, once revealed |
+| **Red ✗** | **your own** wrong answer |
+
+Options nobody picked stay neutral. Marking every wrong answer red says "all
+of this was wrong" — the one thing worth seeing is which one wasn't.
 
 Closing voting is enforced by the security rules, not just hidden in the
 interface — a vote arriving after the reveal is rejected by the database.
@@ -118,6 +122,16 @@ interface — a vote arriving after the reveal is rejected by the database.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
+
+### Add it to a home screen
+
+Both pages ship an icon, a manifest and a theme colour, so **Add to Home
+Screen** gives a real icon and opens without browser chrome — the audience
+page as a voting app, the host page as a remote. There is no reload button in
+that mode, which is what the freshness check inside each page is for.
+
+The interface follows the phone's **light or dark** setting. There's no switch:
+a room reads this in whatever their phone is already set to.
 
 ## Setup
 

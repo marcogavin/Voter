@@ -4,29 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VOTR — Host</title>
+<meta name="description" content="Write the questions, then put them on screen one at a time.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<!-- Added to a home screen this opens without browser chrome, which is what
+     makes it feel like an app rather than a page someone bookmarked. The
+     freshness check inside the page is what replaces the reload button. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VOTR">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101014" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="host">
   <div class="frame">
     <div class="panel">
+      <!-- One app bar: the mark, and the two or three things that are true
+           of the whole screen rather than of either view. -->
       <div class="top-row">
-        <p class="eyebrow" data-i18n="hostControl">Host control</p>
         <div class="mark">
           <img class="logo" src="img/votr-logo.svg" alt="VOTR">
         </div>
-      </div>
-
-      <div class="hostbar group">
-        <span class="hostbar-who" id="account"></span>
-        <button type="button" class="btn" id="qr">
-          <span class="btn-icon" data-icon="qr"></span>
-          <span class="btn-label" data-i18n="qrCode">QR code</span>
-        </button>
-        <button type="button" class="btn" id="signin">
-          <span class="btn-icon" data-icon="signIn"></span>
-          <span class="btn-label" data-i18n="signIn">Sign in with Google</span>
-        </button>
-        <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
+        <div class="hostbtns">
+          <button type="button" class="btn" id="qr">
+            <span class="btn-icon" data-icon="qr"></span>
+            <span class="btn-label" data-i18n="qrCode">QR code</span>
+          </button>
+          <button type="button" class="btn" id="signin">
+            <span class="btn-icon" data-icon="signIn"></span>
+            <span class="btn-label" data-i18n="signIn">Sign in with Google</span>
+          </button>
+          <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
+        </div>
       </div>
 
       <!-- Hidden until a Google account signs in. The gate is applied by the
@@ -41,6 +54,10 @@
       <p class="panel-message" id="signed-out" data-i18n="signedOutNote">
         Sign in with Google to set up and run polls.
       </p>
+
+      <!-- Whose event this is. Setup only: nobody in the room needs it, and
+           Run is the view most likely to be held up or handed over. -->
+      <p class="account" id="account"></p>
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup" hidden>
@@ -64,34 +81,13 @@
 
         <h2 class="section-title" data-i18n="questionsSection">Questions</h2>
 
-        <form id="editor" class="setup">
-          <label class="field">
-            <span class="counted">
-              <span class="field-label" id="editor-label">Question 1</span>
-              <span class="charcount" id="question-count"></span>
-            </span>
-            <input id="question-input" type="text" maxlength="200" required
-                   data-i18n-placeholder="questionPlaceholder"
-                   placeholder="Enter your question here" autocomplete="off">
-          </label>
-          <label class="field">
-            <span class="field-label" data-i18n="optionsLabel">Answers — one per line</span>
-            <textarea id="options-input" rows="3" required
-                      data-i18n-placeholder="optionsPlaceholder"
-                      placeholder="Answer option 1&#10;Answer option 2&#10;Answer option 3"></textarea>
-            <div class="charlist" id="options-count"></div>
-          </label>
-          <div class="field">
-            <span class="field-label" data-i18n="correctLabel">Right answer — optional</span>
-            <div id="correct-list" class="correct-list"></div>
-          </div>
-          <p class="form-error" id="form-error" hidden></p>
-          <div class="actions">
-            <button type="submit" class="btn btn--primary" id="save"><span class="btn-label" data-i18n="addQuestion">Add question</span></button>
-            <button type="button" class="btn" id="cancel" hidden><span class="btn-label" data-i18n="cancel">Cancel</span></button>
-            <span class="actions-note" data-i18n="editHint">Below you can edit, delete and move your questions</span>
-          </div>
-        </form>
+        <div class="actions">
+          <button type="button" class="btn btn--primary" id="add-question">
+            <span class="btn-icon" data-icon="plus"></span>
+            <span class="btn-label" data-i18n="addQuestion">Add question</span>
+          </button>
+          <span class="actions-note" data-i18n="editHint">Below you can edit, delete and move your questions</span>
+        </div>
 
         <ol id="question-list" class="qlist"></ol>
         <p class="panel-message" id="setup-empty" data-i18n="noQuestionsYet">No questions yet — add your first above.</p>
@@ -114,19 +110,8 @@
       <section id="view-run" hidden>
         <p class="deckname" id="run-deck"></p>
         <h1 id="run-question">Nothing on screen</h1>
-        <div id="options"></div>
+        <div id="options" class="choices"></div>
 
-        <div class="runbar group">
-          <button type="button" class="btn" id="prev">
-            <span class="btn-icon" data-icon="prev"></span>
-            <span class="btn-label" data-i18n="prev">Prev</span>
-          </button>
-          <span class="counter" id="counter">—</span>
-          <button type="button" class="btn btn--primary" id="next">
-            <span class="btn-label" data-i18n="start">Start</span>
-            <span class="btn-icon" data-icon="next"></span>
-          </button>
-        </div>
         <div class="actions group">
           <button type="button" class="btn" id="blank">
             <span class="btn-icon" data-icon="hide"></span>
@@ -145,6 +130,21 @@
             <span class="btn-label" data-i18n="startOver">Start over</span>
           </button>
         </div>
+
+        <!-- Last in the view and stuck to the bottom of the screen: moving
+             through the questions is the one thing a presenter does with a
+             phone in one hand, so it stays under the thumb. -->
+        <div class="runbar">
+          <button type="button" class="btn" id="prev">
+            <span class="btn-icon" data-icon="prev"></span>
+            <span class="btn-label" data-i18n="prev">Prev</span>
+          </button>
+          <span class="counter" id="counter">—</span>
+          <button type="button" class="btn btn--primary" id="next">
+            <span class="btn-label" data-i18n="start">Start</span>
+            <span class="btn-icon" data-icon="next"></span>
+          </button>
+        </div>
       </section>
 
       <div class="foot">
@@ -152,6 +152,38 @@
         <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
       </div>
     </div>
+  </div>
+
+  <!-- Writing a question is a job of its own, so it gets the screen while it
+       is happening instead of sitting open and empty above the list. -->
+  <div class="overlay overlay--sheet" id="editor-sheet" hidden>
+    <form id="editor" class="setup sheet-card">
+      <label class="field">
+        <span class="counted">
+          <span class="field-label" id="editor-label">Question 1</span>
+          <span class="charcount" id="question-count"></span>
+        </span>
+        <input id="question-input" type="text" maxlength="200" required
+               data-i18n-placeholder="questionPlaceholder"
+               placeholder="Enter your question here" autocomplete="off">
+      </label>
+      <label class="field">
+        <span class="field-label" data-i18n="optionsLabel">Answers — one per line</span>
+        <textarea id="options-input" rows="3" required
+                  data-i18n-placeholder="optionsPlaceholder"
+                  placeholder="Answer option 1&#10;Answer option 2&#10;Answer option 3"></textarea>
+        <div class="charlist" id="options-count"></div>
+      </label>
+      <div class="field">
+        <span class="field-label" data-i18n="correctLabel">Right answer — optional</span>
+        <div id="correct-list" class="correct-list"></div>
+      </div>
+      <p class="form-error" id="form-error" hidden></p>
+      <div class="actions">
+        <button type="submit" class="btn btn--primary" id="save"><span class="btn-label" data-i18n="addQuestion">Add question</span></button>
+        <button type="button" class="btn" id="cancel"><span class="btn-label" data-i18n="cancel">Cancel</span></button>
+      </div>
+    </form>
   </div>
 
   <!-- Naming a poll and confirming a delete. A native prompt() would do the
@@ -186,8 +218,8 @@
   <script>
     (function () {
       var NEEDS = [
-        "polls", "timer", "qr", "icons", "gate", "picker", "applause",
-        "groups", "sections", "hint", "pickerfield", "hearts",
+        "polls", "timer", "qr", "icons", "gate", "picker", "applause", "sheet",
+        "groups", "sections", "hint", "pickerfield", "hearts", "choices",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
