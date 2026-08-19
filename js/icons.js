@@ -46,6 +46,9 @@ export const icons = {
   prev: ICON(`<path d="M15 18l-6-6 6-6"/>`),
   next: ICON(`<path d="M9 18l6-6-6-6"/>`),
   plus: ICON(`<path d="M12 5v14"/><path d="M5 12h14"/>`),
+  polls: ICON(
+    `<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/>`,
+  ),
   edit: ICON(
     `<path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>`,
   ),

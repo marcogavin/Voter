@@ -272,6 +272,10 @@ function normalise(raw) {
       id,
       title: typeof entry?.title === "string" ? entry.title : "",
       count: Object.keys(entry?.questions || {}).length,
+      // Both are null on a poll written before they existed, which the
+      // picker says nothing about rather than inventing a date for.
+      createdAt: typeof entry?.createdAt === "number" ? entry.createdAt : null,
+      lastRunAt: typeof entry?.lastRunAt === "number" ? entry.lastRunAt : null,
     })),
     likes: typeof deck?.likes === "number" ? deck.likes : 0,
     questions: readQuestions(deck?.questions),
@@ -387,6 +391,7 @@ export function newDeck(title, existingIds) {
       ownerUid: uid,
       ...migration(),
       [`decks/${id}/title`]: title,
+      [`decks/${id}/createdAt`]: database.serverTimestamp(),
       ...liveState(id),
     })
     .then(() => id);
@@ -459,7 +464,7 @@ function nextDeckKey(existingIds) {
  * Always lands with the answer hidden and voting open, so stepping back to a
  * question reopens it rather than showing its answer again.
  */
-export function setCurrentIndex(index) {
+export function setCurrentIndex(index, { starting = false } = {}) {
   requireConnection();
   return database.update(eventRef, {
     ownerUid: uid,
@@ -467,6 +472,11 @@ export function setCurrentIndex(index) {
     revealed: false,
     // stamped by the server, so the countdown starts from one shared instant
     askedAt: database.serverTimestamp(),
+    // "Last run" is when a poll was last put in front of a room, so it is
+    // stamped when a run begins rather than on every question in it.
+    ...(starting
+      ? { [`decks/${liveDeck}/lastRunAt`]: database.serverTimestamp() }
+      : {}),
   });
 }
 
