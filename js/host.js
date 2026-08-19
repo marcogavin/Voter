@@ -48,9 +48,11 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["surveys", "timer", "qr", "icons"];
+window.VOTR_BUILD = ["surveys", "timer", "qr", "icons", "gate"];
 
 const els = {
+  tabs: document.getElementById("tabs"),
+  signedOut: document.getElementById("signed-out"),
   tabSetup: document.getElementById("tab-setup"),
   tabRun: document.getElementById("tab-run"),
   viewSetup: document.getElementById("view-setup"),
@@ -129,6 +131,8 @@ let blanked = false;
 let editingIndex = null; // which question the form is editing, null when adding
 let correctIndex = null; // which option the form has ticked, null for none
 let isOwner = true;
+let signedIn = false; // a Google account, not just an anonymous device
+let mode = "setup"; // which tab is chosen, independent of whether it's shown
 let shownQuestionId = null;
 
 start();
@@ -351,7 +355,8 @@ function render(event) {
 
   // Only a signed-in account can hold or claim an event. An anonymous
   // visitor watches; that's what stops an attendee who finds this page.
-  const signedIn = !isAnonymous();
+  signedIn = !isAnonymous();
+  applyViews();
   isOwner = signedIn && (!event.ownerUid || event.ownerUid === getUid());
 
   els.signin.hidden = signedIn;
@@ -1064,9 +1069,25 @@ async function onReset() {
 /* ── Helpers ───────────────────────────────────────────────────────────── */
 
 function showView(name) {
-  const setup = name === "setup";
-  els.viewSetup.hidden = !setup;
-  els.viewRun.hidden = setup;
+  mode = name;
+  applyViews();
+}
+
+/**
+ * What's on screen depends on the chosen tab and on whether anyone is signed
+ * in. Before sign-in there is nothing worth showing: every control would be
+ * dead, and a dimmed copy of a working screen reads as a broken one.
+ *
+ * This hides the controls, not the data. Anyone signed in — including an
+ * anonymous attendee — can already read the questions straight from the
+ * database, so this is tidiness rather than secrecy. See README.
+ */
+function applyViews() {
+  const setup = mode === "setup";
+  els.tabs.hidden = !signedIn;
+  els.signedOut.hidden = signedIn;
+  els.viewSetup.hidden = !signedIn || !setup;
+  els.viewRun.hidden = !signedIn || setup;
   els.tabSetup.classList.toggle("is-active", setup);
   els.tabRun.classList.toggle("is-active", !setup);
 }

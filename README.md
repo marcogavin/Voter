@@ -185,6 +185,22 @@ remove with ✕.
 **Reset votes** clears the current question only, so you can re-run one without
 disturbing the rest.
 
+## What attendees can see
+
+The host page shows nothing but the sign-in prompt until a Google account signs
+in. That's tidiness, not secrecy — and the difference matters.
+
+**The questions are readable by anyone in the room.** The rules let any
+signed-in device, including an anonymous attendee, read the whole event. That
+is what lets a phone show the question it is voting on, and it means a
+determined attendee who opens `host.html` could read the questions — and which
+answer is marked right — before they are asked.
+
+For a friendly quiz that's fine. For one with a prize, it isn't. Closing it
+would mean dropping the blanket read at the event and granting reads
+branch-by-branch, so `correct` stays hidden until the answer is revealed — a
+real change to both the rules and how `sync.js` listens, not a setting.
+
 ## Who can host
 
 The host signs in with Google; the first signed-in account to save questions
