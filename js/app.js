@@ -73,10 +73,14 @@ async function start() {
 function render(event) {
   latest = event;
   // The host picks the language for the room; a change re-renders everything,
-  // including rows that would otherwise keep their old labels.
+  // including anything already on screen that caches its own markup. Both
+  // guards have to be cleared: one holds the vote rows, the other the waiting
+  // and closing screens, and forgetting either leaves a screen in the language
+  // it happened to be built in.
   if (setLanguage(event.lang)) {
     applyStaticText();
     shownQuestionId = null;
+    delete optionsEl.dataset.screen;
   }
   setStatus(statusEl.dataset.key, statusEl.dataset.state);
 
