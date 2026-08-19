@@ -6,8 +6,8 @@
 // Stored shape:
 //   /events/{EVENT_ID}
 //     ownerUid:     the device allowed to author questions and drive the event
-//     currentDeck:  which survey is live; Setup edits it and Run presents it
-//     currentIndex: which question of that survey is on screen, or -1 for none
+//     currentDeck:  which poll is live; Setup edits it and Run presents it
+//     currentIndex: which question of that poll is on screen, or -1 for none
 //     revealed:     true once the current question's answer is showing, which
 //                   also closes voting — enforced in the rules, not just here
 //     askedAt:      when the current question went up, on the server's clock,
@@ -24,13 +24,13 @@
 // Keys at both levels are zero-padded and sort into presentation order, so key
 // order is the running order and no separate sort field is needed.
 //
-// Only one survey is live at a time, which is why currentIndex, revealed and
+// Only one poll is live at a time, which is why currentIndex, revealed and
 // the rest stay on the event rather than moving inside a deck: they describe
-// the one screen the room is looking at, not a property of a saved survey.
+// the one screen the room is looking at, not a property of a saved poll.
 //
-// Before surveys existed the questions sat directly on the event, with no
+// Before polls existed the questions sat directly on the event, with no
 // decks node at all. That layout is still read — see readDecks — and the first
-// write that touches survey structure moves it across. Nothing has to be
+// write that touches poll structure moves it across. Nothing has to be
 // migrated by hand, and nothing breaks in the meantime.
 
 import {
@@ -43,10 +43,10 @@ import {
 
 const CDN = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
 
-/** The survey that questions written before surveys existed belong to. */
+/** The poll that questions written before polls existed belong to. */
 const FIRST_DECK = "d000";
 
-/** As many surveys as stay usable in one picker. */
+/** As many polls as stay usable in one picker. */
 export const DECK_MAX = 20;
 
 export const TITLE_MAX = 60;
@@ -61,7 +61,7 @@ let eventRef = null;
 let uid = null;
 let clockOffset = 0;
 
-// Read from every snapshot, so writes land on the survey the reader is
+// Read from every snapshot, so writes land on the poll the reader is
 // actually looking at. Threading these through every call site instead would
 // mean the audience passing back state it was only ever given to display.
 let liveDeck = FIRST_DECK;
@@ -238,7 +238,7 @@ export function onEventChange(callback) {
 function normalise(raw) {
   const entries = readDecks(raw);
 
-  // A currentDeck naming a survey that's been deleted would otherwise leave
+  // A currentDeck naming a poll that's been deleted would otherwise leave
   // the room staring at nothing with no way back.
   const [deckId, deck] =
     entries.find(([id]) => id === raw?.currentDeck) ?? entries[0];
@@ -246,7 +246,7 @@ function normalise(raw) {
   liveDeck = deckId;
   unmigrated = !raw?.decks;
   legacyQuestions = raw?.questions ?? null;
-  // Where the live survey's questions are *right now*, which during the window
+  // Where the live poll's questions are *right now*, which during the window
   // between deploying this and the host's first save is still the old place.
   // Votes have to go where the counters actually are.
   questionsPath = unmigrated ? "questions" : `decks/${deckId}/questions`;
@@ -265,7 +265,7 @@ function normalise(raw) {
     players: raw?.players || {},
     lang: typeof raw?.lang === "string" ? raw.lang : "en",
 
-    // Only the live survey is unpacked. The rest are named and counted, which
+    // Only the live poll is unpacked. The rest are named and counted, which
     // is all a picker needs, and all anyone not presenting them should cost.
     currentDeck: deckId,
     decks: entries.map(([id, entry]) => ({
@@ -279,8 +279,8 @@ function normalise(raw) {
 }
 
 /**
- * Every survey, oldest first. There is always at least one: an event with no
- * decks node is presented as a single survey holding whatever questions sit
+ * Every poll, oldest first. There is always at least one: an event with no
+ * decks node is presented as a single poll holding whatever questions sit
  * at the old top-level path, so the picker never has nothing to point at.
  */
 function readDecks(raw) {
@@ -312,8 +312,8 @@ function readQuestions(stored) {
 }
 
 /**
- * The writes that move pre-survey questions into the first survey, to be
- * folded into whichever update first touches survey structure. Doing it in
+ * The writes that move pre-poll questions into the first poll, to be
+ * folded into whichever update first touches poll structure. Doing it in
  * that same update makes it atomic: either the questions arrive in their new
  * home and leave the old one, or nothing moves at all.
  *
@@ -372,9 +372,9 @@ export function saveQuestions(questions) {
 }
 
 /**
- * Creates a survey and switches to it. Returns its id.
+ * Creates a poll and switches to it. Returns its id.
  *
- * Switching is deliberate rather than a side effect: a new survey is empty, so
+ * Switching is deliberate rather than a side effect: a new poll is empty, so
  * leaving the old one live would mean adding questions to something the room
  * isn't looking at.
  */
@@ -402,15 +402,15 @@ export function renameDeck(id, title) {
 }
 
 /**
- * Removes a survey and everything in it. Falls back to a survivor when the one
- * being removed is live, so the room is never pointed at a survey that's gone.
+ * Removes a poll and everything in it. Falls back to a survivor when the one
+ * being removed is live, so the room is never pointed at a poll that's gone.
  */
 export function deleteDeck(id, allIds) {
   requireConnection();
 
   const fallback = allIds.find((other) => other !== id);
   if (!fallback) {
-    throw new Error("An event has to keep at least one survey.");
+    throw new Error("An event has to keep at least one poll.");
   }
 
   return database.update(eventRef, {
@@ -421,7 +421,7 @@ export function deleteDeck(id, allIds) {
   });
 }
 
-/** Puts a different survey on screen, from the top with nothing showing. */
+/** Puts a different poll on screen, from the top with nothing showing. */
 export function setCurrentDeck(id) {
   requireConnection();
   return database.update(eventRef, {
@@ -432,8 +432,8 @@ export function setCurrentDeck(id) {
 }
 
 /**
- * Switching survey can't leave the old one's position behind: index 4 means
- * something entirely different in a survey that has three questions.
+ * Switching poll can't leave the old one's position behind: index 4 means
+ * something entirely different in a poll that has three questions.
  */
 function liveState(deckId) {
   return {
@@ -445,7 +445,7 @@ function liveState(deckId) {
   };
 }
 
-/** One past the highest key in use, so a deleted survey's id isn't reissued. */
+/** One past the highest key in use, so a deleted poll's id isn't reissued. */
 function nextDeckKey(existingIds) {
   const highest = existingIds.reduce(
     (top, id) => Math.max(top, Number(id.slice(1)) || 0),
@@ -534,11 +534,11 @@ export function saveName(name) {
 }
 
 /**
- * Adds one to the live survey's applause. Unlike a vote there is no limit and
+ * Adds one to the live poll's applause. Unlike a vote there is no limit and
  * nothing to be gained by cheating, so the rules only check that it goes up by
  * one at a time — which is enough to stop anyone setting it to a million.
  */
-export function likeSurvey() {
+export function likePoll() {
   requireConnection();
   return database.update(eventRef, {
     [`decks/${liveDeck}/likes`]: database.increment(1),
@@ -559,7 +559,7 @@ export function castVote(questionId, optionId) {
   });
 }
 
-/** Clears every question's results, for running the whole survey again. */
+/** Clears every question's results, for running the whole poll again. */
 export function resetAllVotes(questions) {
   requireConnection();
 

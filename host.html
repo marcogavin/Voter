@@ -40,13 +40,13 @@
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
-        <h2 class="section-title section-title--first" data-i18n="pickOrCreateSurvey">
-          Pick an existing survey or create a new one
+        <h2 class="section-title section-title--first" data-i18n="pickOrCreatePoll">
+          Pick an existing poll or create a new one
         </h2>
 
         <button type="button" class="btn btn--wide btn--outline" id="deck-new">
           <span class="btn-icon" data-icon="plus"></span>
-          <span class="btn-label" data-i18n="newSurvey">Create a new survey</span>
+          <span class="btn-label" data-i18n="newPoll">Create a new poll</span>
         </button>
 
         <div class="deckbar group">
@@ -69,13 +69,13 @@
             </span>
             <input id="question-input" type="text" maxlength="200" required
                    data-i18n-placeholder="questionPlaceholder"
-                   placeholder="What's your age?" autocomplete="off">
+                   placeholder="Enter your question here" autocomplete="off">
           </label>
           <label class="field">
             <span class="field-label" data-i18n="optionsLabel">Options — one per line</span>
             <textarea id="options-input" rows="3" required
                       data-i18n-placeholder="optionsPlaceholder"
-                      placeholder="Under 30&#10;30–50&#10;Over 50"></textarea>
+                      placeholder="Answer option 1&#10;Answer option 2&#10;Answer option 3"></textarea>
             <div class="charlist" id="options-count"></div>
           </label>
           <div class="field">
@@ -86,6 +86,7 @@
           <div class="actions">
             <button type="submit" class="btn btn--primary" id="save"><span class="btn-label" data-i18n="addQuestion">Add question</span></button>
             <button type="button" class="btn" id="cancel" hidden><span class="btn-label" data-i18n="cancel">Cancel</span></button>
+            <span class="actions-note" data-i18n="editHint">You can edit, delete and move your questions</span>
           </div>
         </form>
 
@@ -150,7 +151,7 @@
     </div>
   </div>
 
-  <!-- Naming a survey and confirming a delete. A native prompt() would do the
+  <!-- Naming a poll and confirming a delete. A native prompt() would do the
        job, but it arrives in the browser's language and its own styling. -->
   <div class="overlay" id="ask-overlay" hidden>
     <form class="ask-card" id="ask-form">
@@ -181,7 +182,7 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["surveys", "timer", "qr", "icons", "gate", "groups", "sections"];
+      var NEEDS = ["polls", "timer", "qr", "icons", "gate", "groups", "sections", "hint"];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
         "js/firebase-config.js", "js/icons.js", "css/style.css",
