@@ -279,17 +279,23 @@ in ways that are hard to see and harder to fix.
 
 ## 5. Radius
 
-Three, plus a hairline.
+Three, and a rule for which is which.
 
 | Token | Value | Applied to |
 | :--- | ---: | :--- |
-| `--radius-control` | 8px | Buttons, inputs, selects, list rows |
-| `--radius-card` | 14px | The panel, overlay cards, the frame's inner edge |
-| `--radius-pill` | 999px | The tick box, the status badge |
-| — | 1px | The meter needle only. A hairline, not a corner. |
+| `--radius-pill` | 999px | **Anything you press**: buttons, tabs, the badge, the mark |
+| `--radius-control` | 12px | **Anything you fill or read**: fields, rows, tiles, cards |
+| `--radius-card` | 18px | The panel, sheets, the groups that hold other cards |
 
-There is no fourth. The bezel had its own padding and radius; both went with
-it. In portrait the card's radius goes to `0` — it is against the screen edge,
+**A pill is something you press.** That is the whole rule. A stacked tile in
+the run toolbar is not a pill — three lozenges in a row read as three separate
+things rather than as one control bar — so tiles take the control radius even
+though they are buttons.
+
+Control and card both went up (8 → 12, 14 → 18): 8px on a 44px control reads
+as a box with its corners filed off rather than as a shape.
+
+In portrait the panel's radius goes to `0` — it is against the screen edge,
 and a rounded corner there would be a corner of nothing.
 
 ---
@@ -490,11 +496,19 @@ follows the phone (`prefers-color-scheme`) rather than offering a switch: a
 room reads this in whatever their phone is already set to, and a toggle is one
 more thing to find in the dark.
 
+**Dark separates by ground, not by outline.** A hairline on near-black draws a
+box around a thing; a step of lightness *is* the thing sitting on something.
+Every card that carries a border in light drops it in dark and lifts instead —
+which is the one rule that stops a dark screen looking like a wireframe.
+
 | Token | Light | Dark |
 | :--- | :--- | :--- |
-| `--bg` | `#f4f4f5` | `#0b0b0e` |
-| `--surface` | `#ffffff` | `#16161b` |
-| `--sunken` | `#f0f0f1` | `#1f1f26` |
+| `--bg` | `#f4f2ef` | `#08080b` |
+| `--paper` | `#f5f3f0` | `#121218` |
+| `--card` | `#ffffff` | `#1e1e26` |
+| `--surface` | `#ffffff` | `#22222c` |
+| `--sunken` | `#ebe9e5` | `#24242e` |
+| `--flat` | `#d3e0fb` | `#2f3a63` |
 | `--border` | `#e3e3e6` | `#2c2c35` |
 | `--ink` | `#17171a` | `#f2f2f4` |
 | `--muted` | `#67676d` | `#a0a0aa` |
@@ -542,9 +556,9 @@ stylesheet.
   --space-7:  3rem;      /* 48px */
 
   /* ── Shape ──────────────────────────────────────────── */
-  --radius-control: 8px;
-  --radius-card:   14px;
-  --radius-pill:  999px;
+  --radius-control:  12px;
+  --radius-card:     18px;
+  --radius-pill:    999px;
 
   /* ── Controls ───────────────────────────────────────── */
   --control-h:    2.75rem;  /* 44px — the touch minimum */
@@ -652,7 +666,26 @@ generated from it rather than redrawn, so the two can never drift apart.
 
 ---
 
-## 14. Contrast is checked, not judged
+## 14. Nothing touches
+
+A box a hairline away from another box reads as a mistake, and it is the
+single most common way a careful screen comes out looking careless. A script
+walks every screen in both palettes and flags two things:
+
+- two grounded siblings less than 6px apart
+- a bordered box sitting less than 6px inside another bordered box, on a side
+  where the parent actually draws an edge
+
+It found the segmented control: each tab sat exactly 1px inside the strip's
+own border, at every width, in both palettes. The strip is now a track with a
+pill inside it — which is also what it should have looked like.
+
+Run it before shipping a layout change. A false positive is usually a
+background doing its job; a real one is always visible once you know to look.
+
+---
+
+## 15. Contrast is checked, not judged
 
 Every pair of colours that ends up as text on a ground is measured by a script
 in both palettes — twenty pairs each, forty in all. Text needs 4.5:1; a border
@@ -666,7 +699,7 @@ A new colour is not added to this file until it has been through it.
 
 ---
 
-## 15. Adding to this
+## 16. Adding to this
 
 1. **Reach for an existing token first.** Two elements a pixel apart is the
    problem this file exists to stop.
