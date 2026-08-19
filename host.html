@@ -29,10 +29,14 @@
         <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
       </div>
 
-      <div class="tabs" role="tablist">
+      <div class="tabs" id="tabs" role="tablist">
         <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup poll</button>
         <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run poll</button>
       </div>
+
+      <p class="panel-message" id="signed-out" data-i18n="signedOutNote" hidden>
+        Sign in with Google to set up and run polls.
+      </p>
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
@@ -175,7 +179,7 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["surveys", "timer", "qr", "icons", "groups", "sections"];
+      var NEEDS = ["surveys", "timer", "qr", "icons", "gate", "groups", "sections"];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
         "js/firebase-config.js", "js/icons.js", "css/style.css",

@@ -107,6 +107,7 @@ const strings = {
     qrCode: "QR code",
     close: "Close",
     signInPrompt: "Sign in to run this poll",
+    signedOutNote: "Sign in with Google to set up and run polls.",
     signedInAs: "Signed in as {name}",
     optionTooLong: "Answer {i} is {n} characters. The limit is {max}.",
 
@@ -215,6 +216,7 @@ const strings = {
     qrCode: "Código QR",
     close: "Fechar",
     signInPrompt: "Inicia sessão para conduzires esta votação",
+    signedOutNote: "Inicia sessão com o Google para preparares e conduzires votações.",
     signedInAs: "Sessão iniciada como {name}",
     optionTooLong: "A resposta {i} tem {n} caracteres. O limite é {max}.",
 
@@ -323,6 +325,7 @@ const strings = {
     qrCode: "Código QR",
     close: "Cerrar",
     signInPrompt: "Inicia sesión para dirigir esta votación",
+    signedOutNote: "Inicia sesión con Google para preparar y dirigir votaciones.",
     signedInAs: "Sesión iniciada como {name}",
     optionTooLong: "La respuesta {i} tiene {n} caracteres. El límite es {max}.",
 
@@ -431,6 +434,7 @@ const strings = {
     qrCode: "Code QR",
     close: "Fermer",
     signInPrompt: "Connecte-toi pour animer ce vote",
+    signedOutNote: "Connecte-toi avec Google pour préparer et animer des votes.",
     signedInAs: "Connecté en tant que {name}",
     optionTooLong: "La réponse {i} fait {n} caractères. La limite est {max}.",
 
@@ -539,6 +543,7 @@ const strings = {
     qrCode: "QR-Code",
     close: "Schließen",
     signInPrompt: "Melde dich an, um diese Umfrage zu leiten",
+    signedOutNote: "Melde dich mit Google an, um Umfragen vorzubereiten und zu leiten.",
     signedInAs: "Angemeldet als {name}",
     optionTooLong: "Antwort {i} hat {n} Zeichen. Erlaubt sind {max}.",
 
