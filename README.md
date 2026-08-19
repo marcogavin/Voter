@@ -139,7 +139,9 @@ page as a voting app, the host page as a remote. There is no reload button in
 that mode, which is what the freshness check inside each page is for.
 
 The interface follows the phone's **light or dark** setting. There's no switch:
-a room reads this in whatever their phone is already set to.
+a room reads this in whatever their phone is already set to. Light is white
+cards on warm paper; dark separates the same cards by lifting them off the
+panel rather than by drawing a line around each one.
 
 ## Setup
 

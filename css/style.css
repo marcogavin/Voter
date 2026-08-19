@@ -8,14 +8,17 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet";
+  --build: "groups sections names hint hearts choices clock pollsheet paper";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
      is a shade of paper, there to separate things rather than decorate them. */
-  --bg: #f4f4f5; /* the page behind the card */
-  --surface: #ffffff; /* the card, and anything raised off the page */
-  --sunken: #f0f0f1; /* fields, and anything you type or choose into */
+  --bg: #f4f2ef; /* the page behind everything */
+  --paper: #f5f3f0; /* the panel: the ground the cards are laid on */
+  --surface: #ffffff; /* a sheet or a dialog, in front of the page */
+  --card: #ffffff; /* a card *on* the paper: an answer, a question, a group */
+  --sunken: #ebe9e5; /* fields, and anything you type or choose into */
+  --flat: #d3e0fb; /* the share of an answer nobody has claimed */
   --border: #e3e3e6; /* hairlines and control outlines */
   --ink: #17171a;
   /* Two shades darker than it was: as the share of a tinted answer card it
@@ -95,9 +98,14 @@
   --space-6: 2rem; /* 32px */
   --space-7: 3rem; /* 48px */
 
-  /* ── Shape ────────────────────────────────────────────────────────── */
-  --radius-control: 8px;
-  --radius-card: 14px;
+  /* ── Shape ────────────────────────────────────────────────────────────
+     Three radii and a rule for which is which: a **pill** is something you
+     press, a **card** is something that holds other things, and everything
+     between — a field, a row, a tile — takes the control radius. Softer than
+     they were: 8px on a 44px control reads as a box with the corners filed
+     off rather than as a shape.                                            */
+  --radius-control: 12px;
+  --radius-card: 18px;
   --radius-pill: 999px;
 
   /* ── Controls ─────────────────────────────────────────────────────── */
@@ -119,9 +127,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0b0b0e;
-    --surface: #16161b;
-    --sunken: #1f1f26;
+    --bg: #08080b;
+    --paper: #121218;
+    --surface: #22222c; /* a sheet has to read as being in front of the page */
+    /* Dark separates by ground, not by outline. A hairline on black is a box
+       drawn around a thing; a step of lightness is the thing itself sitting
+       on something. Cards lift off the panel and their borders go. */
+    --card: #1e1e26;
+    --sunken: #24242e;
+    --flat: #2f3a63;
     --border: #2c2c35;
     --ink: #f2f2f4;
     --muted: #a0a0aa;
@@ -154,6 +168,20 @@
      colour lives inside an image rather than in a token. */
   .logo {
     filter: invert(1) hue-rotate(180deg) saturate(1.25);
+  }
+
+  /* Outlines come off in the dark. A hairline on near-black draws a box
+     around a thing; the step of lightness *is* the thing. Everything that
+     was a bordered card is now a lighter ground instead. */
+  .choice,
+  .qitem,
+  .group,
+  .pollitem.is-open {
+    border-color: transparent;
+  }
+
+  .btn:not(.btn--outline):not(.btn--primary) {
+    background: var(--card);
   }
 }
 
@@ -212,7 +240,10 @@ body {
      which is how the mark ended up touching the account bar: neither of them
      had one, and nothing else was going to provide it. */
   gap: var(--space-4);
-  background: var(--surface);
+  /* Paper, not white: the cards on it are white, and two whites a shade
+     apart would only look like a mistake. This is the one change that makes
+     a list of cards read as a list of cards. */
+  background: var(--paper);
   border-radius: var(--radius-card);
   padding: var(--space-5);
   box-shadow: var(--shadow-card);
@@ -294,7 +325,9 @@ h1 {
   /* Transparent rather than absent, so the primary can take a border without
      changing the height a hair. */
   border: 1px solid transparent;
-  border-radius: var(--radius-control);
+  /* A pill, because it is something you press. Tiles, rows and fields are
+     not, and they keep the control radius. */
+  border-radius: var(--radius-pill);
   cursor: pointer;
 }
 
@@ -432,9 +465,13 @@ h1.is-centred {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  overflow: hidden;
+  gap: var(--space-1);
+  /* A track with a pill sliding inside it, rather than two buttons pressed
+     against the inside of a box — the seam where a tab met the border was a
+     hairline gap that read as a mistake at every size. */
+  padding: var(--space-1);
+  background: var(--sunken);
+  border-radius: var(--radius-pill);
 }
 
 .tab {
@@ -445,24 +482,18 @@ h1.is-centred {
   font-weight: 600;
   line-height: var(--leading-flat);
   color: var(--muted);
-  background: var(--surface);
+  background: none;
   border: none;
-  border-left: 1px solid var(--border);
+  border-radius: var(--radius-pill);
   cursor: pointer;
-}
-
-.tab:first-child {
-  border-left: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .tab.is-active {
   color: var(--on-accent);
   background: var(--accent);
-}
-
-/* The outline would be clipped by the control's own overflow. */
-.tab:focus-visible {
-  outline-offset: -3px;
 }
 
 /* The question the room is voting on. Smaller than the host's, which is read
@@ -552,11 +583,14 @@ h1.is-centred {
   overflow-wrap: anywhere;
 }
 
+/* Ink, not muted: the share is the result, not a note about it — and it is
+   read over the tinted ground of its own bar, where muted grey measured
+   4.23:1 against a line of 4.5. */
 .choice-pct {
   font-size: var(--text-body);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
+  color: var(--ink);
   opacity: 0;
   transition: opacity 0.25s ease;
 }
@@ -716,6 +750,7 @@ h1.is-centred {
 
 .group {
   padding: var(--space-3) var(--space-4);
+  background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
 }
@@ -1499,11 +1534,16 @@ h1.is-centred {
   gap: var(--space-2);
 }
 
+/* White tiles on the paper, like every other card on this screen. */
 .btn--stack {
+  background: var(--card);
   flex-direction: column;
   gap: var(--space-1);
   min-height: 4.25rem;
   padding: var(--space-2) var(--space-1);
+  /* A tile, not a pill: three lozenges in a row would read as three separate
+     things rather than as one control bar. */
+  border-radius: var(--radius-control);
 }
 
 .btn--stack .btn-label {
@@ -1535,7 +1575,7 @@ h1.is-centred {
   gap: var(--space-2);
   padding: var(--space-3) 0
     max(var(--space-3), calc(env(safe-area-inset-bottom) - var(--space-3)));
-  background: var(--surface);
+  background: var(--paper);
   border-top: 1px solid var(--border);
 }
 
@@ -1837,8 +1877,8 @@ body.audience .panel {
 
   body.audience {
     /* Nothing of the page shows any more, so it stops being a different
-       colour from the card sitting on it. */
-    --bg: var(--surface);
+       colour from the paper it is behind. */
+    --bg: var(--paper);
     align-items: stretch;
     padding: 0;
 
