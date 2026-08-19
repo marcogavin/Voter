@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -18,7 +18,7 @@
   --surface: #ffffff; /* a sheet or a dialog, in front of the page */
   --card: #ffffff; /* a card *on* the paper: an answer, a question, a group */
   --sunken: #ebe9e5; /* fields, and anything you type or choose into */
-  --flat: #d3e0fb; /* the share of an answer nobody has claimed */
+  --flat: #c2d5fb; /* the share of an answer nobody has claimed */
   --border: #e3e3e6; /* hairlines and control outlines */
   --ink: #17171a;
   /* Two shades darker than it was: as the share of a tinted answer card it
@@ -135,7 +135,7 @@
        on something. Cards lift off the panel and their borders go. */
     --card: #1e1e26;
     --sunken: #24242e;
-    --flat: #2f3a63;
+    --flat: #3c4a80;
     --border: #2c2c35;
     --ink: #f2f2f4;
     --muted: #a0a0aa;
@@ -524,7 +524,7 @@ h1.is-centred {
    instead of their own answer.                                            */
 
 .choice {
-  --fill: var(--sunken);
+  --fill: var(--flat);
   position: relative;
   isolation: isolate;
   display: block;
@@ -679,6 +679,29 @@ h1.is-centred {
 .choice.is-key .choice-label::after {
   content: " ✓";
   color: var(--muted);
+}
+
+/* ─── What the room sees ───────────────────────────────────────────────
+   The host's copy of the audience's blank screen. Framed, and labelled as a
+   copy, so it reads as a preview of another screen rather than as this one
+   having nothing on it.                                                    */
+
+.preview-label {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.preview {
+  padding: var(--space-4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+}
+
+.preview .waiting-art {
+  width: min(40%, 8rem);
 }
 
 /* ─── The clock ────────────────────────────────────────────────────────
@@ -863,8 +886,14 @@ h1.is-centred {
   flex-direction: column;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-5) 0;
   text-align: center;
+}
+
+/* On the closing screen the question and the heart are one thing to read, so
+   they sit together rather than at opposite ends of the stage. */
+.stage.is-ending {
+  justify-content: center;
+  gap: var(--space-4);
 }
 
 /* The hearts leave from here, so it has to be the thing they're measured
@@ -1166,6 +1195,15 @@ h1.is-centred {
   justify-content: flex-end;
 }
 
+/* Three buttons under a code that is already as wide as the card. The card
+   is a centring column, which squeezes a row of buttons to its narrowest
+   possible width unless the row claims the whole line for itself. */
+.qr-card .actions {
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .polllist {
   list-style: none;
   margin: 0;
@@ -1264,9 +1302,18 @@ h1.is-centred {
 }
 
 .field-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--text-label);
   font-weight: 600;
   color: var(--muted);
+}
+
+/* An icon in a label is the label's size, not a button's. */
+.field-label .btn-icon svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 /* Text you are composing wants to be larger than text you are scanning. */
@@ -1438,12 +1485,23 @@ h1.is-centred {
   outline: 2px solid var(--accent);
 }
 
+/* A ruled column, so the digit reads as this question's number rather than
+   as something that drifted in from the left. */
 .qnum {
-  font-size: var(--text-micro);
+  align-self: stretch;
+  /* Inset, so the rule reads as a divider between two columns rather than as
+     a line that fell 5px short of the card's own edge. */
+  margin: var(--space-2) 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2em;
+  padding-right: var(--space-2);
+  border-right: 1px solid var(--border);
+  font-size: var(--text-label);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-width: 1.4em;
 }
 
 .qbody {
@@ -1758,8 +1816,11 @@ h1.is-centred {
 }
 
 /* White behind the code rather than the panel's cream: scanners cope with
-   cream, but contrast is the one thing worth not economising on here. */
-.qr-card svg {
+   cream, but contrast is the one thing worth not economising on here.
+
+   Scoped to the code itself, not to every svg in the card — the buttons
+   underneath carry icons, and a 340px-wide icon is a memorable sight. */
+#qr-art svg {
   display: block;
   width: min(70vw, 340px);
   height: auto;

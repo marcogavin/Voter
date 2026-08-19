@@ -405,6 +405,7 @@ Questions, Settings — so three labels doing the same job look the same. A
 | Which poll is open | Heads **Questions**, name in ink, rest muted |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
+| Run: what the room sees | `.preview` — a framed copy, labelled as a copy |
 | Run: count, then Prev / Next | Sticky to the bottom, one rule above it |
 | Run: hide, reset, start over | `.toolbar` — equal cells, icon over label |
 | Writing a question | `.overlay--sheet` — it takes the screen |

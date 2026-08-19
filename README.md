@@ -65,6 +65,12 @@ every attendee's phone, because the room should read one language rather than
 each person hunting for a setting. Available in English, Portuguese, Spanish,
 French and German.
 
+### What the room sees
+
+With nothing on screen, Run shows you the audience's own waiting screen
+rather than an empty space — the presenter shouldn't be the one person in the
+building who doesn't know what's on the phones.
+
 ### The end of a poll
 
 Past the last question every phone shows **Like VOTR?** and a heart. It takes
@@ -210,17 +216,21 @@ with the arrows, fix wording with ✎, remove with ✕.
 
 1. Open `host.html`, check the poll named under **My polls**, and switch to
    **Run**
-2. Share the audience URL — the **QR code** button puts it on screen
+2. Share the audience URL — the **QR code** button puts it on screen, with
+   **Copy image** for a slide and **Copy link** for a message
 3. **Start** puts the first question up; every phone follows within about a second
 4. Move through with **Prev** / **Next**
 5. **Hide screen** blanks every phone while keeping your place, for talking
-   between questions. **Show screen** brings it back
+   between questions — and **stops the clock**. Take a question from the
+   floor, then **Show screen** and the room gets back the seconds it had
 6. **Start over** clears every answer in the poll and returns to the top, with
    nothing on screen — so the room doesn't get question 1 before you're ready.
    One press of **Start** begins the run
 
-**Start over** asks first, but only when there is something to lose: a poll
-nobody has answered yet just goes back to the top. **Reset this question's
+**Start over** clears the hearts along with the votes, and the question it
+asks says so — a room arriving to find the last room's applause already on the
+board isn't being asked anything. It asks only when there is something to
+lose: a poll nobody has answered yet just goes back to the top. **Reset this question's
 votes** clears the one on screen and nothing else, for re-running a single
 question without disturbing the rest.
 

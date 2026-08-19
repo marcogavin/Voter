@@ -256,6 +256,10 @@ function normalise(raw) {
     currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
     revealed: raw?.revealed === true,
     askedAt: typeof raw?.askedAt === "number" ? raw.askedAt : null,
+    // Set while the screen is hidden, and what the clock counts up to instead
+    // of "now" — hiding the question stops the clock rather than letting it
+    // run out behind a blank screen.
+    pausedAt: typeof raw?.pausedAt === "number" ? raw.pausedAt : null,
     // An event saved before the clock existed has no setting of its own, and
     // should behave the way it did rather than suddenly run untimed.
     seconds: typeof raw?.seconds === "number" ? raw.seconds : DEFAULT_SECONDS,
@@ -447,6 +451,7 @@ function liveState(deckId) {
     revealed: false,
     blanked: false,
     askedAt: database.serverTimestamp(),
+    pausedAt: null,
   };
 }
 
@@ -472,6 +477,8 @@ export function setCurrentIndex(index, { starting = false } = {}) {
     revealed: false,
     // stamped by the server, so the countdown starts from one shared instant
     askedAt: database.serverTimestamp(),
+    // a fresh question is never mid-pause, whatever the last one was doing
+    pausedAt: null,
     // "Last run" is when a poll was last put in front of a room, so it is
     // stamped when a run begins rather than on every question in it.
     ...(starting
@@ -491,7 +498,9 @@ export function setRevealed(revealed) {
     ownerUid: uid,
     revealed,
     // reopening restarts the clock; there'd be no time left otherwise
-    ...(revealed ? {} : { askedAt: database.serverTimestamp() }),
+    ...(revealed
+      ? {}
+      : { askedAt: database.serverTimestamp(), pausedAt: null }),
   });
 }
 
@@ -500,9 +509,22 @@ export function setRevealed(revealed) {
  * setCurrentIndex(-1), which returns to the top of the set. For talking
  * between questions with nothing stale on everyone's phone.
  */
-export function setBlanked(blanked) {
+/**
+ * Hides or shows the question, and stops or restarts the clock with it.
+ *
+ * Hiding stamps `pausedAt`; showing clears it and hands back the seconds that
+ * were left, by moving the question's start forward by however long it was
+ * hidden. A presenter who takes a question from the floor gets the clock back
+ * where they left it rather than finding it spent.
+ */
+export function setBlanked(blanked, resumedAskedAt = null) {
   requireConnection();
-  return database.update(eventRef, { ownerUid: uid, blanked });
+  return database.update(eventRef, {
+    ownerUid: uid,
+    blanked,
+    pausedAt: blanked ? database.serverTimestamp() : null,
+    ...(resumedAskedAt === null ? {} : { askedAt: resumedAskedAt }),
+  });
 }
 
 /**
@@ -530,6 +552,7 @@ export function saveSeconds(seconds) {
     ownerUid: uid,
     seconds,
     askedAt: database.serverTimestamp(),
+    pausedAt: null,
   });
 }
 
@@ -569,11 +592,16 @@ export function castVote(questionId, optionId) {
   });
 }
 
-/** Clears every question's results, for running the whole poll again. */
+/**
+ * Clears every question's results *and* the applause, for running the whole
+ * poll again. The hearts belong to the run that earned them: a room arriving
+ * to find the last room's 103 already on the board isn't being asked
+ * anything.
+ */
 export function resetAllVotes(questions) {
   requireConnection();
 
-  const updates = {};
+  const updates = { [`decks/${liveDeck}/likes`]: 0 };
   for (const question of questions) {
     updates[`${questionsPath}/${question.id}/voters`] = null;
     for (const option of question.options) {
