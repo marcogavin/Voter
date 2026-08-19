@@ -582,6 +582,13 @@ h1.is-centred {
   opacity: 0.4;
 }
 
+/* The first heading in a view sits straight under the tab strip, which is
+   already a bordered control — a rule there would be a line beside a line. */
+.section-title--first {
+  padding-top: 0;
+  border-top: none;
+}
+
 /* ─── Grouping ─────────────────────────────────────────────────────────
    Two devices, used for two different things.
 
