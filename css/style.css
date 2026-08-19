@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections";
+  --build: "groups sections names";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -627,6 +627,75 @@ h1.is-centred {
   font-size: var(--text-label);
   font-weight: 700;
   color: var(--accent);
+}
+
+/* ─── Joining ──────────────────────────────────────────────────────────
+   Asked once, before anything else. The field is the only thing on screen,
+   so it can be the size of the thing it is asking for.                    */
+
+.join {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding: var(--space-5) 0;
+  text-align: center;
+}
+
+.join-name {
+  width: 100%;
+  height: var(--control-h-lg);
+  padding: 0 var(--space-4);
+  font-family: inherit;
+  font-size: var(--text-lead);
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+  background: var(--sunken);
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+}
+
+.join-name:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* This phone's own name, on every screen but the join one. Quiet, because it
+   is a reminder rather than a thing to read — but tappable, because people
+   mistype their own name on a phone. */
+.whoami {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: var(--space-2);
+  min-height: var(--control-h);
+  padding: 0 var(--space-2);
+  margin-left: calc(var(--space-2) * -1);
+  font-family: inherit;
+  font-size: var(--text-label);
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.whoami-name {
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.whoami .btn-icon svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+@media (hover: hover) {
+  .whoami:hover {
+    background: var(--sunken);
+  }
 }
 
 /* ─── The closing screen ───────────────────────────────────────────────

@@ -21,6 +21,18 @@ different jobs:
 - **Run** — one question on screen, live results, and the controls to move
   through the survey. Every attendee's phone follows whatever you have up.
 
+### Names
+
+Attendees give a name before they see the first question. It sits at the top of
+their own screen, they can tap it to correct a typo, and it is what will put
+them on a leaderboard.
+
+**It is not private.** Names are stored on the event and readable by every
+device in the room — that is what a shared leaderboard requires. The app shows
+each person only their own, but it cannot keep a name secret from someone
+determined to look. Don't ask for one at a meeting where the answers are
+supposed to be anonymous.
+
 ### Surveys
 
 Questions are kept in named **surveys**, so a set written for one talk stays
@@ -128,6 +140,7 @@ In the console: **Realtime Database → Rules**, paste the contents of
 They enforce:
 
 - only signed-in devices (including anonymous ones) can read an event
+- a device can write **its own** name and nobody else's
 - an attendee can add their own vote **once**, and can't change it afterwards
 - vote counters only move up by one at a time — nobody can set them to 900
 - no votes at all once the answer has been revealed

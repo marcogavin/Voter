@@ -18,6 +18,10 @@
           <img class="logo logo--banner" src="img/votr-logo.svg" alt="VOTR">
         </div>
       </div>
+      <button type="button" class="whoami" id="whoami" hidden>
+        <span class="whoami-name"></span>
+        <span class="btn-icon" data-icon="edit"></span>
+      </button>
       <h1 id="question">Connecting…</h1>
       <div id="options"></div>
       <div class="foot">
@@ -37,7 +41,7 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["surveys", "timer", "ending", "groups", "sections"];
+      var NEEDS = ["surveys", "timer", "ending", "names", "groups", "sections"];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
         "js/firebase-config.js", "js/icons.js", "css/style.css",

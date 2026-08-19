@@ -474,6 +474,8 @@ The implementation contract — every element, and the tokens it takes.
 | Footer note | `label` | 400 | sentence | — |
 | Overlay title | `lead` | 700 | sentence | — |
 | Closing-screen count | `title` | 700 | — | — |
+| Join field | `lead` | 600 | sentence | `control-h-lg` |
+| Your own name | `label` | 400, name at 700 | sentence | `control-h` |
 
 Percentages and counts take `font-variant-numeric: tabular-nums` so digits
 don't shift as they change.
