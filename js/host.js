@@ -48,7 +48,7 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate"];
+window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate", "picker"];
 
 const els = {
   tabs: document.getElementById("tabs"),
@@ -375,7 +375,7 @@ function render(event) {
   els.seconds.disabled = !isOwner;
 
   fillDecks();
-  els.deck.setAttribute("aria-label", t("currentPoll"));
+  els.deck.setAttribute("aria-label", t("pickExisting"));
   els.deck.value = currentDeck;
   els.deck.disabled = !isOwner;
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;

@@ -273,6 +273,12 @@ operated on phones and an iPad. **Set it explicitly.** The old buttons had no
 height at all; their height was whatever their padding and font produced, which
 is why a button and an icon button next to each other never matched.
 
+`min-height` is not enough on a `<select>`: a native one is laid out from the
+browser's own menulist metrics, and Safari ignores the property entirely, so
+the picker sat shorter than the round buttons beside it. Selects take
+`appearance: none` and a real `height`, with the chevron drawn back as a
+background image — the price of a control that is the same size everywhere.
+
 Padding controls the horizontal only:
 
 | | Padding |
@@ -334,15 +340,16 @@ border round half a screen. `--text-label`, weight 700, in `--accent`, with a
 `--border` rule above. Coloured because a heading here is a landmark to find,
 not a line to read.
 
-Every heading that names a section is a `.section-title` — Pick a poll,
+Every heading that names a section is a `.section-title` — Polls,
 Questions, Settings — so three labels doing the same job look the same. A
 `.field-label` names one control; it never names a section.
 
 | Part | Device |
 | :--- | :--- |
 | Account | `.group` |
+| Polls | `.section-title`, then the button and a `.group` |
 | Create a new poll | Neither — an outline button, distinct by treatment |
-| Pick an existing poll… | `.section-title`, then a `.group` |
+| Or pick an existing poll | `.field-label` inside that `.group` |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
 | Run: Prev / counter / Next | `.group` |
