@@ -42,6 +42,7 @@ let ticker = null;
 let renaming = false; // true while someone is changing a name they already gave
 let joinDraft = ""; // what was typed into the join field, kept across a rebuild
 let joinError = ""; // why the last join was refused, if it was
+let connection = { key: "connecting", state: "pending" }; // what the badge says
 let likesSeen = null; // the applause already drawn, so only new taps fly
 
 start();
@@ -101,7 +102,7 @@ function render(event) {
     shownQuestionId = null;
     delete optionsEl.dataset.screen;
   }
-  setStatus(statusEl.dataset.key, statusEl.dataset.state);
+  drawStatus();
 
   // Nobody votes anonymously any more: the name is what puts a person on the
   // leaderboard, so it is asked for once, before anything else is shown.
@@ -217,6 +218,7 @@ function startTicking() {
     drawTime();
     if (secondsLeft() === 0) {
       updateRows(question, true);
+      drawStatus(); // voting just closed, so Live stops being true
       stopTicking();
     }
   }, 250);
@@ -291,6 +293,7 @@ async function submitVote(questionId, optionId) {
 
   try {
     await castVote(questionId, optionId);
+    drawStatus();
   } catch (error) {
     setStatus("voteRefused", "error");
     console.error(error);
@@ -500,10 +503,38 @@ function showRetry(text) {
   optionsEl.appendChild(button);
 }
 
-/** Takes a translation key, so the badge can be re-rendered on a language change. */
+/**
+ * The badge is about *this phone's* connection, and it only says Live when
+ * live means something: a question is up and your vote would count.
+ *
+ * It used to say Live whenever the page had a database behind it, which is
+ * true and useless — it was on screen while the room waited, while the answer
+ * was up, and after voting had closed.
+ */
 function setStatus(key, state) {
   if (!key) return;
-  statusEl.dataset.key = key;
-  statusEl.textContent = t(key);
-  statusEl.dataset.state = state;
+  connection = { key, state };
+  drawStatus();
+}
+
+function drawStatus() {
+  // Anything wrong outranks everything: that is what a badge is for.
+  const wrong = connection.state !== "live";
+  const votable = wrong ? false : canVote();
+
+  statusEl.hidden = !wrong && !votable;
+  statusEl.dataset.key = wrong ? connection.key : "live";
+  statusEl.dataset.state = wrong ? connection.state : "live";
+  statusEl.textContent = t(statusEl.dataset.key);
+}
+
+/** True while a question is on screen and this phone could still answer it. */
+function canVote() {
+  const question = latest?.blanked
+    ? null
+    : (latest?.questions[latest.currentIndex] ?? null);
+
+  if (!question || latest.revealed) return false;
+  if (secondsLeft() === 0) return false;
+  return question.voters[getUid()] === undefined;
 }

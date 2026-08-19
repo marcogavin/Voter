@@ -137,6 +137,18 @@ interface — a vote arriving after the reveal is rejected by the database.
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
 
+### The badges
+
+On a phone, **LIVE** means *your vote would count right now* — a question is
+up, the clock is running and you haven't answered yet. It goes as soon as any
+of that stops being true, so an empty corner means there is nothing to do.
+Anything wrong with the connection outranks it and says so.
+
+On the host, the badge is the connection, and a confirmation — Saved, Hidden,
+Reset — borrows it for a second and a half with a ✓ before handing it back.
+It used to keep the last one on screen indefinitely, which made a thing that
+happened look like a thing that was still true.
+
 ### Add it to a home screen
 
 Both pages ship an icon, a manifest and a theme colour, so **Add to Home

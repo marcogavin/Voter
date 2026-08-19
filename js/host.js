@@ -125,6 +125,8 @@ const OPTION_MAX = 100;
 
 let askedAt = null;
 let pausedAt = null; // when the screen was hidden, and the clock with it
+let connection = { key: "connecting", state: "pending" }; // what the badge says
+let flashTimer = null; // while a confirmation is borrowing the badge
 let seconds = 0; // how long a question stays open; 0 for no limit
 let secondsMenu = null; // signature of what the duration picker currently offers
 let ticker = null;
@@ -392,7 +394,7 @@ function render(event) {
     drawCorrectChoices();
     drawCounts();
     shownQuestionId = null;
-    setStatus(els.status.dataset.key, els.status.dataset.state);
+    drawStatus();
   }
 
   // Only a signed-in account can hold or claim an event. An anonymous
@@ -528,7 +530,11 @@ function drawRun() {
   nameButton(els.blank, blanked ? t("showScreen") : t("hideScreen"));
   els.blank.querySelector(".btn-icon").dataset.icon = blanked ? "show" : "hide";
   drawIcons(els.blank);
-  els.blank.classList.toggle("btn--primary", blanked);
+  // Engaged, not primary: the room's screen is off, and this is the button
+  // that turns it back on. Primary blue here read as "press me next", beside
+  // a Next button that actually is.
+  els.blank.classList.toggle("btn--on", blanked);
+  els.blank.setAttribute("aria-pressed", String(blanked));
   els.blank.disabled = !isOwner || (!question && !atEnd && !blanked);
 
   if (atEnd) {
@@ -789,7 +795,7 @@ async function openDeck(id) {
 
   try {
     await setCurrentDeck(id);
-    setStatus("switched", "live");
+    flash("switched");
     closePollSheet();
   } catch (error) {
     setStatus("refused", "error");
@@ -811,7 +817,7 @@ async function onDeckNew() {
       title.slice(0, TITLE_MAX),
       decks.map((deck) => deck.id),
     );
-    setStatus("added", "live");
+    flash("added");
   } catch (error) {
     setStatus("refused", "error");
     els.hint.textContent = `Database refused the write: ${error.message}`;
@@ -827,7 +833,7 @@ async function onDeckRename(deck) {
 
   try {
     await renameDeck(deck.id, title.slice(0, TITLE_MAX));
-    setStatus("saved", "live");
+    flash("saved");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -848,7 +854,7 @@ async function onDeckDelete(deck) {
       deck.id,
       decks.map((other) => other.id),
     );
-    setStatus("deleted", "live");
+    flash("deleted");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1058,7 +1064,7 @@ function stopEditing() {
 async function commit(next, verb) {
   try {
     await saveQuestions(next);
-    setStatus(verb, "live");
+    flash(verb);
     return true;
   } catch (error) {
     setStatus("refused", "error");
@@ -1085,7 +1091,7 @@ function onNext() {
 async function reveal(show) {
   try {
     await setRevealed(show);
-    setStatus(show ? "revealed" : "reopened", "live");
+    flash(show ? "revealed" : "reopened");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1194,7 +1200,7 @@ async function blank(hide) {
 
   try {
     await setBlanked(hide, resumed);
-    setStatus(hide ? "hidden" : "shown", "live");
+    flash(hide ? "hidden" : "shown");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1252,7 +1258,7 @@ function fillSeconds() {
 async function onSecondsChange(changeEvent) {
   try {
     await saveSeconds(Number(changeEvent.target.value));
-    setStatus("saved", "live");
+    flash("saved");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1265,7 +1271,7 @@ async function onReset() {
 
   try {
     await resetVotes(question);
-    setStatus("reset", "live");
+    flash("reset");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1295,7 +1301,7 @@ async function onStartOver() {
 
   try {
     if (cast || likes) await resetAllVotes(questions);
-    setStatus("reset", "live");
+    flash("reset");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1414,9 +1420,16 @@ async function onQrCopy() {
     said(els.qrCopy, "copied");
   } catch (error) {
     // Not every browser will put an image on the clipboard. The address is
-    // the useful half of the code anyway, so it goes instead of nothing.
+    // the useful half of the code anyway, so it goes instead of nothing —
+    // and the button says which of the two you actually got.
     console.error(error);
-    onQrCopyLink();
+    try {
+      await navigator.clipboard.writeText(audienceUrl());
+      said(els.qrCopy, "copiedLinkInstead");
+    } catch (also) {
+      setStatus("refused", "error");
+      console.error(also);
+    }
   }
 }
 
@@ -1443,27 +1456,42 @@ function said(button, key) {
   );
 }
 
-/** The code on screen, drawn into a PNG big enough to project. */
+/**
+ * The code, drawn into a PNG big enough to project.
+ *
+ * Painted module by module rather than by loading the SVG that is already on
+ * screen: an inline SVG carries no namespace and no intrinsic size, and Safari
+ * refuses to load one as an image — which is why "Copy image" was quietly
+ * copying the link instead. Nothing to load means nothing to refuse.
+ */
 function qrPng() {
-  const svg = els.qrArt.querySelector("svg").outerHTML;
-  const size = 1024;
+  const modules = encode(audienceUrl());
+  const quiet = 4;
+  const span = modules.length + quiet * 2;
+  const scale = Math.max(1, Math.floor(1024 / span));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = span * scale;
+  canvas.height = span * scale;
+
+  const paper = canvas.getContext("2d");
+  // The quiet zone stays white whatever the code is pasted onto.
+  paper.fillStyle = "#ffffff";
+  paper.fillRect(0, 0, canvas.width, canvas.height);
+  paper.fillStyle = "#000000";
+  modules.forEach((row, r) => {
+    row.forEach((dark, c) => {
+      if (dark) {
+        paper.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+      }
+    });
+  });
 
   return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const paper = canvas.getContext("2d");
-      // The code needs its quiet zone to stay white whatever it is pasted on.
-      paper.fillStyle = "#ffffff";
-      paper.fillRect(0, 0, size, size);
-      paper.imageSmoothingEnabled = false;
-      paper.drawImage(image, 0, 0, size, size);
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("no blob"))), "image/png");
-    };
-    image.onerror = () => reject(new Error("the code wouldn't draw"));
-    image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("no image came back"))),
+      "image/png",
+    );
   });
 }
 
@@ -1497,9 +1525,35 @@ function showMessage(text) {
 }
 
 /** Takes a translation key, so the badge survives a language change. */
+/**
+ * The badge says one thing: whether this page is talking to the database.
+ *
+ * It used to double as a log of the last thing you did — "Hidden" sat there
+ * long after the screen came back — which made a state and an event look like
+ * the same kind of thing. Confirmations now visit for a moment and leave, and
+ * they arrive with a tick so it is obvious which of the two you are reading.
+ */
 function setStatus(key, state) {
   if (!key) return;
+  connection = { key, state };
+  clearTimeout(flashTimer);
+  flashTimer = null;
+  drawStatus();
+}
+
+/** Says something just happened, then gives the badge back. */
+function flash(key) {
   els.status.dataset.key = key;
+  els.status.dataset.state = "done";
   els.status.textContent = t(key);
-  els.status.dataset.state = state;
+
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(drawStatus, 1800);
+}
+
+function drawStatus() {
+  flashTimer = null;
+  els.status.dataset.key = connection.key;
+  els.status.dataset.state = connection.state;
+  els.status.textContent = t(connection.key);
 }

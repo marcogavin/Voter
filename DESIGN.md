@@ -581,6 +581,7 @@ The implementation contract — every element, and the tokens it takes.
 | :--- | :--- | :--- | :--- | :--- |
 | Section title | `body` | 700 | sentence | — |
 | Status badge | `micro` | 700 | UPPER | — |
+| Engaged control (`.btn--on`) | `body` | 600 | sentence | min `control-h` |
 | Tab | `body` | 600 | sentence | `control-h` |
 | Button | `body` | 600 | sentence | min `control-h` |
 | Icon button | `lead` | 400 | — | `control-h` square |
@@ -664,6 +665,24 @@ someone bookmarked.
 
 The icon is the wordmark's own O — the same paths as `img/votr-logo.svg`,
 generated from it rather than redrawn, so the two can never drift apart.
+
+---
+
+### A state and an event are not the same badge
+
+The status badge carries the connection: Live, Connecting, Offline. A
+confirmation — Saved, Hidden, Reset — **visits** it for 1.8 seconds with a ✓
+on a tinted ground, then it goes back to the connection.
+
+The old version wrote confirmations into the badge and left them there, so
+"Hidden" sat on screen long after the screen came back. If a thing that
+happened and a thing that is still true share one place, the place has to say
+which of the two you are looking at, and give the state back.
+
+**A pressed toggle is not the primary action.** `.btn--on` is outlined and
+tinted in the accent, never filled: filled is what the one primary action on
+a screen looks like, and Hide screen sitting next to Next in the same clothes
+read as "press me next".
 
 ---
 

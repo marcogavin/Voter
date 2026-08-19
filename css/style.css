@@ -359,6 +359,20 @@ h1 {
   color: currentColor;
 }
 
+/* A control that is currently *doing* something — the screen is hidden, and
+   this is what will bring it back. Outlined and tinted rather than filled:
+   filled is what the primary action looks like, and there is one of those on
+   this screen already. */
+.btn--on {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.btn--on .btn-icon {
+  color: var(--accent);
+}
+
 /* The closing screen is centred as a block, title and all. */
 h1.is-centred {
   text-align: center;
@@ -1051,6 +1065,20 @@ h1.is-centred {
 .badge[data-state="error"] {
   color: var(--ink);
   border-color: var(--ink);
+}
+
+/* Something that just happened, borrowing the badge for a moment. A tick
+   rather than a dot: one says "done", the other says "still true". */
+.badge[data-state="done"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.badge[data-state="done"]::before {
+  content: "✓";
+  font-size: var(--text-label);
+  line-height: var(--leading-flat);
 }
 
 /* On air, and only that. The badge also reads Saved, Switched, Deleted and
