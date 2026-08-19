@@ -98,11 +98,17 @@
 
         <div class="settings">
           <label class="field field--pick">
-            <span class="field-label" data-i18n="language">Language</span>
+            <span class="field-label">
+              <span class="btn-icon" data-icon="globe"></span>
+              <span data-i18n="language">Language</span>
+            </span>
             <select id="language"></select>
           </label>
           <label class="field field--pick">
-            <span class="field-label" data-i18n="timeLimit">Time limit</span>
+            <span class="field-label">
+              <span class="btn-icon" data-icon="clock"></span>
+              <span data-i18n="timeLimit">Time limit</span>
+            </span>
             <select id="seconds"></select>
           </label>
         </div>
@@ -185,8 +191,14 @@
       </div>
       <p class="form-error" id="form-error" hidden></p>
       <div class="actions">
-        <button type="submit" class="btn btn--primary" id="save"><span class="btn-label" data-i18n="addQuestion">Add question</span></button>
-        <button type="button" class="btn" id="cancel"><span class="btn-label" data-i18n="cancel">Cancel</span></button>
+        <button type="submit" class="btn btn--primary" id="save">
+          <span class="btn-icon" data-icon="check"></span>
+          <span class="btn-label" data-i18n="addQuestion">Add question</span>
+        </button>
+        <button type="button" class="btn" id="cancel">
+          <span class="btn-icon" data-icon="close"></span>
+          <span class="btn-label" data-i18n="cancel">Cancel</span>
+        </button>
       </div>
     </form>
   </div>
@@ -199,6 +211,7 @@
       <ul class="polllist" id="poll-list"></ul>
       <div class="actions">
         <button type="button" class="btn" id="poll-close">
+          <span class="btn-icon" data-icon="close"></span>
           <span class="btn-label" data-i18n="close">Close</span>
         </button>
       </div>
@@ -212,8 +225,14 @@
       <p class="ask-title" id="ask-title"></p>
       <input type="text" id="ask-input" maxlength="60" autocomplete="off">
       <div class="actions">
-        <button type="submit" class="btn btn--primary" id="ask-ok"><span class="btn-label">OK</span></button>
-        <button type="button" class="btn" id="ask-cancel"><span class="btn-label" data-i18n="cancel">Cancel</span></button>
+        <button type="submit" class="btn btn--primary" id="ask-ok">
+          <span class="btn-icon" data-icon="check"></span>
+          <span class="btn-label">OK</span>
+        </button>
+        <button type="button" class="btn" id="ask-cancel">
+          <span class="btn-icon" data-icon="close"></span>
+          <span class="btn-label" data-i18n="cancel">Cancel</span>
+        </button>
       </div>
     </form>
   </div>
@@ -222,7 +241,20 @@
     <div class="qr-card">
       <div id="qr-art"></div>
       <a class="qr-url" id="qr-url" target="_blank" rel="noopener"></a>
-      <button type="button" class="btn btn--primary" id="qr-close"><span class="btn-label" data-i18n="close">Close</span></button>
+      <div class="actions">
+        <button type="button" class="btn" id="qr-copy">
+          <span class="btn-icon" data-icon="copy"></span>
+          <span class="btn-label" data-i18n="copyImage">Copy image</span>
+        </button>
+        <button type="button" class="btn" id="qr-copy-link">
+          <span class="btn-icon" data-icon="link"></span>
+          <span class="btn-label" data-i18n="copyLink">Copy link</span>
+        </button>
+        <button type="button" class="btn btn--primary" id="qr-close">
+          <span class="btn-icon" data-icon="close"></span>
+          <span class="btn-label" data-i18n="close">Close</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -237,8 +269,8 @@
   <script>
     (function () {
       var NEEDS = [
-        "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-        "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
+        "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause",
+        "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper", "preview",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",

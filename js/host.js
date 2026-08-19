@@ -36,7 +36,7 @@ import {
 } from "./sync.js";
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
-import { drawIcons, icons } from "./icons.js";
+import { drawIcons, icons, waitingArt } from "./icons.js";
 import { flyHearts } from "./hearts.js";
 import {
   t,
@@ -51,6 +51,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
+  "pause",
 ];
 
 const els = {
@@ -111,6 +112,8 @@ const els = {
   qrArt: document.getElementById("qr-art"),
   qrUrl: document.getElementById("qr-url"),
   qrClose: document.getElementById("qr-close"),
+  qrCopy: document.getElementById("qr-copy"),
+  qrCopyLink: document.getElementById("qr-copy-link"),
   hint: document.getElementById("hint"),
   status: document.getElementById("status"),
 };
@@ -121,6 +124,7 @@ const QUESTION_MAX = 200;
 const OPTION_MAX = 100;
 
 let askedAt = null;
+let pausedAt = null; // when the screen was hidden, and the clock with it
 let seconds = 0; // how long a question stays open; 0 for no limit
 let secondsMenu = null; // signature of what the duration picker currently offers
 let ticker = null;
@@ -255,6 +259,8 @@ function wireUp() {
 
   els.qr.addEventListener("click", showQr);
   els.qrClose.addEventListener("click", hideQr);
+  els.qrCopy.addEventListener("click", onQrCopy);
+  els.qrCopyLink.addEventListener("click", onQrCopyLink);
   els.qrOverlay.addEventListener("click", (event) => {
     if (event.target === els.qrOverlay) hideQr();
   });
@@ -373,6 +379,7 @@ function render(event) {
   revealed = event.revealed;
   blanked = event.blanked;
   askedAt = event.askedAt;
+  pausedAt = event.pausedAt;
   seconds = event.seconds;
   likes = event.likes;
 
@@ -514,7 +521,7 @@ function drawRun() {
   nameButton(els.reset, t("resetVotes"));
   nameButton(els.clear, t("startOver"));
   els.reset.disabled = !isOwner || !question;
-  els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast());
+  els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast() && !likes);
 
   // Blanking only means anything while something is up.
   setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
@@ -554,13 +561,28 @@ function drawRun() {
 
   if (!question) {
     shownQuestionId = null;
-    delete els.options.dataset.screen;
     els.runQuestion.textContent = questions.length
       ? t("nothingOnScreen")
       : t("noQuestions");
-    els.options.innerHTML = `<p class="panel-message">${
-      questions.length ? t("pressStart") : t("addInSetup")
-    }</p>`;
+
+    // With nothing up, the useful thing to show the host is the screen the
+    // room is actually looking at — otherwise the presenter is the only
+    // person in the building who doesn't know what's on the phones.
+    // The guard carries what the screen says, not just which screen it is:
+    // the note underneath changes with the language and with whether there
+    // are any questions yet.
+    const key = `waiting:${getLanguage()}:${questions.length ? "some" : "none"}`;
+    if (els.options.dataset.screen !== key) {
+      els.options.dataset.screen = key;
+      els.options.innerHTML =
+        `<p class="preview-label">${t("whatTheRoomSees")}</p>` +
+        `<div class="preview">` +
+        `<div class="waiting">${waitingArt(t("waitingForHost"))}` +
+        `<p class="panel-message">${t("waitingForHost")}</p></div></div>` +
+        `<p class="panel-message">${
+          questions.length ? t("pressStart") : t("addInSetup")
+        }</p>`;
+    }
     return;
   }
 
@@ -1100,9 +1122,16 @@ function watchClock() {
   const question = questions[currentIndex] ?? null;
   if (!isOwner || !question || revealed || !askedAt || !seconds) return;
 
+  // Hidden means paused: the counter shows what is left, holds there, and
+  // nothing closes behind a blank screen.
+  if (pausedAt) {
+    els.counter.textContent =
+      `${currentIndex + 1} / ${questions.length} · ${secondsLeft()}s`;
+    return;
+  }
+
   ticker = setInterval(() => {
-    const gone = (serverNow() - askedAt) / 1000;
-    const left = Math.max(0, Math.ceil(seconds - gone));
+    const left = secondsLeft();
 
     els.counter.textContent = `${currentIndex + 1} / ${questions.length} · ${left}s`;
     if (left === 0) {
@@ -1111,6 +1140,12 @@ function watchClock() {
       reveal(true);
     }
   }, 250);
+}
+
+/** What's left on the clock, holding still while the screen is hidden. */
+function secondsLeft() {
+  const gone = ((pausedAt ?? serverNow()) - askedAt) / 1000;
+  return Math.max(0, Math.ceil(seconds - gone));
 }
 
 async function onSignIn() {
@@ -1147,9 +1182,18 @@ function explain(error) {
   }
 }
 
+/**
+ * Hiding the question stops its clock; showing it again hands back the
+ * seconds that were left, by moving the question's start forward by however
+ * long it was hidden. Taking a question from the floor shouldn't cost the
+ * room the time they had to answer in.
+ */
 async function blank(hide) {
+  const resumed =
+    !hide && pausedAt && askedAt ? askedAt + (serverNow() - pausedAt) : null;
+
   try {
-    await setBlanked(hide);
+    await setBlanked(hide, resumed);
     setStatus(hide ? "hidden" : "shown", "live");
   } catch (error) {
     setStatus("refused", "error");
@@ -1241,10 +1285,16 @@ async function onReset() {
  */
 async function onStartOver() {
   const cast = votesCast();
-  if (cast && !(await ask({ title: t("startOverWarn", { n: cast }) }))) return;
+  // Hearts are part of what the last run left behind, so they go with the
+  // votes — and the question says so rather than quietly taking them.
+  const warn = likes
+    ? t("startOverWarnHearts", { n: cast, hearts: likes })
+    : t("startOverWarn", { n: cast });
+
+  if ((cast || likes) && !(await ask({ title: warn }))) return;
 
   try {
-    if (cast) await resetAllVotes(questions);
+    if (cast || likes) await resetAllVotes(questions);
     setStatus("reset", "live");
   } catch (error) {
     setStatus("refused", "error");
@@ -1347,6 +1397,74 @@ function showQr() {
   els.qrUrl.textContent = url;
   els.qrUrl.href = new URL(".", location.href).href;
   els.qrOverlay.hidden = false;
+}
+
+/**
+ * The QR as a PNG on the clipboard, so it can go straight into a slide.
+ *
+ * The blob is handed to ClipboardItem as a *promise* rather than awaited
+ * first: Safari only allows a clipboard write inside the gesture that asked
+ * for it, and awaiting anything beforehand ends the gesture.
+ */
+async function onQrCopy() {
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({ "image/png": qrPng() }),
+    ]);
+    said(els.qrCopy, "copied");
+  } catch (error) {
+    // Not every browser will put an image on the clipboard. The address is
+    // the useful half of the code anyway, so it goes instead of nothing.
+    console.error(error);
+    onQrCopyLink();
+  }
+}
+
+async function onQrCopyLink() {
+  try {
+    await navigator.clipboard.writeText(audienceUrl());
+    said(els.qrCopyLink, "copied");
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+/** Says what happened on the button that was pressed, then puts it back. */
+function said(button, key) {
+  const slot = button.querySelector(".btn-label");
+  const was = slot.textContent;
+  slot.textContent = t(key);
+  clearTimeout(button.dataset.timer);
+  button.dataset.timer = String(
+    setTimeout(() => {
+      slot.textContent = was;
+    }, 1600),
+  );
+}
+
+/** The code on screen, drawn into a PNG big enough to project. */
+function qrPng() {
+  const svg = els.qrArt.querySelector("svg").outerHTML;
+  const size = 1024;
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const paper = canvas.getContext("2d");
+      // The code needs its quiet zone to stay white whatever it is pasted on.
+      paper.fillStyle = "#ffffff";
+      paper.fillRect(0, 0, size, size);
+      paper.imageSmoothingEnabled = false;
+      paper.drawImage(image, 0, 0, size, size);
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("no blob"))), "image/png");
+    };
+    image.onerror = () => reject(new Error("the code wouldn't draw"));
+    image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
 }
 
 function hideQr() {

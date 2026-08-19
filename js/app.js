@@ -12,7 +12,7 @@ import {
   serverNow,
   NAME_MAX,
 } from "./sync.js";
-import { icons, drawIcons } from "./icons.js";
+import { icons, drawIcons, waitingArt } from "./icons.js";
 import { flyHearts, heartColour } from "./hearts.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
@@ -20,9 +20,12 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "ending", "names", "applause", "stage"];
+window.VOTR_BUILD = [
+  "polls", "timer", "ending", "names", "applause", "stage", "pause",
+];
 
 const optionsEl = document.getElementById("options");
+const stageEl = document.querySelector(".stage");
 const progressEl = document.getElementById("progress");
 const clockEl = document.getElementById("clock");
 const clockFillEl = document.getElementById("clock-fill");
@@ -121,6 +124,7 @@ function render(event) {
       event.currentIndex === event.questions.length) {
     shownQuestionId = null;
     drawProgress(null);
+    stageEl.classList.add("is-ending");
     questionEl.hidden = false;
     questionEl.textContent = t("likeVotr");
     questionEl.classList.add("is-centred");
@@ -131,6 +135,7 @@ function render(event) {
   }
 
   questionEl.classList.remove("is-centred");
+  stageEl.classList.remove("is-ending");
 
   if (!question) {
     shownQuestionId = null;
@@ -168,7 +173,10 @@ function render(event) {
  */
 function secondsLeft() {
   if (!latest?.askedAt || !latest?.seconds) return null;
-  const gone = (serverNow() - latest.askedAt) / 1000;
+  // While the host has the screen hidden the clock holds: it counts up to the
+  // moment it was paused rather than to now, so the seconds that were left
+  // are still there when the question comes back.
+  const gone = ((latest.pausedAt ?? serverNow()) - latest.askedAt) / 1000;
   return Math.max(0, Math.ceil(latest.seconds - gone));
 }
 
@@ -301,13 +309,7 @@ function showWaiting() {
   optionsEl.dataset.screen = "waiting";
   optionsEl.innerHTML = `
     <div class="waiting">
-      <svg class="waiting-art" viewBox="269 13 328 352" role="img"
-           aria-label="${t("waitingForHost")}">
-        <path d="M 516,42 L 495,31 L 467,22 L 445,19 L 401,22 L 365,34 L 343,47 L 318,69 L 303,88 L 282,132 L 275,182 L 279,215 L 288,243 L 299,264 L 320,291 L 307,354 L 311,359 L 325,358 L 379,331 L 419,339 L 457,338 L 485,331 L 506,322 L 533,304 L 549,289 L 567,265 L 581,237 L 589,209 L 591,164 L 588,145 L 580,119 L 563,87 L 534,55 Z M 414,53 L 447,52 L 459,54 L 481,61 L 507,76 L 528,96 L 542,116 L 552,138 L 558,164 L 558,194 L 554,214 L 544,239 L 531,259 L 510,280 L 492,292 L 477,299 L 450,306 L 407,304 L 385,297 L 362,284 L 339,263 L 329,250 L 317,227 L 310,204 L 308,172 L 311,151 L 319,127 L 330,107 L 351,83 L 370,69 L 391,59 Z" fill="#1D4ED8" fill-rule="evenodd"/>
-        <path d="M 358,172 L 356,173 L 352,178 L 352,258 L 357,264 L 360,265 L 395,265 L 396,263 L 396,179 L 395,176 L 390,172 Z" fill="#0B7D88" fill-rule="evenodd" class="waiting-bar waiting-bar--a"/>
-        <path d="M 420,106 L 415,108 L 412,113 L 412,263 L 414,265 L 453,265 L 455,263 L 455,113 L 453,109 L 450,107 L 439,107 L 438,106 L 422,107 Z" fill="#1D4ED8" fill-rule="evenodd" class="waiting-bar waiting-bar--b"/>
-        <path d="M 479,150 L 476,151 L 472,156 L 472,264 L 473,265 L 508,265 L 514,260 L 515,257 L 515,158 L 514,155 L 510,151 L 507,150 Z" fill="#17743C" fill-rule="evenodd" class="waiting-bar waiting-bar--c"/>
-      </svg>
+      ${waitingArt(t("waitingForHost"))}
       <p class="panel-message">${t("waitingForHost")}</p>
     </div>
   `;

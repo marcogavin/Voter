@@ -23,6 +23,10 @@
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber()"
         },
+        "pausedAt": {
+          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
+          ".validate": "newData.isNumber()"
+        },
         "seconds": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600"
