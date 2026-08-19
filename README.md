@@ -40,6 +40,9 @@ intact when you write the next. **My polls** at the top of Setup has two
 doors of the same size — **Create a new poll** and **Open an existing poll** —
 and the line under them says which one you have open. Up to 20.
 
+The **Questions** heading carries the name of whichever poll is open, so what
+you are editing is never in doubt.
+
 Opening one lists every poll with what you need to tell them apart later:
 how many questions it holds, and when it last faced a room (or when you made
 it, if it never has). Renaming and deleting live in that list, beside the poll
