@@ -377,9 +377,13 @@ job. Containment is what says *these belong together and the next thing
 doesn't*, which a gap alone stops saying once several gaps are the same size.
 
 **`.section-title`** — for the long, flowing parts, where a box would be a
-border round half a screen. `--text-label`, weight 700, in `--accent`, with a
+border round half a screen. `--text-body`, weight 700, in `--accent`, with a
 `--border` rule above. Coloured because a heading here is a landmark to find,
 not a line to read.
+
+It was `--text-label` until a heading ended up smaller than the button
+underneath it, which is the wrong way round however loud its colour is. **A
+heading is never smaller than the text it introduces.**
 
 Every heading that names a section is a `.section-title` — Polls,
 Questions, Settings — so three labels doing the same job look the same. A
@@ -389,9 +393,10 @@ Questions, Settings — so three labels doing the same job look the same. A
 | :--- | :--- |
 | App bar (mark, QR, sign in/out) | Neither — one row, no box |
 | Signed in as… | A quiet line under the tabs, Setup only |
-| Polls | `.section-title`, then the button and a `.group` |
-| Create a new poll | Neither — an outline button, distinct by treatment |
-| Or pick an existing poll | `.field-label` inside that `.group` |
+| My polls | `.section-title` |
+| Create a new poll / Open an existing poll | Two outline buttons of one size |
+| Which poll is open | A `--text-label` line under them. Not a control |
+| The poll picker | `.overlay--sheet`, one row per poll |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
 | Run: Prev / counter / Next | Sticky to the bottom, one rule above it |
@@ -542,11 +547,13 @@ The implementation contract — every element, and the tokens it takes.
 
 | Element | Size | Weight | Case | Height |
 | :--- | :--- | :--- | :--- | :--- |
-| Eyebrow | `label` | 600 | UPPER | — |
+| Section title | `body` | 700 | sentence | — |
 | Status badge | `micro` | 700 | UPPER | — |
 | Tab | `body` | 600 | sentence | `control-h` |
-| Button | `body` | 600 | sentence | `control-h` |
+| Button | `body` | 600 | sentence | min `control-h` |
 | Icon button | `lead` | 400 | — | `control-h` square |
+| Icon button in a list | `lead` | 400 | — | 36px square |
+| Poll row in the picker | `body` | 600 | sentence | min `control-h` |
 | Poll name (run view) | `label` | 600 | sentence | — |
 | Field label | `label` | 600 | sentence | — |
 | Input, textarea, select | `lead` | 400 | sentence | `control-h` |

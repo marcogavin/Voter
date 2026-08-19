@@ -36,9 +36,14 @@ supposed to be anonymous.
 ### Polls
 
 Questions are kept in named **polls**, so a set written for one talk stays
-intact when you write the next. The picker at the top of Setup chooses which
-one you're editing, and **Create a new poll**, ✎ and ✕ beside it add, rename
-and delete. Up to 20.
+intact when you write the next. **My polls** at the top of Setup has two
+doors of the same size — **Create a new poll** and **Open an existing poll** —
+and the line under them says which one you have open. Up to 20.
+
+Opening one lists every poll with what you need to tell them apart later:
+how many questions it holds, and when it last faced a room (or when you made
+it, if it never has). Renaming and deleting live in that list, beside the poll
+they act on.
 
 One poll is live at a time — the one named in the picker is both the one you
 edit and the one the room sees, and Run shows its name above the question. That
@@ -192,13 +197,13 @@ https://<username>.github.io/Voter/host.html ← you
 
 ## Running an event
 
-**Beforehand**, in **Setup**: pick or create the poll, then add each question
-with its options, one per line. Reorder with the arrows, fix wording with ✎,
-remove with ✕.
+**Beforehand**, in **Setup**: open or create the poll, then **Add question** —
+the form takes the screen while you write and gives it back after. Reorder
+with the arrows, fix wording with ✎, remove with ✕.
 
 **On the day:**
 
-1. Open `host.html`, check the poll named at the top of Setup, and switch to
+1. Open `host.html`, check the poll named under **My polls**, and switch to
    **Run**
 2. Share the audience URL — the **QR code** button puts it on screen
 3. **Start** puts the first question up; every phone follows within about a second

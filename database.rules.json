@@ -47,6 +47,8 @@
             "title": {
               ".validate": "newData.isString() && newData.val().length <= 60"
             },
+            "createdAt": { ".validate": "newData.isNumber()" },
+            "lastRunAt": { ".validate": "newData.isNumber()" },
             "likes": {
               ".write": "auth != null && newData.isNumber() && (!data.exists() ? newData.val() === 1 : newData.val() === data.val() + 1)",
               ".validate": "newData.isNumber() && newData.val() >= 0"

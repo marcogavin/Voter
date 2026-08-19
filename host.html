@@ -61,23 +61,23 @@
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup" hidden>
-        <h2 class="section-title section-title--first" data-i18n="pollsSection">Polls</h2>
+        <h2 class="section-title section-title--first" data-i18n="pollsSection">My polls</h2>
 
-        <button type="button" class="btn btn--wide btn--outline" id="deck-new">
-          <span class="btn-icon" data-icon="plus"></span>
-          <span class="btn-label" data-i18n="newPoll">Create a new poll</span>
-        </button>
-
-        <div class="deckbar group">
-          <div class="field field--pick deckbar-pick">
-            <span class="field-label" data-i18n="pickExisting">Or pick an existing poll</span>
-            <select id="deck"></select>
-          </div>
-          <div class="deckbtns">
-            <button type="button" class="iconbtn" id="deck-rename" data-icon="edit"></button>
-            <button type="button" class="iconbtn" id="deck-delete" data-icon="remove"></button>
-          </div>
+        <!-- Two ways in, and they are the same size because they are the same
+             kind of thing. Renaming and deleting live in the picker, beside
+             the poll they act on. -->
+        <div class="pollbtns">
+          <button type="button" class="btn btn--outline" id="deck-new">
+            <span class="btn-icon" data-icon="plus"></span>
+            <span class="btn-label" data-i18n="newPoll">Create a new poll</span>
+          </button>
+          <button type="button" class="btn btn--outline" id="deck-open">
+            <span class="btn-icon" data-icon="polls"></span>
+            <span class="btn-label" data-i18n="openPoll">Open an existing poll</span>
+          </button>
         </div>
+
+        <p class="deckopen" id="deck-open-name"></p>
 
         <h2 class="section-title" data-i18n="questionsSection">Questions</h2>
 
@@ -186,6 +186,20 @@
     </form>
   </div>
 
+  <!-- Every poll, with enough about each one to tell them apart a month
+       later. Tapping one opens it; renaming and deleting are per row. -->
+  <div class="overlay overlay--sheet" id="poll-sheet" hidden>
+    <div class="sheet-card">
+      <p class="sheet-title" data-i18n="openPoll">Open an existing poll</p>
+      <ul class="polllist" id="poll-list"></ul>
+      <div class="actions">
+        <button type="button" class="btn" id="poll-close">
+          <span class="btn-label" data-i18n="close">Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Naming a poll and confirming a delete. A native prompt() would do the
        job, but it arrives in the browser's language and its own styling. -->
   <div class="overlay" id="ask-overlay" hidden>
@@ -218,8 +232,8 @@
   <script>
     (function () {
       var NEEDS = [
-        "polls", "timer", "qr", "icons", "gate", "picker", "applause", "sheet",
-        "groups", "sections", "hint", "pickerfield", "hearts", "choices",
+        "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
+        "groups", "sections", "hint", "hearts", "choices", "pollsheet",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",

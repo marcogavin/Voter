@@ -50,7 +50,7 @@ import {
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
-  "polls", "timer", "qr", "icons", "gate", "picker", "applause", "sheet",
+  "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
 ];
 
 const els = {
@@ -58,15 +58,17 @@ const els = {
   signedOut: document.getElementById("signed-out"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
+  deckOpen: document.getElementById("deck-open"),
+  deckOpenName: document.getElementById("deck-open-name"),
+  pollSheet: document.getElementById("poll-sheet"),
+  pollList: document.getElementById("poll-list"),
+  pollClose: document.getElementById("poll-close"),
   tabSetup: document.getElementById("tab-setup"),
   tabRun: document.getElementById("tab-run"),
   viewSetup: document.getElementById("view-setup"),
   viewRun: document.getElementById("view-run"),
 
-  deck: document.getElementById("deck"),
   deckNew: document.getElementById("deck-new"),
-  deckRename: document.getElementById("deck-rename"),
-  deckDelete: document.getElementById("deck-delete"),
 
   editor: document.getElementById("editor"),
   editorLabel: document.getElementById("editor-label"),
@@ -199,10 +201,13 @@ function wireUp() {
   els.tabSetup.addEventListener("click", () => showView("setup"));
   els.tabRun.addEventListener("click", () => showView("run"));
 
-  els.deck.addEventListener("change", onDeckChange);
   els.deckNew.addEventListener("click", onDeckNew);
-  els.deckRename.addEventListener("click", onDeckRename);
-  els.deckDelete.addEventListener("click", onDeckDelete);
+  els.deckOpen.addEventListener("click", openPollSheet);
+  els.pollClose.addEventListener("click", closePollSheet);
+  els.pollList.addEventListener("click", onPollListClick);
+  els.pollSheet.addEventListener("click", (event) => {
+    if (event.target === els.pollSheet) closePollSheet();
+  });
 
   els.askForm.addEventListener("submit", onAskSubmit);
   document.addEventListener("keydown", (event) => {
@@ -210,6 +215,7 @@ function wireUp() {
     closeAsk(null);
     hideQr();
     if (!els.editorSheet.hidden) stopEditing();
+    closePollSheet();
   });
   els.askCancel.addEventListener("click", () => closeAsk(null));
   els.askOverlay.addEventListener("click", (event) => {
@@ -401,17 +407,9 @@ function render(event) {
   els.seconds.value = String(seconds);
   els.seconds.disabled = !isOwner;
 
-  fillDecks();
-  els.deck.setAttribute("aria-label", t("pickExisting"));
-  els.deck.value = currentDeck;
-  els.deck.disabled = !isOwner;
+  drawPolls();
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
-  els.deckRename.disabled = !isOwner;
-  // An event always keeps one poll; there'd be nothing to fall back to.
-  els.deckDelete.disabled = !isOwner || decks.length < 2;
   nameButton(els.signout, t("signOut"));
-  nameButton(els.deckRename, t("renamePoll"));
-  nameButton(els.deckDelete, t("deletePoll"));
 
   if (isOwner) {
     els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });
@@ -447,20 +445,25 @@ function drawList() {
     item.className = "qitem" + (index === editingIndex ? " is-editing" : "");
     item.dataset.index = String(index);
     const answer = question.options.find((o) => o.id === question.correct);
+    // The question takes the full width and the four things you can do to it
+    // share the line under it with its own summary — they used to sit on a
+    // line of their own, which cost about 30px on every row in the list.
     item.innerHTML = `
       <span class="qnum">${index + 1}</span>
-      <span class="qtext">
-        ${escapeHtml(question.text)}
-        <small>${t("optionsCount", { n: question.options.length })}${
-          answer ? ` · ✓ ${escapeHtml(answer.label)}` : ""
-        }</small>
-      </span>
-      <span class="qbtns">
-        <button type="button" class="iconbtn" data-act="up"   aria-label="${t("moveUp")}"    ${index === 0 ? "disabled" : ""}>↑</button>
-        <button type="button" class="iconbtn" data-act="down" aria-label="${t("moveDown")}"  ${index === questions.length - 1 ? "disabled" : ""}>↓</button>
-        <button type="button" class="iconbtn" data-act="edit" aria-label="${t("edit")}">✎</button>
-        <button type="button" class="iconbtn" data-act="del"  aria-label="${t("delete")}">✕</button>
-      </span>
+      <div class="qbody">
+        <span class="qtext">${escapeHtml(question.text)}</span>
+        <span class="qfoot">
+          <small class="qmeta">${t("optionsCount", { n: question.options.length })}${
+            answer ? ` · ✓ ${escapeHtml(answer.label)}` : ""
+          }</small>
+          <span class="qbtns">
+            <button type="button" class="iconbtn" data-act="up"   aria-label="${t("moveUp")}"    ${index === 0 ? "disabled" : ""}>↑</button>
+            <button type="button" class="iconbtn" data-act="down" aria-label="${t("moveDown")}"  ${index === questions.length - 1 ? "disabled" : ""}>↓</button>
+            <button type="button" class="iconbtn" data-act="edit" aria-label="${t("edit")}">✎</button>
+            <button type="button" class="iconbtn" data-act="del"  aria-label="${t("delete")}">✕</button>
+          </span>
+        </span>
+      </div>
     `;
     for (const button of item.querySelectorAll("button")) {
       button.disabled = button.disabled || !isOwner;
@@ -616,23 +619,111 @@ function drawRun() {
  * thing you want to know before switching is whether you're switching to the
  * poll you actually wrote.
  */
-function fillDecks() {
-  const signature = JSON.stringify([getLanguage(), decks]);
+/** Which poll is open, under the two buttons that change that. */
+function drawPolls() {
+  const deck = liveDeck();
+  els.deckOpenName.textContent = deck
+    ? `${deckTitle(deck)} · ${describeDeck(deck)}`
+    : "";
+  if (!els.pollSheet.hidden) fillPollList();
+}
 
-  // Same reason as the duration picker: render() runs on every vote, and
-  // rebuilding a <select> closes it under whoever is choosing.
+/**
+ * The picker. A name alone doesn't tell you which of five polls you want a
+ * month later — how big it is and when it last faced a room does.
+ */
+function fillPollList() {
+  const signature = JSON.stringify([getLanguage(), decks, currentDeck, isOwner]);
   if (signature === deckMenu) return;
   deckMenu = signature;
 
-  els.deck.innerHTML = "";
+  els.pollList.innerHTML = "";
   for (const deck of decks) {
-    const option = document.createElement("option");
-    option.value = deck.id;
-    option.textContent = `${deckTitle(deck)} · ${t("questionsCount", {
-      n: deck.count,
-    })}`;
-    els.deck.appendChild(option);
+    const open = deck.id === currentDeck;
+    const item = document.createElement("li");
+    item.className = "pollitem" + (open ? " is-open" : "");
+    item.innerHTML = `
+      <button type="button" class="pollpick" data-act="open" data-id="${deck.id}">
+        <span class="pollmark" aria-hidden="true"></span>
+        <span class="pollbody">
+          <span class="polltitle"></span>
+          <span class="pollmeta"></span>
+        </span>
+      </button>
+      <span class="qbtns">
+        <button type="button" class="iconbtn" data-act="rename" data-id="${deck.id}"
+                data-icon="edit" aria-label="${t("renamePoll")}"></button>
+        <button type="button" class="iconbtn" data-act="delete" data-id="${deck.id}"
+                data-icon="remove" aria-label="${t("deletePoll")}"></button>
+      </span>
+    `;
+    // Titles are typed by a person, so they go in as text and never as markup.
+    item.querySelector(".polltitle").textContent = deckTitle(deck);
+    item.querySelector(".pollmeta").textContent = describeDeck(deck);
+    for (const button of item.querySelectorAll("button")) {
+      button.disabled = !isOwner;
+    }
+    // An event always keeps one poll; there'd be nothing to fall back to.
+    if (decks.length < 2) {
+      item.querySelector('[data-act="delete"]').disabled = true;
+    }
+    drawIcons(item);
+    els.pollList.appendChild(item);
   }
+}
+
+/** "3 questions · last run 2 days ago", in as much of it as is known. */
+function describeDeck(deck) {
+  const parts = [t("questionsCount", { n: deck.count })];
+  if (deck.lastRunAt) parts.push(t("lastRun", { when: when(deck.lastRunAt) }));
+  else if (deck.createdAt) parts.push(t("createdOn", { when: when(deck.createdAt) }));
+  else if (deck.count) parts.push(t("neverRun"));
+  return parts.join(" · ");
+}
+
+/**
+ * A date the way a person would say it: how long ago while that is still the
+ * useful answer, and a date once it isn't. Both come from Intl, so both are
+ * already in the language the room is reading.
+ */
+function when(stamp) {
+  const days = Math.round((stamp - Date.now()) / 86400000);
+  const language = getLanguage();
+
+  if (days > -7) {
+    return new Intl.RelativeTimeFormat(language, { numeric: "auto" })
+      .format(days, "day");
+  }
+  return new Intl.DateTimeFormat(language, {
+    day: "numeric",
+    month: "short",
+    year:
+      new Date(stamp).getFullYear() === new Date().getFullYear()
+        ? undefined
+        : "numeric",
+  }).format(stamp);
+}
+
+function openPollSheet() {
+  deckMenu = null; // rebuild it: what it says about each poll may have moved on
+  fillPollList();
+  els.pollSheet.hidden = false;
+}
+
+function closePollSheet() {
+  els.pollSheet.hidden = true;
+}
+
+function onPollListClick(clickEvent) {
+  const button = clickEvent.target.closest("button[data-act]");
+  if (!button || button.disabled) return;
+
+  const deck = decks.find((other) => other.id === button.dataset.id);
+  if (!deck) return;
+
+  if (button.dataset.act === "open") return openDeck(deck.id);
+  if (button.dataset.act === "rename") return onDeckRename(deck);
+  if (button.dataset.act === "delete") return onDeckDelete(deck);
 }
 
 /** Falls back to the poll's position, so an unnamed one is still findable. */
@@ -646,22 +737,18 @@ function liveDeck() {
   return decks.find((deck) => deck.id === currentDeck) ?? null;
 }
 
-async function onDeckChange(changeEvent) {
-  const id = changeEvent.target.value;
-  if (id === currentDeck) return;
+async function openDeck(id) {
+  if (id === currentDeck) return closePollSheet();
 
   // Switching moves the whole room, so it shouldn't be something a stray tap
   // in Setup does while a question is up in front of an audience.
-  if (currentIndex >= 0 && !(await ask({ title: t("switchPollWarn") }))) {
-    els.deck.value = currentDeck;
-    return;
-  }
+  if (currentIndex >= 0 && !(await ask({ title: t("switchPollWarn") }))) return;
 
   try {
     await setCurrentDeck(id);
     setStatus("switched", "live");
+    closePollSheet();
   } catch (error) {
-    els.deck.value = currentDeck;
     setStatus("refused", "error");
     console.error(error);
   }
@@ -689,8 +776,7 @@ async function onDeckNew() {
   }
 }
 
-async function onDeckRename() {
-  const deck = liveDeck();
+async function onDeckRename(deck) {
   if (!deck) return;
 
   const title = await ask({ title: t("namePoll"), value: deckTitle(deck) });
@@ -705,8 +791,7 @@ async function onDeckRename() {
   }
 }
 
-async function onDeckDelete() {
-  const deck = liveDeck();
+async function onDeckDelete(deck) {
   if (!deck || decks.length < 2) return;
 
   const confirmed = await ask({
@@ -967,8 +1052,11 @@ async function reveal(show) {
 async function go(index) {
   // questions.length is the closing screen; anything past it is nothing.
   const target = index < 0 || index > questions.length ? -1 : index;
+  // Going from nothing on screen to something is a run beginning, which is
+  // what the picker means by "last run".
+  const starting = currentIndex < 0 && target >= 0;
   try {
-    await setCurrentIndex(target);
+    await setCurrentIndex(target, { starting });
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);

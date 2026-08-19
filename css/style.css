@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint pickerfield hearts choices clock";
+  --build: "groups sections names hint hearts choices clock pollsheet";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -738,11 +738,13 @@ h1.is-centred {
    with parts. Accent-coloured, because a heading is a landmark rather than
    something to read.                                                       */
 
+/* Body size, not label size: a heading that is smaller than the button under
+   it is the wrong way round however loud its colour is. */
 .section-title {
   margin: var(--space-2) 0 0;
   padding-top: var(--space-4);
   border-top: 1px solid var(--border);
-  font-size: var(--text-label);
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--accent);
 }
@@ -987,10 +989,12 @@ h1.is-centred {
   border-color: var(--ink);
 }
 
-/* On air. It isn't always: the badge also reads Connecting, Offline, Refused
-   and every transient the host triggers — so the light belongs to this one
-   state and not to the badge in general. */
-.badge[data-state="live"]::before {
+/* On air, and only that. The badge also reads Saved, Switched, Deleted and
+   every other transient the host triggers, all of which are green because
+   they went well — but a pulsing red light next to "Hidden" says the room is
+   watching something when the whole point of Hidden is that it isn't. It
+   keys off *what the badge says*, not off the colour it says it in. */
+.badge[data-key="live"]::before {
   content: "";
   width: 0.45rem;
   height: 0.45rem;
@@ -1000,7 +1004,7 @@ h1.is-centred {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .badge[data-state="live"]::before {
+  .badge[data-key="live"]::before {
     animation: live-pulse 2.4s ease-out infinite;
   }
 }
@@ -1074,28 +1078,126 @@ h1.is-centred {
   font-weight: 600;
 }
 
-/* ─── Poll picker ──────────────────────────────────────────────────────
-   Sits above the form because it's the context for everything below it: the
-   question being added belongs to whichever poll is named here. Separated
-   by space rather than a rule.                                            */
+/* ─── Polls ────────────────────────────────────────────────────────────
+   Two ways in, the same size, because they are two of the same kind of
+   thing. One of them used to be a filled accent button and the other a grey
+   field with two icons hanging off it, which read as an action and a
+   setting rather than as a choice between two doors.                      */
 
-.deckbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-3);
-  margin: 0;
+.pollbtns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: var(--space-2);
 }
 
-.deckbar-pick {
-  flex: 1 1 12rem;
+.pollbtns .btn {
+  width: 100%;
+}
+
+/* Which one is open, under the buttons that change that. Not a control. */
+.deckopen {
+  margin: 0;
+  font-size: var(--text-label);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ─── The poll picker ──────────────────────────────────────────────────
+   A name alone doesn't tell you which of five polls you want a month later,
+   so each row carries its size and when it last faced a room. Renaming and
+   deleting sit beside the poll they act on rather than beside whichever one
+   happens to be open.                                                     */
+
+.sheet-title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* The way out of the sheet sits where a thumb ends up, not where the list
+   happens to stop. */
+.sheet-card .actions {
+  justify-content: flex-end;
+}
+
+.polllist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-height: 55dvh;
+  overflow-y: auto;
+}
+
+.pollitem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-right: var(--space-1);
+  border-radius: var(--radius-control);
+  border: 1px solid transparent;
+}
+
+.pollitem.is-open {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.pollpick {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-h);
+  padding: var(--space-2);
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pollpick:disabled {
+  cursor: default;
+}
+
+/* Filled on the poll that is open, empty on the rest — the same shape the
+   audience taps to answer, doing the same job. */
+.pollmark {
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.pollitem.is-open .pollmark {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: inset 0 0 0 3px var(--surface);
+}
+
+.pollbody {
+  display: flex;
+  flex-direction: column;
   min-width: 0;
 }
 
-.deckbtns {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
+.polltitle {
+  font-size: var(--text-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pollmeta {
+  font-size: var(--text-label);
+  color: var(--muted);
 }
 
 /* ─── The question form ────────────────────────────────────────────────── */
@@ -1272,12 +1374,16 @@ h1.is-centred {
   gap: var(--space-2);
 }
 
+/* A saved question is one line of content and four small things you can do
+   to it, on the same line. They used to wrap onto a row of their own, which
+   made every question in the list about 150px tall — a set of five filled the
+   screen twice over. */
 .qitem {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2);
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-control);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1295,25 +1401,46 @@ h1.is-centred {
   min-width: 1.4em;
 }
 
+.qbody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
 .qtext {
   font-size: var(--text-body);
   font-weight: 600;
   line-height: var(--leading-tight);
-  min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.qtext small {
-  display: block;
-  margin-top: var(--space-1);
+.qfoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.qmeta {
+  min-width: 0;
   font-size: var(--text-label);
-  font-weight: 400;
   color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .qbtns {
   display: flex;
-  gap: var(--space-1);
+  gap: 0;
+}
+
+/* Four of them share a line with the question's own summary, so they are
+   sized for a list rather than for a toolbar. */
+.qbtns .iconbtn {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 /* A saved question is content; the four things you can do to it are not.
@@ -1427,6 +1554,11 @@ h1.is-centred {
   animation: waiting-breathe 2.4s ease-in-out infinite;
 }
 
+/* Spelled out rather than left to the default, so all three bars are named
+   in the same place and none of them looks like an oversight. */
+.waiting-bar--a {
+  animation-delay: 0s;
+}
 .waiting-bar--b {
   animation-delay: 0.3s;
 }
