@@ -516,6 +516,8 @@ function drawRun() {
     !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
+  setLabel(els.reopen, t("reopenVotingShort"));
+  nameButton(els.reopen, t("reopenVoting"));
   // Two short labels in a row of equal cells, each carrying its full
   // sentence as its accessible name — the whole of "Reset this question's
   // votes" doesn't fit under an icon on a phone, and it is the difference
@@ -526,7 +528,10 @@ function drawRun() {
   els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast() && !likes);
 
   // Blanking only means anything while something is up.
-  setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
+  // Two words on the tile, the whole sentence as its name — the same split
+  // the reset button uses, for the same reason: the cell is ten characters
+  // wide and German needs more than that to say "hide the screen".
+  setLabel(els.blank, blanked ? t("showScreenShort") : t("hideScreenShort"));
   nameButton(els.blank, blanked ? t("showScreen") : t("hideScreen"));
   els.blank.querySelector(".btn-icon").dataset.icon = blanked ? "show" : "hide";
   drawIcons(els.blank);

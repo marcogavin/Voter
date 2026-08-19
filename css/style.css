@@ -296,6 +296,10 @@ h1 {
   font-size: var(--text-body);
   line-height: var(--leading-body);
   color: var(--muted);
+  /* Some of these are error messages, and an error message is where a URL
+     with no spaces in it turns up. One of those pushed the whole page 34px
+     sideways before this line existed. */
+  overflow-wrap: anywhere;
 }
 
 /* ─── Buttons ──────────────────────────────────────────────────────────
@@ -336,6 +340,13 @@ h1 {
    a label that outgrows a narrow phone makes its button taller instead of
    pushing out of the card. Nothing else in here is allowed to overflow. */
 .btn-label {
+  overflow-wrap: anywhere;
+}
+
+/* A tile is about ten characters wide, so its label is two short words in
+   every language and the sentence it stands for is the button's accessible
+   name. Breaking mid-word is the fallback, not the plan. */
+.btn--stack .btn-label {
   overflow-wrap: anywhere;
 }
 
@@ -1616,7 +1627,11 @@ h1.is-centred {
 .toolbar {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: 1fr;
+  /* minmax(0, 1fr), not 1fr: a plain 1fr will not shrink a cell below its
+     longest word, so one long label in one language pushed the whole row out
+     of the card. Below this the labels break instead, which is the lesser of
+     the two. */
+  grid-auto-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 
