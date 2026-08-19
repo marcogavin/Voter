@@ -41,10 +41,13 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["polls", "timer", "ending", "names", "groups", "sections"];
+      var NEEDS = [
+        "polls", "timer", "ending", "names", "applause",
+        "groups", "sections", "hearts",
+      ];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
-        "js/firebase-config.js", "js/icons.js", "css/style.css",
+        "js/firebase-config.js", "js/icons.js", "js/hearts.js", "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

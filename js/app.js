@@ -13,13 +13,14 @@ import {
   NAME_MAX,
 } from "./sync.js";
 import { icons, drawIcons } from "./icons.js";
+import { flyHearts, heartColour } from "./hearts.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "ending", "names"];
+window.VOTR_BUILD = ["polls", "timer", "ending", "names", "applause"];
 
 const optionsEl = document.getElementById("options");
 const questionEl = document.getElementById("question");
@@ -34,6 +35,7 @@ let ticker = null;
 let renaming = false; // true while someone is changing a name they already gave
 let joinDraft = ""; // what was typed into the join field, kept across a rebuild
 let joinError = ""; // why the last join was refused, if it was
+let likesSeen = null; // the applause already drawn, so only new taps fly
 
 start();
 
@@ -381,6 +383,9 @@ async function onJoin(submitEvent) {
 function showEnding(count) {
   if (optionsEl.dataset.screen !== "ending") {
     optionsEl.dataset.screen = "ending";
+    // A screen that has just been built hasn't drawn any of the applause yet,
+    // and shouldn't replay all of it at once.
+    likesSeen = null;
     optionsEl.innerHTML = `
       <div class="ending">
         <div class="heart-stage">
@@ -395,28 +400,21 @@ function showEnding(count) {
     optionsEl.querySelector("#like").addEventListener("click", onLike);
   }
 
+  // The counter is the only thing everyone shares, so it is what says someone
+  // tapped: every step up is a heart from somebody, and it flies here too.
+  // Your own taps are claimed in onLike before their snapshot arrives, so
+  // they aren't counted twice — and a refused one comes back down without
+  // flying anything.
+  if (likesSeen === null) likesSeen = count;
+  else if (count > likesSeen) {
+    flyHearts(optionsEl.querySelector(".heart-stage"), count - likesSeen);
+    likesSeen = count;
+  } else if (count < likesSeen) likesSeen = count;
+
   // Only when it changes: overwriting it on every snapshot would undo the
   // optimistic bump between the tap and the database answering.
   const shown = optionsEl.querySelector("#like-count");
   if (Number(shown.textContent) !== count) shown.textContent = count;
-}
-
-/**
- * One heart per tap, drifting up and out. Each gets its own drift, tilt and
- * size, or a burst of taps leaves in a single column and reads as one heart
- * stuttering rather than as a room clapping.
- */
-function flyHeart(stage) {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const fly = document.createElement("span");
-  fly.className = "heart-fly";
-  fly.innerHTML = icons.heart;
-  fly.style.setProperty("--drift", `${Math.round((Math.random() - 0.5) * 140)}px`);
-  fly.style.setProperty("--tilt", `${Math.round((Math.random() - 0.5) * 60)}deg`);
-  fly.style.setProperty("--size", `${(1.5 + Math.random() * 1.5).toFixed(2)}rem`);
-  fly.addEventListener("animationend", () => fly.remove());
-  stage.appendChild(fly);
 }
 
 async function onLike(clickEvent) {
@@ -427,7 +425,8 @@ async function onLike(clickEvent) {
   button.classList.remove("is-beating");
   void button.offsetWidth; // restart the animation on a repeated tap
   button.classList.add("is-beating");
-  flyHeart(button.parentElement);
+  flyHearts(button.parentElement, 1, heartColour(getUid()));
+  likesSeen = (likesSeen ?? 0) + 1;
 
   // A tap that works clears the last one's complaint.
   const hint = optionsEl.querySelector("#like-hint");
@@ -444,6 +443,7 @@ async function onLike(clickEvent) {
     // A refused write used to leave the count sitting at zero with nothing
     // said, which looks exactly like a button that doesn't work.
     shown.textContent = before;
+    likesSeen = Math.max((likesSeen ?? 1) - 1, 0);
     hint.textContent = `${t("likeRefused")} ${error.message}`;
     hint.classList.add("is-error");
     setStatus("refused", "error");

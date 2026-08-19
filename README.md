@@ -57,6 +57,18 @@ every attendee's phone, because the room should read one language rather than
 each person hunting for a setting. Available in English, Portuguese, Spanish,
 French and German.
 
+### The end of a poll
+
+Past the last question every phone shows **Like VOTR?** and a heart. It takes
+as many taps as anyone wants to give it — there's nothing to win, so there's
+nothing to protect against — and the count is kept with the poll.
+
+A tap sends a heart up on **every** screen in the room, including the host's,
+so the applause is shared rather than private. Your own hearts always fly in
+the same colour; hearts from other people take one of eight at random, since
+the database sends a count and not a name. Anyone who has asked for reduced
+motion gets the count without the animation.
+
 ### The clock
 
 A question accepts votes for a set number of seconds, then closes itself. You

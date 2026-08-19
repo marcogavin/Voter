@@ -91,6 +91,25 @@ who can't separate red from green.
 | `--right` | `#17743c` | The right answer, once revealed |
 | `--wrong` | `#d0342c` | Wrong answers, once revealed; also the heart |
 
+### Applause
+
+Confetti, not meaning. Eight colours for the hearts on the closing screen: a
+phone always uses the same one for its own taps (chosen from its device id),
+and hearts arriving from other people take one at random, because the database
+sends a count rather than a name. People share colours in any real room, which
+is fine — nothing depends on telling them apart.
+
+| Token | Value | | Token | Value |
+| :--- | :--- | --- | :--- | :--- |
+| `--heart-1` | `#d0342c` | | `--heart-5` | `#0f766e` |
+| `--heart-2` | `#c2410c` | | `--heart-6` | `#1d4ed8` |
+| `--heart-3` | `#a16207` | | `--heart-7` | `#6d28d9` |
+| `--heart-4` | `#15803d` | | `--heart-8` | `#be185d` |
+
+Each is dark enough on white to read as a shape at 1.5–3rem. The big heart
+itself stays `--wrong` red — it's the app's own mark on that screen, not
+anybody's colour.
+
 ### On air
 
 | Token | Value | Where |

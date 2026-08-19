@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint pickerfield";
+  --build: "groups sections names hint pickerfield hearts";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -39,6 +39,21 @@
   --vote: #0b7d88; /* teal — your own pick */
   --right: #17743c;
   --wrong: #d0342c;
+
+  /* The applause. One per person, picked from their device id so your own
+     hearts are always the same colour, and at random for hearts that arrive
+     from someone else — which is everyone but you, since the database sends
+     a count and not a name. Eight colours in a room of any size means people
+     share; that's fine, it's confetti, not identity. Each is dark enough on
+     white to read as a shape rather than a smudge. */
+  --heart-1: #d0342c;
+  --heart-2: #c2410c;
+  --heart-3: #a16207;
+  --heart-4: #15803d;
+  --heart-5: #0f766e;
+  --heart-6: #1d4ed8;
+  --heart-7: #6d28d9;
+  --heart-8: #be185d;
 
   /* Broadcast red, and only ever a status. Deliberately a different red from
      the one that means a wrong answer: this one says "on air". */
@@ -91,6 +106,14 @@
    to remember to opt out of being displayed. */
 [hidden] {
   display: none !important;
+}
+
+/* iOS treats two quick taps on a control as "zoom in on this", which is
+   exactly wrong on a screen meant to be tapped fast — the heart most of all,
+   but an impatient Next is no different. Pinch zoom is untouched: the page as
+   a whole still scales for anyone who needs it larger. */
+button {
+  touch-action: manipulation;
 }
 
 body {
@@ -740,6 +763,11 @@ h1.is-centred {
   cursor: pointer;
   /* Nothing about a tap should feel like it might have missed. */
   -webkit-tap-highlight-color: transparent;
+  /* Tapped fast and often, so the magnifier and the selection callout that a
+     held tap raises go too. Double-tap zoom is off for every button above. */
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .heart svg {
@@ -759,6 +787,7 @@ h1.is-centred {
 
 /* What the host sees: the same count, with no way to add to it. */
 .tally {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -768,6 +797,9 @@ h1.is-centred {
 }
 
 .tally-heart {
+  /* Also the launch pad for the room's hearts, so it has to be something an
+     absolutely positioned child can be measured against. */
+  position: relative;
   display: block;
   width: 2rem;
   height: 2rem;

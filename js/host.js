@@ -37,6 +37,7 @@ import {
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons } from "./icons.js";
+import { flyHearts } from "./hearts.js";
 import {
   t,
   setLanguage,
@@ -48,7 +49,7 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate", "picker"];
+window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate", "picker", "applause"];
 
 const els = {
   tabs: document.getElementById("tabs"),
@@ -124,6 +125,7 @@ let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
 let likes = 0; // applause on the closing screen
+let likesSeen = null; // the applause already drawn, so only new taps fly
 let questions = []; // the live poll's questions, in running order
 let currentIndex = -1;
 let revealed = false;
@@ -502,17 +504,34 @@ function drawRun() {
   if (atEnd) {
     shownQuestionId = null;
     els.runQuestion.textContent = t("likeVotr");
-    // The host watches the applause arrive; only the audience can add to it.
-    els.options.innerHTML =
-      `<p class="tally"><span class="tally-heart" aria-hidden="true"></span>` +
-      `<span class="tally-count">${likes}</span></p>` +
-      `<p class="panel-message">${t("likeHostNote")}</p>`;
-    els.options.querySelector(".tally-heart").innerHTML = icons.heart;
+    // Rebuilt only on arrival now: this used to be redrawn on every snapshot,
+    // which would wipe a heart out of the air the moment it took off.
+    if (els.options.dataset.screen !== "ending") {
+      els.options.dataset.screen = "ending";
+      // The host watches the applause arrive; only the audience can add to it.
+      els.options.innerHTML =
+        `<p class="tally"><span class="tally-heart" aria-hidden="true"></span>` +
+        `<span class="tally-count">${likes}</span></p>` +
+        `<p class="panel-message">${t("likeHostNote")}</p>`;
+      els.options.querySelector(".tally-heart").innerHTML = icons.heart;
+      likesSeen = null;
+    }
+
+    // The room's taps, on the screen the room is looking at. Nobody here can
+    // add to the count, so every heart that flies came from somebody else.
+    if (likesSeen === null) likesSeen = likes;
+    else if (likes > likesSeen) {
+      flyHearts(els.options.querySelector(".tally-heart"), likes - likesSeen);
+      likesSeen = likes;
+    } else if (likes < likesSeen) likesSeen = likes;
+
+    els.options.querySelector(".tally-count").textContent = likes;
     return;
   }
 
   if (!question) {
     shownQuestionId = null;
+    delete els.options.dataset.screen;
     els.runQuestion.textContent = questions.length
       ? t("nothingOnScreen")
       : t("noQuestions");
@@ -527,6 +546,7 @@ function drawRun() {
   els.runQuestion.textContent = question.text;
 
   if (question.id !== shownQuestionId) {
+    delete els.options.dataset.screen;
     els.options.innerHTML = "";
     for (const option of question.options) {
       const row = document.createElement("div");
