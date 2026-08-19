@@ -48,7 +48,7 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["surveys", "timer", "qr", "icons", "gate"];
+window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate"];
 
 const els = {
   tabs: document.getElementById("tabs"),
@@ -118,13 +118,13 @@ let seconds = 0; // how long a question stays open; 0 for no limit
 let secondsMenu = null; // signature of what the duration picker currently offers
 let ticker = null;
 
-let decks = []; // every saved survey: { id, title, count }
+let decks = []; // every saved poll: { id, title, count }
 let currentDeck = null; // the one being edited here and presented to the room
-let deckMenu = null; // signature of what the survey picker currently offers
+let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
 let likes = 0; // applause on the closing screen
-let questions = []; // the live survey's questions, in running order
+let questions = []; // the live poll's questions, in running order
 let currentIndex = -1;
 let revealed = false;
 let blanked = false;
@@ -327,7 +327,7 @@ function render(event) {
   questions = event.questions;
   decks = event.decks;
 
-  // A half-written question belongs to the survey it was started in, and its
+  // A half-written question belongs to the poll it was started in, and its
   // index means something different in the one being switched to. Acted on
   // below, once the language and ownership this render is drawing with settle.
   const switchedDeck = event.currentDeck !== currentDeck;
@@ -375,16 +375,16 @@ function render(event) {
   els.seconds.disabled = !isOwner;
 
   fillDecks();
-  els.deck.setAttribute("aria-label", t("currentSurvey"));
+  els.deck.setAttribute("aria-label", t("currentPoll"));
   els.deck.value = currentDeck;
   els.deck.disabled = !isOwner;
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
   els.deckRename.disabled = !isOwner;
-  // An event always keeps one survey; there'd be nothing to fall back to.
+  // An event always keeps one poll; there'd be nothing to fall back to.
   els.deckDelete.disabled = !isOwner || decks.length < 2;
   nameButton(els.signout, t("signOut"));
-  nameButton(els.deckRename, t("renameSurvey"));
-  nameButton(els.deckDelete, t("deleteSurvey"));
+  nameButton(els.deckRename, t("renamePoll"));
+  nameButton(els.deckDelete, t("deletePoll"));
 
   if (isOwner) {
     els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });
@@ -401,7 +401,7 @@ function render(event) {
 
   // The question being edited can disappear under us — another device could
   // delete it, or this one could while the save is still in flight. Switching
-  // survey does the same thing to it, less visibly.
+  // poll does the same thing to it, less visibly.
   if (switchedDeck || (editingIndex !== null && editingIndex >= questions.length)) {
     stopEditing();
   }
@@ -454,7 +454,7 @@ function drawRun() {
   if (slot) slot.textContent = deckTitle(liveDeck());
 
   // One past the last question is the closing screen rather than nothing at
-  // all: a survey should finish somewhere rather than just stop responding.
+  // all: a poll should finish somewhere rather than just stop responding.
   const atEnd = questions.length > 0 && currentIndex === questions.length;
 
   els.counter.textContent = !questions.length
@@ -566,12 +566,12 @@ function drawRun() {
       (revealed ? t("votingClosedSuffix") : "");
 }
 
-/* ── Surveys ───────────────────────────────────────────────────────────── */
+/* ── Polls ─────────────────────────────────────────────────────────────── */
 
 /**
  * The picker carries the question count as well as the name, because the one
  * thing you want to know before switching is whether you're switching to the
- * survey you actually wrote.
+ * poll you actually wrote.
  */
 function fillDecks() {
   const signature = JSON.stringify([getLanguage(), decks]);
@@ -592,11 +592,11 @@ function fillDecks() {
   }
 }
 
-/** Falls back to the survey's position, so an unnamed one is still findable. */
+/** Falls back to the poll's position, so an unnamed one is still findable. */
 function deckTitle(deck) {
   if (!deck) return "";
   const index = decks.findIndex((other) => other.id === deck.id);
-  return deck.title || t("surveyN", { n: index + 1 });
+  return deck.title || t("pollN", { n: index + 1 });
 }
 
 function liveDeck() {
@@ -609,7 +609,7 @@ async function onDeckChange(changeEvent) {
 
   // Switching moves the whole room, so it shouldn't be something a stray tap
   // in Setup does while a question is up in front of an audience.
-  if (currentIndex >= 0 && !(await ask({ title: t("switchSurveyWarn") }))) {
+  if (currentIndex >= 0 && !(await ask({ title: t("switchPollWarn") }))) {
     els.deck.value = currentDeck;
     return;
   }
@@ -628,8 +628,8 @@ async function onDeckNew() {
   if (decks.length >= DECK_MAX) return;
 
   const title = await ask({
-    title: t("nameSurvey"),
-    value: t("surveyN", { n: decks.length + 1 }),
+    title: t("namePoll"),
+    value: t("pollN", { n: decks.length + 1 }),
   });
   if (title === null) return;
 
@@ -650,7 +650,7 @@ async function onDeckRename() {
   const deck = liveDeck();
   if (!deck) return;
 
-  const title = await ask({ title: t("nameSurvey"), value: deckTitle(deck) });
+  const title = await ask({ title: t("namePoll"), value: deckTitle(deck) });
   if (title === null) return;
 
   try {
@@ -667,7 +667,7 @@ async function onDeckDelete() {
   if (!deck || decks.length < 2) return;
 
   const confirmed = await ask({
-    title: t("deleteSurveyWarn", { title: deckTitle(deck), n: deck.count }),
+    title: t("deletePollWarn", { title: deckTitle(deck), n: deck.count }),
     ok: t("delete"),
   });
   if (!confirmed) return;
@@ -721,7 +721,7 @@ function onAskSubmit(submitEvent) {
 
   if (els.askInput.hidden) return closeAsk(true);
 
-  // An unnamed survey can't be told apart from another unnamed one. Refuse
+  // An unnamed poll can't be told apart from another unnamed one. Refuse
   // by putting the cursor back rather than by doing nothing at all.
   const typed = els.askInput.value.trim();
   if (typed) closeAsk(typed);
