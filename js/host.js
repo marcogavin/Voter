@@ -377,6 +377,7 @@ function render(event) {
   els.deckRename.disabled = !isOwner;
   // An event always keeps one survey; there'd be nothing to fall back to.
   els.deckDelete.disabled = !isOwner || decks.length < 2;
+  nameButton(els.signout, t("signOut"));
   nameButton(els.deckRename, t("renameSurvey"));
   nameButton(els.deckDelete, t("deleteSurvey"));
 
@@ -1113,7 +1114,9 @@ function showQr() {
     `<rect width="${span}" height="${span}" fill="#fff"/>` +
     `<g fill="#000">${rects.join("")}</g></svg>`;
 
+  // Readable without the scheme, but a link needs the whole thing.
   els.qrUrl.textContent = url;
+  els.qrUrl.href = new URL(".", location.href).href;
   els.qrOverlay.hidden = false;
 }
 

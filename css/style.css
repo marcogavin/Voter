@@ -40,6 +40,12 @@
   --right: #17743c;
   --wrong: #d0342c;
 
+  /* Broadcast red, and only ever a status. Deliberately a different red from
+     the one that means a wrong answer: this one says "on air". */
+  --live: #e5484d;
+  --live-glow: rgba(229, 72, 77, 0.4);
+  --live-fade: rgba(229, 72, 77, 0);
+
   /* One elevation. A card is either on the page or it isn't. */
   --shadow-card: 0 1px 2px rgba(20, 20, 26, 0.04),
     0 4px 14px rgba(20, 20, 26, 0.06);
@@ -118,6 +124,10 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  /* The panel's parts are spaced here rather than each carrying a margin,
+     which is how the mark ended up touching the account bar: neither of them
+     had one, and nothing else was going to provide it. */
+  gap: var(--space-4);
   background: var(--surface);
   border-radius: var(--radius-card);
   padding: var(--space-5);
@@ -157,7 +167,7 @@ body {
 }
 
 h1 {
-  margin: var(--space-3) 0 var(--space-4);
+  margin: 0;
   font-size: var(--text-title);
   font-weight: 700;
   line-height: var(--leading-tight);
@@ -329,7 +339,6 @@ h1.is-centred {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  margin: var(--space-4) 0 var(--space-5);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   overflow: hidden;
@@ -752,6 +761,9 @@ h1.is-centred {
    The second and last place uppercase survives.                           */
 
 .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-size: var(--text-micro);
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -779,6 +791,36 @@ h1.is-centred {
   border-color: var(--ink);
 }
 
+/* On air. It isn't always: the badge also reads Connecting, Offline, Refused
+   and every transient the host triggers — so the light belongs to this one
+   state and not to the badge in general. */
+.badge[data-state="live"]::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--live);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .badge[data-state="live"]::before {
+    animation: live-pulse 2.4s ease-out infinite;
+  }
+}
+
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--live-glow);
+  }
+  70% {
+    box-shadow: 0 0 0 0.4rem var(--live-fade);
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--live-fade);
+  }
+}
+
 /* ─── Footer ───────────────────────────────────────────────────────────
    The second of the three dividers.                                       */
 
@@ -787,7 +829,6 @@ h1.is-centred {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-top: var(--space-4);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
 }
@@ -1199,10 +1240,13 @@ h1.is-centred {
 }
 
 .qr-url {
+  display: block;
   margin: 0;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
   font-size: var(--text-body);
   font-weight: 700;
-  color: var(--ink);
   text-align: center;
   overflow-wrap: anywhere;
 }
@@ -1216,19 +1260,18 @@ body.audience .panel {
   justify-content: center;
 }
 
-.top-row--centred {
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
+/* Not a flex row at all. Three attempts at centring this through flex
+   alignment each depended on a parent behaving, so it is now a block with an
+   auto margin — the plainest centring there is, and nothing above it can
+   change its mind. */
+.top-row--centred,
+.top-row--centred .mark {
+  display: block;
   text-align: center;
 }
 
-/* The mark takes the full width and centres inside it, rather than being a
-   shrink-to-fit box that has to be centred by its parent. */
-.top-row--centred .mark {
-  width: 100%;
-  justify-content: center;
+.top-row--centred .logo {
+  margin-inline: auto;
 }
 
 /* The wordmark is roughly 3:1, which is what caps it: a phone panel is about
@@ -1244,9 +1287,15 @@ body.audience .panel {
   gap: var(--space-2);
 }
 
+/* The question sits closer to the answers than to the mark: they are one
+   thing to read, and the mark is the room's letterhead. */
+body.audience #question {
+  margin-top: var(--space-5);
+}
+
 body.audience #options {
   flex: 1;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* ─── Portrait phone ───────────────────────────────────────────────────
