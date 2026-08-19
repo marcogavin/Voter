@@ -13,15 +13,20 @@ import {
   NAME_MAX,
 } from "./sync.js";
 import { icons, drawIcons } from "./icons.js";
+import { flyHearts, heartColour } from "./hearts.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "ending", "names"];
+window.VOTR_BUILD = ["polls", "timer", "ending", "names", "applause", "stage"];
 
 const optionsEl = document.getElementById("options");
+const progressEl = document.getElementById("progress");
+const clockEl = document.getElementById("clock");
+const clockFillEl = document.getElementById("clock-fill");
+const clockTimeEl = document.getElementById("clock-time");
 const questionEl = document.getElementById("question");
 const whoamiEl = document.getElementById("whoami");
 const statusEl = document.getElementById("status");
@@ -34,6 +39,7 @@ let ticker = null;
 let renaming = false; // true while someone is changing a name they already gave
 let joinDraft = ""; // what was typed into the join field, kept across a rebuild
 let joinError = ""; // why the last join was refused, if it was
+let likesSeen = null; // the applause already drawn, so only new taps fly
 
 start();
 
@@ -114,6 +120,7 @@ function render(event) {
   if (!event.blanked && event.questions.length &&
       event.currentIndex === event.questions.length) {
     shownQuestionId = null;
+    drawProgress(null);
     questionEl.hidden = false;
     questionEl.textContent = t("likeVotr");
     questionEl.classList.add("is-centred");
@@ -127,6 +134,7 @@ function render(event) {
 
   if (!question) {
     shownQuestionId = null;
+    drawProgress(null);
     questionEl.hidden = true;
     noteEl.textContent = "";
     stopTicking();
@@ -135,7 +143,7 @@ function render(event) {
   }
 
   questionEl.hidden = false;
-
+  drawProgress(event.currentIndex + 1, event.questions.length);
   questionEl.textContent = question.text;
 
   if (question.id !== shownQuestionId) {
@@ -164,16 +172,32 @@ function secondsLeft() {
   return Math.max(0, Math.ceil(latest.seconds - gone));
 }
 
+/** "Question 2 of 3", or nothing at all when no question is up. */
+function drawProgress(index, total) {
+  const show = index !== null;
+  progressEl.hidden = !show;
+  if (show) progressEl.textContent = t("questionProgress", { n: index, of: total });
+}
+
+/**
+ * The clock is a bar that empties, with the seconds beside it. As a number
+ * alone in the footer it was both too small to glance at and nowhere near
+ * the question it was counting down.
+ */
 function drawTime() {
   const left = secondsLeft();
   const closed = latest?.revealed || left === 0;
+  const urgent = !closed && left !== null && left <= 5;
 
-  noteEl.textContent = closed
-    ? t("votingClosed")
-    : left === null
-      ? ""
-      : t("secondsLeft", { n: left });
-  noteEl.classList.toggle("is-urgent", !closed && left !== null && left <= 5);
+  clockEl.hidden = left === null || closed;
+  if (!clockEl.hidden) {
+    clockFillEl.style.width = `${(left / latest.seconds) * 100}%`;
+    clockTimeEl.textContent = t("secondsLeft", { n: left });
+    clockEl.classList.toggle("is-urgent", urgent);
+  }
+
+  noteEl.textContent = closed ? t("votingClosed") : "";
+  noteEl.classList.toggle("is-urgent", false);
 }
 
 function startTicking() {
@@ -202,19 +226,18 @@ function buildRows(question) {
   for (const option of question.options) {
     const row = document.createElement("button");
     row.type = "button";
-    row.className = "meter meter--vote";
+    row.className = "choice";
     row.dataset.id = option.id;
     row.setAttribute("aria-label", t("voteFor", { label: option.label }));
-    // The tick box is what tells people this row is theirs to press — tapping
-    // anywhere on the row still works, but nothing else says "choose one".
+    // The mark is what tells people this row is theirs to press — tapping
+    // anywhere on the card still works, but nothing else says "choose one".
     row.innerHTML = `
-      <span class="tick" aria-hidden="true"></span>
-      <span class="meter-label"></span>
-      <span class="meter-track">
-        <span class="meter-fill"></span>
-        <span class="meter-needle"></span>
+      <span class="choice-fill"></span>
+      <span class="choice-body">
+        <span class="choice-mark" aria-hidden="true"></span>
+        <span class="choice-label"></span>
+        <span class="choice-pct"></span>
       </span>
-      <span class="meter-pct"></span>
     `;
     row.addEventListener("click", () => submitVote(question.id, option.id));
     optionsEl.appendChild(row);
@@ -231,19 +254,25 @@ function updateRows(question, revealed) {
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
 
   for (const option of question.options) {
-    const row = optionsEl.querySelector(`.meter[data-id="${option.id}"]`);
+    const row = optionsEl.querySelector(`.choice[data-id="${option.id}"]`);
     if (!row) continue;
 
     const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
 
-    row.querySelector(".meter-label").textContent = option.label;
-    row.querySelector(".meter-fill").style.width = showResults ? pct + "%" : "0%";
-    row.querySelector(".meter-needle").style.left = showResults ? pct + "%" : "0%";
-    row.querySelector(".meter-pct").textContent = showResults ? pct + "%" : "";
+    row.querySelector(".choice-label").textContent = option.label;
+    row.querySelector(".choice-fill").style.width = showResults ? pct + "%" : "0%";
+    row.querySelector(".choice-pct").textContent = pct + "%";
 
+    row.classList.toggle("is-counted", showResults);
     row.classList.toggle("is-mine", option.id === myVote);
     row.classList.toggle("is-right", scored && option.id === question.correct);
-    row.classList.toggle("is-wrong", scored && option.id !== question.correct);
+    // Only your own wrong answer is marked wrong. Painting every other option
+    // red as well says "all of this was wrong", when the one thing worth
+    // seeing is which one wasn't.
+    row.classList.toggle(
+      "is-missed",
+      scored && option.id === myVote && option.id !== question.correct,
+    );
     row.disabled = revealed || myVote !== null;
   }
 }
@@ -381,6 +410,9 @@ async function onJoin(submitEvent) {
 function showEnding(count) {
   if (optionsEl.dataset.screen !== "ending") {
     optionsEl.dataset.screen = "ending";
+    // A screen that has just been built hasn't drawn any of the applause yet,
+    // and shouldn't replay all of it at once.
+    likesSeen = null;
     optionsEl.innerHTML = `
       <div class="ending">
         <div class="heart-stage">
@@ -395,28 +427,21 @@ function showEnding(count) {
     optionsEl.querySelector("#like").addEventListener("click", onLike);
   }
 
+  // The counter is the only thing everyone shares, so it is what says someone
+  // tapped: every step up is a heart from somebody, and it flies here too.
+  // Your own taps are claimed in onLike before their snapshot arrives, so
+  // they aren't counted twice — and a refused one comes back down without
+  // flying anything.
+  if (likesSeen === null) likesSeen = count;
+  else if (count > likesSeen) {
+    flyHearts(optionsEl.querySelector(".heart-stage"), count - likesSeen);
+    likesSeen = count;
+  } else if (count < likesSeen) likesSeen = count;
+
   // Only when it changes: overwriting it on every snapshot would undo the
   // optimistic bump between the tap and the database answering.
   const shown = optionsEl.querySelector("#like-count");
   if (Number(shown.textContent) !== count) shown.textContent = count;
-}
-
-/**
- * One heart per tap, drifting up and out. Each gets its own drift, tilt and
- * size, or a burst of taps leaves in a single column and reads as one heart
- * stuttering rather than as a room clapping.
- */
-function flyHeart(stage) {
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-  const fly = document.createElement("span");
-  fly.className = "heart-fly";
-  fly.innerHTML = icons.heart;
-  fly.style.setProperty("--drift", `${Math.round((Math.random() - 0.5) * 140)}px`);
-  fly.style.setProperty("--tilt", `${Math.round((Math.random() - 0.5) * 60)}deg`);
-  fly.style.setProperty("--size", `${(1.5 + Math.random() * 1.5).toFixed(2)}rem`);
-  fly.addEventListener("animationend", () => fly.remove());
-  stage.appendChild(fly);
 }
 
 async function onLike(clickEvent) {
@@ -427,7 +452,8 @@ async function onLike(clickEvent) {
   button.classList.remove("is-beating");
   void button.offsetWidth; // restart the animation on a repeated tap
   button.classList.add("is-beating");
-  flyHeart(button.parentElement);
+  flyHearts(button.parentElement, 1, heartColour(getUid()));
+  likesSeen = (likesSeen ?? 0) + 1;
 
   // A tap that works clears the last one's complaint.
   const hint = optionsEl.querySelector("#like-hint");
@@ -444,6 +470,7 @@ async function onLike(clickEvent) {
     // A refused write used to leave the count sitting at zero with nothing
     // said, which looks exactly like a button that doesn't work.
     shown.textContent = before;
+    likesSeen = Math.max((likesSeen ?? 1) - 1, 0);
     hint.textContent = `${t("likeRefused")} ${error.message}`;
     hint.classList.add("is-error");
     setStatus("refused", "error");

@@ -37,6 +37,7 @@ import {
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons } from "./icons.js";
+import { flyHearts } from "./hearts.js";
 import {
   t,
   setLanguage,
@@ -48,11 +49,15 @@ import {
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
-window.VOTR_BUILD = ["polls", "timer", "qr", "icons", "gate", "picker"];
+window.VOTR_BUILD = [
+  "polls", "timer", "qr", "icons", "gate", "picker", "applause", "sheet",
+];
 
 const els = {
   tabs: document.getElementById("tabs"),
   signedOut: document.getElementById("signed-out"),
+  editorSheet: document.getElementById("editor-sheet"),
+  addQuestion: document.getElementById("add-question"),
   tabSetup: document.getElementById("tab-setup"),
   tabRun: document.getElementById("tab-run"),
   viewSetup: document.getElementById("view-setup"),
@@ -124,6 +129,7 @@ let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
 let likes = 0; // applause on the closing screen
+let likesSeen = null; // the applause already drawn, so only new taps fly
 let questions = []; // the live poll's questions, in running order
 let currentIndex = -1;
 let revealed = false;
@@ -158,6 +164,15 @@ async function start() {
 
   try {
     wireUp();
+
+    // The page ships gated, and render() only opens it once the database
+    // answers. Auth is settled by the time connect() resolves, so the gate is
+    // decided here too — otherwise a host who is already signed in reads
+    // "sign in to set up and run polls" for the second before the first
+    // snapshot lands.
+    signedIn = !isAnonymous();
+    applyViews();
+
     onEventChange(render);
   } catch (error) {
     setStatus("broken", "error");
@@ -194,6 +209,7 @@ function wireUp() {
     if (event.key !== "Escape") return;
     closeAsk(null);
     hideQr();
+    if (!els.editorSheet.hidden) stopEditing();
   });
   els.askCancel.addEventListener("click", () => closeAsk(null));
   els.askOverlay.addEventListener("click", (event) => {
@@ -201,7 +217,14 @@ function wireUp() {
   });
 
   els.editor.addEventListener("submit", onSubmit);
+  els.addQuestion.addEventListener("click", () => {
+    stopEditing();
+    openEditor();
+  });
   els.cancel.addEventListener("click", stopEditing);
+  els.editorSheet.addEventListener("click", (event) => {
+    if (event.target === els.editorSheet) stopEditing();
+  });
   els.list.addEventListener("click", onListClick);
   els.questionInput.setAttribute("maxlength", String(QUESTION_MAX));
   els.questionInput.addEventListener("input", drawCounts);
@@ -212,7 +235,7 @@ function wireUp() {
   els.prev.addEventListener("click", () => go(currentIndex - 1));
   els.next.addEventListener("click", onNext);
   els.reopen.addEventListener("click", () => reveal(false));
-  els.clear.addEventListener("click", () => go(-1));
+  els.clear.addEventListener("click", onStartOver);
   els.blank.addEventListener("click", () => blank(!blanked));
   els.reset.addEventListener("click", onReset);
 
@@ -239,13 +262,18 @@ function wireUp() {
 
 /* ── Character counts ──────────────────────────────────────────────────── */
 
+/** How close to a limit is close enough to be worth saying so. */
+const NEAR_LIMIT = 40;
+
 /**
  * Counts down as you type, so a limit is visible before it's hit rather than
- * discovered as a refusal after pressing the button.
+ * discovered as a refusal after pressing the button — but only once it is
+ * near. "200" beside an empty field is a number nobody needs, and a screen
+ * of numbers nobody needs is what makes a tool feel like a form.
  */
 function drawCounts() {
   const left = QUESTION_MAX - els.questionInput.value.length;
-  els.questionCount.textContent = format(left);
+  els.questionCount.textContent = left <= NEAR_LIMIT ? format(left) : "";
   els.questionCount.classList.toggle("is-over", left < 0);
 
   // One count per answer rather than a single worst-case number: a summary
@@ -253,6 +281,7 @@ function drawCounts() {
   els.optionsCount.innerHTML = "";
   parseOptions().forEach((line, index) => {
     const remaining = OPTION_MAX - line.length;
+    if (remaining > NEAR_LIMIT) return;
     const chip = document.createElement("span");
     chip.className = "charchip" + (remaining < 0 ? " is-over" : "");
     chip.textContent = `${index + 1} · ${format(remaining)}`;
@@ -359,8 +388,6 @@ function render(event) {
   applyViews();
   isOwner = signedIn && (!event.ownerUid || event.ownerUid === getUid());
 
-  els.signin.hidden = signedIn;
-  els.signout.hidden = !signedIn;
   if (!els.account.classList.contains("is-error")) {
     els.account.textContent = signedIn
       ? t("signedInAs", { name: accountName() ?? "—" })
@@ -477,11 +504,11 @@ function drawRun() {
     !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
-  // With nothing on screen there's no single question to clear, but wanting a
-  // clean slate before running the set again is exactly when this is needed.
-  setLabel(els.reset, question ? t("resetVotes") : t("resetAllVotes"));
-  els.reset.disabled = !isOwner || !questions.length;
-  els.clear.disabled = !isOwner || (!question && !atEnd);
+  // One question's votes, and it says so: clearing the whole poll is what
+  // Start over does, and two buttons that both meant "reset" were the reason
+  // it wasn't obvious which one had the wider reach.
+  els.reset.disabled = !isOwner || !question;
+  els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast());
 
   // Blanking only means anything while something is up.
   setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
@@ -493,17 +520,34 @@ function drawRun() {
   if (atEnd) {
     shownQuestionId = null;
     els.runQuestion.textContent = t("likeVotr");
-    // The host watches the applause arrive; only the audience can add to it.
-    els.options.innerHTML =
-      `<p class="tally"><span class="tally-heart" aria-hidden="true"></span>` +
-      `<span class="tally-count">${likes}</span></p>` +
-      `<p class="panel-message">${t("likeHostNote")}</p>`;
-    els.options.querySelector(".tally-heart").innerHTML = icons.heart;
+    // Rebuilt only on arrival now: this used to be redrawn on every snapshot,
+    // which would wipe a heart out of the air the moment it took off.
+    if (els.options.dataset.screen !== "ending") {
+      els.options.dataset.screen = "ending";
+      // The host watches the applause arrive; only the audience can add to it.
+      els.options.innerHTML =
+        `<p class="tally"><span class="tally-heart" aria-hidden="true"></span>` +
+        `<span class="tally-count">${likes}</span></p>` +
+        `<p class="panel-message">${t("likeHostNote")}</p>`;
+      els.options.querySelector(".tally-heart").innerHTML = icons.heart;
+      likesSeen = null;
+    }
+
+    // The room's taps, on the screen the room is looking at. Nobody here can
+    // add to the count, so every heart that flies came from somebody else.
+    if (likesSeen === null) likesSeen = likes;
+    else if (likes > likesSeen) {
+      flyHearts(els.options.querySelector(".tally-heart"), likes - likesSeen);
+      likesSeen = likes;
+    } else if (likes < likesSeen) likesSeen = likes;
+
+    els.options.querySelector(".tally-count").textContent = likes;
     return;
   }
 
   if (!question) {
     shownQuestionId = null;
+    delete els.options.dataset.screen;
     els.runQuestion.textContent = questions.length
       ? t("nothingOnScreen")
       : t("noQuestions");
@@ -518,18 +562,18 @@ function drawRun() {
   els.runQuestion.textContent = question.text;
 
   if (question.id !== shownQuestionId) {
+    delete els.options.dataset.screen;
     els.options.innerHTML = "";
     for (const option of question.options) {
       const row = document.createElement("div");
-      row.className = "meter meter--static";
+      row.className = "choice choice--static";
       row.dataset.id = option.id;
       row.innerHTML = `
-        <span class="meter-label"></span>
-        <span class="meter-track">
-          <span class="meter-fill"></span>
-          <span class="meter-needle"></span>
+        <span class="choice-fill"></span>
+        <span class="choice-body">
+          <span class="choice-label"></span>
+          <span class="choice-pct"></span>
         </span>
-        <span class="meter-pct"></span>
       `;
       els.options.appendChild(row);
     }
@@ -540,17 +584,16 @@ function drawRun() {
   const scored = revealed && question.correct !== null;
 
   for (const option of question.options) {
-    const row = els.options.querySelector(`.meter[data-id="${option.id}"]`);
+    const row = els.options.querySelector(`.choice[data-id="${option.id}"]`);
     if (!row) continue;
 
     const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
-    row.querySelector(".meter-label").textContent = option.label;
-    row.querySelector(".meter-fill").style.width = pct + "%";
-    row.querySelector(".meter-needle").style.left = pct + "%";
-    row.querySelector(".meter-pct").textContent = `${pct}%`;
+    row.querySelector(".choice-label").textContent = option.label;
+    row.querySelector(".choice-fill").style.width = pct + "%";
+    row.querySelector(".choice-pct").textContent = `${pct}%`;
 
+    row.classList.add("is-counted");
     row.classList.toggle("is-right", scored && option.id === question.correct);
-    row.classList.toggle("is-wrong", scored && option.id !== question.correct);
     // Before revealing, the presenter still needs to know which one it is.
     row.classList.toggle(
       "is-key",
@@ -831,6 +874,16 @@ function onListClick(clickEvent) {
   }
 }
 
+/**
+ * The form takes the screen while it is being used, and gives it back after.
+ * It used to sit open and empty above the list, so the first thing anyone saw
+ * in Setup was an empty form rather than the questions they had written.
+ */
+function openEditor() {
+  els.editorSheet.hidden = false;
+  els.questionInput.focus();
+}
+
 function startEditing(index) {
   const question = questions[index];
   editingIndex = index;
@@ -844,7 +897,7 @@ function startEditing(index) {
   drawCounts();
   drawEditorLabels();
   drawList();
-  els.questionInput.focus();
+  openEditor();
 }
 
 /**
@@ -859,12 +912,12 @@ function drawEditorLabels() {
     ? t("questionN", { n: questions.length + 1 })
     : t("editingQuestionN", { n: editingIndex + 1 });
   setLabel(els.save, adding ? t("addQuestion") : t("saveChanges"));
-  els.cancel.hidden = adding;
 }
 
 function stopEditing() {
   editingIndex = null;
   correctIndex = null;
+  els.editorSheet.hidden = true;
   els.editor.reset();
   showFormError(null);
   drawCorrectChoices();
@@ -1055,15 +1108,51 @@ async function onSecondsChange(changeEvent) {
 
 async function onReset() {
   const question = questions[currentIndex] ?? null;
-  if (!question && !questions.length) return;
+  if (!question) return;
 
   try {
-    await (question ? resetVotes(question) : resetAllVotes(questions));
+    await resetVotes(question);
     setStatus("reset", "live");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
   }
+}
+
+/**
+ * Back to the top with a clean sheet — which is what starting over means, and
+ * it used to leave every answer from the last run in place.
+ *
+ * It asks first, but only when there is something to lose: a poll nobody has
+ * answered yet has nothing to confirm, and a confirmation people always say
+ * yes to stops being read.
+ *
+ * The screen goes blank rather than straight to the first question, so the
+ * room doesn't get it before the presenter is ready. Next puts it up.
+ */
+async function onStartOver() {
+  const cast = votesCast();
+  if (cast && !(await ask({ title: t("startOverWarn", { n: cast }) }))) return;
+
+  try {
+    if (cast) await resetAllVotes(questions);
+    setStatus("reset", "live");
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+    return;
+  }
+
+  await go(-1);
+}
+
+/** Every answer given in this poll, across all its questions. */
+function votesCast() {
+  return questions.reduce(
+    (all, question) =>
+      all + question.options.reduce((sum, option) => sum + option.votes, 0),
+    0,
+  );
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────────── */
@@ -1084,6 +1173,16 @@ function showView(name) {
  */
 function applyViews() {
   const setup = mode === "setup";
+  // Nobody in the room needs the host's email address, and Run is the view
+  // most likely to be held up, handed over or photographed.
+  els.account.hidden = !setup || !signedIn;
+  // Everything in the app bar follows from whether an account is signed in,
+  // and is set here rather than on the next snapshot — the bar is on screen
+  // from the first paint, and a Sign in button beside a signed-in account is
+  // exactly the sort of thing that reads as an app not knowing its own state.
+  els.signin.hidden = signedIn;
+  els.signout.hidden = !signedIn;
+  els.qr.hidden = !signedIn; // nothing to share until there's an event to run
   els.tabs.hidden = !signedIn;
   els.signedOut.hidden = signedIn;
   els.viewSetup.hidden = !signedIn || !setup;

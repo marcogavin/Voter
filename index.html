@@ -8,6 +8,20 @@
      home indicator. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>VOTR</title>
+<meta name="description" content="Vote from your phone and watch the room's answers land live.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="img/icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<!-- Added to a home screen this opens without browser chrome, which is what
+     makes it feel like an app rather than a page someone bookmarked. The
+     freshness check inside the page is what replaces the reload button. -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VOTR">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101014" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="audience">
@@ -17,13 +31,26 @@
         <div class="mark">
           <img class="logo logo--banner" src="img/votr-logo.svg" alt="VOTR">
         </div>
+        <button type="button" class="whoami" id="whoami" hidden>
+          <span class="whoami-name"></span>
+          <span class="btn-icon" data-icon="edit"></span>
+        </button>
       </div>
-      <button type="button" class="whoami" id="whoami" hidden>
-        <span class="whoami-name"></span>
-        <span class="btn-icon" data-icon="edit"></span>
-      </button>
-      <h1 id="question">Connecting…</h1>
-      <div id="options"></div>
+
+      <!-- The question, its clock and its answers are one block, centred in
+           what's left of the screen rather than stacked at the top. -->
+      <main class="stage">
+        <p class="progress" id="progress" hidden></p>
+        <h1 id="question">Connecting…</h1>
+        <div class="clock" id="clock" hidden>
+          <span class="clock-track">
+            <span class="clock-fill" id="clock-fill"></span>
+          </span>
+          <span class="clock-time" id="clock-time"></span>
+        </div>
+        <div id="options" class="choices"></div>
+      </main>
+
       <div class="foot">
         <p class="note" id="note"></p>
         <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
@@ -41,10 +68,13 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["polls", "timer", "ending", "names", "groups", "sections"];
+      var NEEDS = [
+        "polls", "timer", "ending", "names", "applause", "stage",
+        "groups", "sections", "hearts", "choices", "clock",
+      ];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
-        "js/firebase-config.js", "js/icons.js", "css/style.css",
+        "js/firebase-config.js", "js/icons.js", "js/hearts.js", "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

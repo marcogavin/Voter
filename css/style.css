@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint pickerfield";
+  --build: "groups sections names hint pickerfield hearts choices clock";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -18,7 +18,9 @@
   --sunken: #f0f0f1; /* fields, and anything you type or choose into */
   --border: #e3e3e6; /* hairlines and control outlines */
   --ink: #17171a;
-  --muted: #6c6c72;
+  /* Two shades darker than it was: as the share of a tinted answer card it
+     measured 4.42:1, which is under the line for text. */
+  --muted: #67676d;
 
   /* Royal blue, and nothing else in the interface is blue. The terracotta it
      replaces sat a few degrees from the red that means "wrong answer", so the
@@ -39,6 +41,28 @@
   --vote: #0b7d88; /* teal — your own pick */
   --right: #17743c;
   --wrong: #d0342c;
+
+  /* The same three at a tint, for the ground behind an answer. A result has
+     to be readable as a *share* at a glance, which a saturated bar under a
+     row can't do once there are four of them. */
+  --vote-soft: #e0f0f2;
+  --right-soft: #e2f1e8;
+  --wrong-soft: #fbe8e6;
+
+  /* The applause. One per person, picked from their device id so your own
+     hearts are always the same colour, and at random for hearts that arrive
+     from someone else — which is everyone but you, since the database sends
+     a count and not a name. Eight colours in a room of any size means people
+     share; that's fine, it's confetti, not identity. Each is dark enough on
+     white to read as a shape rather than a smudge. */
+  --heart-1: #d0342c;
+  --heart-2: #c2410c;
+  --heart-3: #a16207;
+  --heart-4: #15803d;
+  --heart-5: #0f766e;
+  --heart-6: #1d4ed8;
+  --heart-7: #6d28d9;
+  --heart-8: #be185d;
 
   /* Broadcast red, and only ever a status. Deliberately a different red from
      the one that means a wrong answer: this one says "on air". */
@@ -81,6 +105,58 @@
   --control-h-lg: 3.25rem; /* 52px — the audience's vote rows */
 }
 
+/* ─── Dark ─────────────────────────────────────────────────────────────
+   The same interface with the paper turned down, not a second design: every
+   value here is already a token, so this is a palette and nothing else. It
+   follows the phone rather than offering a switch — a room reads this in
+   whatever their phone is already set to, and a toggle is one more thing to
+   find in the dark.
+
+   The accent lifts (a royal blue that reads on white disappears on black)
+   and the result colours lift with it; each was checked against the surface
+   it lands on, and the soft grounds are near-black tints rather than the
+   washed-out light ones.                                                  */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b0e;
+    --surface: #16161b;
+    --sunken: #1f1f26;
+    --border: #2c2c35;
+    --ink: #f2f2f4;
+    --muted: #a0a0aa;
+
+    --accent: #7aa2ff;
+    --accent-deep: #93b4ff;
+    --on-accent: #10131c;
+    --accent-soft: #1e2438;
+    --accent-soft-hover: #262e46;
+
+    --scrim: rgba(0, 0, 0, 0.6);
+
+    --vote: #4fd1de;
+    --right: #58d68d;
+    --wrong: #ff7b72;
+
+    --vote-soft: #10333a;
+    --right-soft: #12331f;
+    --wrong-soft: #3a1c1b;
+
+    --live: #ff6169;
+    --live-glow: rgba(255, 97, 105, 0.45);
+    --live-fade: rgba(255, 97, 105, 0);
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+
+  /* The wordmark and the waiting art are drawn in ink that was chosen for
+     white. Nothing else in here is filtered — this is the one place a fixed
+     colour lives inside an image rather than in a token. */
+  .logo {
+    filter: invert(1) hue-rotate(180deg) saturate(1.25);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -91,6 +167,14 @@
    to remember to opt out of being displayed. */
 [hidden] {
   display: none !important;
+}
+
+/* iOS treats two quick taps on a control as "zoom in on this", which is
+   exactly wrong on a screen meant to be tapped fast — the heart most of all,
+   but an impatient Next is no different. Pinch zoom is untouched: the page as
+   a whole still scales for anyone who needs it larger. */
+button {
+  touch-action: manipulation;
 }
 
 body {
@@ -193,12 +277,18 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: var(--control-h);
-  padding: 0 var(--space-4);
+  /* A floor, not a fixed height. German needs half as many words again as
+     English for the same button, and on a 320px phone "Stimmen dieser Frage
+     löschen" ran straight out of the card. A long label now makes its button
+     taller instead; a short one still measures exactly 44px, so nothing that
+     lines up with an icon button stops lining up. */
+  min-height: var(--control-h);
+  max-width: 100%;
+  padding: var(--space-2) var(--space-4);
   font-family: inherit;
   font-size: var(--text-body);
   font-weight: 600;
-  line-height: var(--leading-flat);
+  line-height: var(--leading-tight);
   color: var(--ink);
   background: var(--sunken);
   /* Transparent rather than absent, so the primary can take a border without
@@ -209,8 +299,11 @@ h1 {
 }
 
 /* A button is a fixed height, so its label can't be allowed a second line. */
+/* Free to wrap: with the button's height a floor rather than a fixed number,
+   a label that outgrows a narrow phone makes its button taller instead of
+   pushing out of the card. Nothing else in here is allowed to overflow. */
 .btn-label {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 /* An icon says what a control does before the label is read, which is most of
@@ -322,7 +415,7 @@ h1.is-centred {
 .btn:focus-visible,
 .iconbtn:focus-visible,
 .tab:focus-visible,
-.meter:focus-visible,
+.choice:focus-visible,
 .setup input:focus-visible,
 .setup textarea:focus-visible,
 .field--pick select:focus-visible,
@@ -392,194 +485,212 @@ h1.is-centred {
   font-weight: 600;
 }
 
-/* ─── Meters ───────────────────────────────────────────────────────────── */
+/* ─── Choices ──────────────────────────────────────────────────────────
+   An answer, on either screen. One component rather than two: the share of
+   the vote is drawn *inside* the card as a ground the text sits on, instead
+   of on a track beside a label column — a label column on a phone is about
+   seven characters wide, which is how the host came to read "Open tex…"
+   instead of their own answer.                                            */
 
-.meter {
-  --bar: var(--accent);
-  display: grid;
-  align-items: center;
-  background: none;
-  border: none;
-  padding: 0;
-  font-family: inherit;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.meter:disabled {
-  cursor: default;
-}
-
-/* The host's read-only meters: label, bar and share on one line. */
-.meter--static {
-  cursor: default;
-  grid-template-columns: minmax(0, 30%) 1fr auto;
-  gap: var(--space-3);
-  min-height: var(--control-h);
-}
-
-.meter-label {
-  font-size: var(--text-body);
-  font-weight: 600;
-  color: var(--ink);
-  min-width: 0;
-}
-
-/* One line on the host, so a long answer can't push the panel wider. */
-.meter--static .meter-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.meter-track {
+.choice {
+  --fill: var(--sunken);
   position: relative;
-  height: 10px;
-  border-radius: var(--radius-pill);
-  background: var(--sunken);
-  overflow: visible;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  min-height: var(--control-h-lg);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    transform 0.12s ease;
 }
 
-.meter-fill {
+.choice:disabled {
+  cursor: default;
+}
+
+/* Pressed, on the phone of the person pressing it. The room's own vote is
+   the one moment this app should feel like something happened. */
+.choice:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+.choice-fill {
   position: absolute;
-  inset: 0;
-  width: 0%;
-  border-radius: var(--radius-pill);
-  background: var(--bar);
+  inset: 0 auto 0 0;
+  z-index: -1;
+  width: 0;
+  background: var(--fill);
   transition:
-    width 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+    width 1s cubic-bezier(0.22, 1, 0.36, 1),
     background 0.25s ease;
 }
 
-/* A hairline, not a corner — the one radius outside the scale. */
-.meter-needle {
-  position: absolute;
-  top: -3px;
-  bottom: -3px;
-  left: 0%;
-  width: 2px;
-  background: var(--ink);
-  border-radius: 1px;
-  transform: translateX(-1px);
-  transition: left 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+.choice-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-h-lg);
+  padding: var(--space-2) var(--space-4);
 }
 
-.meter-pct {
+.choice-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.choice-pct {
   font-size: var(--text-body);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--muted);
-  min-width: 2.4em;
-  text-align: right;
+  opacity: 0;
+  transition: opacity 0.25s ease;
 }
 
-/* Your own pick, before the answer is out. */
-.meter.is-mine {
-  --bar: var(--vote);
+.choice.is-counted .choice-pct {
+  opacity: 1;
 }
 
-.meter.is-mine .meter-label {
-  color: var(--vote);
+/* The mark is what says a row is yours to press, and later what happened to
+   it. Empty until it means something. */
+.choice-mark {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-label);
+  font-weight: 700;
+  line-height: var(--leading-flat);
+  color: transparent;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
-/* Correctness wins over "mine" — declared after it on purpose. */
-.meter.is-right {
-  --bar: var(--right);
+.choice-mark::after {
+  content: "✓";
 }
 
-.meter.is-right .meter-label {
-  color: var(--right);
+/* ── What happened to it ────────────────────────────────────────────────
+   Your pick is teal from the moment you make it. Once the answer is out,
+   the right one is green — and the only red is on your own wrong pick.
+   Painting every wrong option red says "you got all of this wrong"; the
+   eye should land on the answer, not on a wall of failure.               */
+
+.choice.is-mine {
+  --fill: var(--vote-soft);
+  border-color: var(--vote);
 }
 
-.meter.is-right .meter-label::after {
-  content: " ✓";
+.choice.is-mine .choice-mark {
+  color: var(--on-accent);
+  background: var(--vote);
+  border-color: var(--vote);
 }
 
-.meter.is-wrong {
-  --bar: var(--wrong);
+/* Correctness outranks "mine" — declared after it on purpose. */
+.choice.is-right {
+  --fill: var(--right-soft);
+  border-color: var(--right);
 }
 
-.meter.is-wrong .meter-label {
-  color: var(--wrong);
+.choice.is-right .choice-mark {
+  color: var(--on-accent);
+  background: var(--right);
+  border-color: var(--right);
 }
 
-.meter.is-wrong .meter-label::after {
-  content: " ✗";
+.choice.is-missed {
+  --fill: var(--wrong-soft);
+  border-color: var(--wrong);
+}
+
+.choice.is-missed .choice-mark {
+  color: var(--on-accent);
+  background: var(--wrong);
+  border-color: var(--wrong);
+}
+
+.choice.is-missed .choice-mark::after {
+  content: "✗";
+}
+
+/* The host's copy: the same card, with nothing to press and no mark. */
+.choice--static {
+  cursor: default;
+}
+
+.choice--static .choice-mark {
+  display: none;
 }
 
 /* Host only: which one is right, before the room is told. */
-.meter.is-key .meter-label::after {
+.choice.is-key .choice-label::after {
   content: " ✓";
   color: var(--muted);
 }
 
-/* ─── The audience's vote rows ─────────────────────────────────────────
-   A different component, not a resized one: the answer and its share sit on
-   top, the bar runs the full width beneath. Side by side on a phone the
-   label column would be about seven characters wide.                      */
+/* ─── The clock ────────────────────────────────────────────────────────
+   A bar that empties. The number alone, in the footer, was both too small
+   to glance at and nowhere near the question it belonged to.             */
 
-.meter--vote {
-  grid-template-columns: auto 1fr auto;
-  grid-template-areas:
-    "tick label pct"
-    "tick track track";
-  gap: var(--space-1) var(--space-3);
-  min-height: var(--control-h-lg);
-  padding: var(--space-1) 0;
+.clock {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
 }
 
-.meter--vote .tick {
-  grid-area: tick;
-}
-.meter--vote .meter-label {
-  grid-area: label;
-}
-.meter--vote .meter-pct {
-  grid-area: pct;
-}
-.meter--vote .meter-track {
-  grid-area: track;
-}
-
-/* Long answers wrap, and a run of characters with no spaces breaks mid-word
-   rather than pushing the panel wider than the screen. */
-.meter--vote .meter-label {
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: var(--leading-tight);
-}
-
-/* The tick box is what says this row is yours to press. */
-.tick {
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 2px solid var(--muted);
+.clock-track {
+  flex: 1;
+  height: 6px;
   border-radius: var(--radius-pill);
-  display: grid;
-  place-items: center;
-  font-size: var(--text-body);
-  line-height: var(--leading-flat);
-  color: transparent;
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+.clock-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
   transition:
-    background 0.25s ease,
-    border-color 0.25s ease;
+    width 0.25s linear,
+    background 0.25s ease;
 }
 
-.tick::after {
-  content: "✓";
+.clock-time {
+  font-size: var(--text-label);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  min-width: 2.5em;
+  text-align: right;
 }
 
-/* Marked throughout — your pick stays findable after the reveal, when
-   correctness takes over the bar's colour. */
-.meter.is-mine .tick {
-  border-color: var(--vote);
-  background: var(--vote);
-  color: var(--on-accent);
+.clock.is-urgent .clock-fill {
+  background: var(--live);
 }
 
-.meter--vote:disabled:not(.is-mine) .tick {
-  opacity: 0.4;
+.clock.is-urgent .clock-time {
+  color: var(--live);
 }
 
 /* The first heading in a view sits straight under the tab strip, which is
@@ -740,6 +851,11 @@ h1.is-centred {
   cursor: pointer;
   /* Nothing about a tap should feel like it might have missed. */
   -webkit-tap-highlight-color: transparent;
+  /* Tapped fast and often, so the magnifier and the selection callout that a
+     held tap raises go too. Double-tap zoom is off for every button above. */
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .heart svg {
@@ -759,6 +875,7 @@ h1.is-centred {
 
 /* What the host sees: the same count, with no way to add to it. */
 .tally {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -768,6 +885,9 @@ h1.is-centred {
 }
 
 .tally-heart {
+  /* Also the launch pad for the room's hearts, so it has to be something an
+     absolutely positioned child can be measured against. */
+  position: relative;
   display: block;
   width: 2rem;
   height: 2rem;
@@ -930,31 +1050,26 @@ h1.is-centred {
 }
 
 /* ─── Host account ─────────────────────────────────────────────────────
-   One line. The address is the part that can be any length, so it is the
-   part that gives way — the controls beside it never wrap below.         */
+   The controls that belong to the whole screen sit in the app bar beside the
+   mark; the address they belong to is a quiet line under the tabs, where a
+   long one can wrap without pushing anything off the edge.                */
 
-.hostbar {
+.hostbtns {
   display: flex;
-  /* Signed out, "Sign in with Google" and the QR button together are wider
-     than a phone: without this they pushed straight out of the panel and the
-     whole page scrolled sideways. Signed in, the account line shrinks instead
-     and everything still fits on one row. */
   flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--space-2);
 }
 
-.hostbar-who {
-  flex: 1 1 auto;
-  min-width: 0;
+.account {
+  margin: 0;
   font-size: var(--text-label);
   color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
-.hostbar-who.is-error {
+.account.is-error {
   color: var(--wrong);
   font-weight: 600;
 }
@@ -1201,6 +1316,19 @@ h1.is-centred {
   gap: var(--space-1);
 }
 
+/* A saved question is content; the four things you can do to it are not.
+   Filled circles on every row turned the list into a wall of controls, so
+   they carry no ground until a pointer is actually on one. */
+.qbtns .iconbtn {
+  background: none;
+}
+
+@media (hover: hover) {
+  .qbtns .iconbtn:hover:not(:disabled) {
+    background: var(--accent-soft);
+  }
+}
+
 /* ─── Event settings ───────────────────────────────────────────────────
    The third and last divider: it separates the questions from the settings
    that apply to all of them.                                              */
@@ -1217,14 +1345,43 @@ h1.is-centred {
   min-width: 0;
 }
 
-/* ─── Run controls ─────────────────────────────────────────────────────── */
+/* Four things that operate on the question, as one block of equal parts.
+   Centred buttons of different widths read as a pile. */
+#view-run .actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: var(--space-2);
+}
+
+#view-run .actions .btn {
+  width: 100%;
+}
+
+/* ─── Run controls ─────────────────────────────────────────────────────
+   Moving through the questions is what a presenter does with a phone in one
+   hand, half-watching the room. It stays under the thumb instead of being
+   one more thing in the scroll.                                            */
 
 .runbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  padding: var(--space-3) 0
+    max(var(--space-3), calc(env(safe-area-inset-bottom) - var(--space-3)));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+/* The primary action is the wide one: Next is pressed far more than anything
+   else on this screen, including by someone not looking at it. */
+.runbar .btn--primary {
+  flex: 1 1 8rem;
+  justify-content: center;
 }
 
 .counter {
@@ -1286,6 +1443,54 @@ h1.is-centred {
   50% {
     transform: scaleY(1);
     opacity: 1;
+  }
+}
+
+/* ─── The editor sheet ─────────────────────────────────────────────────
+   Writing a question is a job of its own. On a phone it comes up from the
+   bottom and takes the screen; on anything wider it is a card in the middle,
+   which is the same overlay everything else here uses.                     */
+
+.overlay--sheet {
+  align-items: flex-end;
+  padding: 0;
+}
+
+.sheet-card {
+  width: 100%;
+  max-width: 560px;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: var(--space-5) var(--space-4)
+    max(var(--space-5), calc(env(safe-area-inset-bottom) + var(--space-4)));
+  background: var(--surface);
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  box-shadow: var(--shadow-card);
+  animation: sheet-up 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}
+
+@media (min-width: 701px) {
+  .overlay--sheet {
+    align-items: center;
+    padding: var(--space-5);
+  }
+
+  .sheet-card {
+    border-radius: var(--radius-card);
+    padding: var(--space-5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card {
+    animation: none;
   }
 }
 
@@ -1368,42 +1573,82 @@ body.audience .panel {
   justify-content: center;
 }
 
-/* Not a flex row at all. Three attempts at centring this through flex
-   alignment each depended on a parent behaving, so it is now a block with an
-   auto margin — the plainest centring there is, and nothing above it can
-   change its mind. */
-.top-row--centred,
+/* Three columns with the mark in the middle one, so it is centred by the
+   grid rather than by anything it or its neighbours do. The name sits in the
+   right column; the left is left empty to pay for it. Earlier attempts
+   centred this through flex alignment and each depended on a parent
+   behaving. */
+.top-row--centred {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .top-row--centred .mark {
-  display: block;
-  text-align: center;
+  grid-column: 2;
+  min-width: 0;
+  justify-self: center;
 }
 
-.top-row--centred .logo {
-  margin-inline: auto;
+.top-row--centred .whoami {
+  white-space: nowrap;
 }
 
-/* The wordmark is roughly 3:1, which is what caps it: a phone panel is about
-   330px across, and anything taller would run off the side. */
+.top-row--centred .whoami {
+  grid-column: 3;
+  justify-self: end;
+  align-self: center;
+}
+
+/* Letterhead, not a splash screen: it was a fifth of a phone screen tall,
+   above the question that is the only thing anyone is there to read. Sized
+   in absolute units — a percentage here resolves against a grid column that
+   the image itself is sizing, and the mark ate the row. */
 .logo--banner {
+  width: 124px;
+  max-width: 100%;
   height: auto;
-  width: min(100%, 225px);
 }
 
-#options {
+.choices {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-/* The question sits closer to the answers than to the mark: they are one
-   thing to read, and the mark is the room's letterhead. */
-body.audience #question {
-  margin-top: var(--space-5);
+/* ─── The stage ────────────────────────────────────────────────────────
+   The question, its clock and its answers, as one block in the middle of
+   the screen. Pinned to the top they left a phone two-thirds empty, which
+   reads as a page that hasn't finished loading.                           */
+
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
 }
 
-body.audience #options {
-  flex: 1;
-  justify-content: flex-start;
+.progress {
+  margin: 0;
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Every screen the audience sees arrives the same way, so a new question
+   reads as a change rather than as a redraw. */
+.stage > * {
+  animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
 }
 
 /* ─── Portrait phone ───────────────────────────────────────────────────
@@ -1466,9 +1711,13 @@ body.audience #options {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .meter-fill,
-  .meter-needle {
+  .choice,
+  .choice-fill,
+  .choice-pct,
+  .clock-fill,
+  .stage > * {
     transition: none;
+    animation: none;
   }
 
   .waiting-bar {

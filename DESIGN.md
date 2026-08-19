@@ -65,7 +65,12 @@ look like a mistake.
 | Token | Value | Where |
 | :--- | :--- | :--- |
 | `--ink` | `#17171a` | All primary text |
-| `--muted` | `#6c6c72` | Labels, meta, disabled, percentages |
+| `--muted` | `#67676d` | Labels, meta, disabled, percentages |
+
+`--muted` is two shades darker than it first shipped. As the share written
+inside a tinted answer card it measured 4.42:1, and the line for text is 4.5.
+Every pair in this file is checked by a script rather than by eye — see
+§14.
 
 ### Accent
 
@@ -89,7 +94,37 @@ who can't separate red from green.
 | :--- | :--- | :--- |
 | `--vote` | `#0b7d88` | The answer this phone voted for |
 | `--right` | `#17743c` | The right answer, once revealed |
-| `--wrong` | `#d0342c` | Wrong answers, once revealed; also the heart |
+| `--wrong` | `#d0342c` | **Your own** wrong answer; also the heart |
+| `--vote-soft` | `#e0f0f2` | The ground behind your pick |
+| `--right-soft` | `#e2f1e8` | The ground behind the right answer |
+| `--wrong-soft` | `#fbe8e6` | The ground behind your wrong one |
+
+Red is only ever on the answer *you* chose. Painting every wrong option red
+says "all of this was wrong", when the one thing worth seeing is which one
+wasn't. Options nobody needs to think about stay neutral.
+
+The soft tints exist because a result has to read as a *share* at a glance,
+which a saturated bar under a row cannot do once there are four of them. The
+share is the ground the answer sits on.
+
+### Applause
+
+Confetti, not meaning. Eight colours for the hearts on the closing screen: a
+phone always uses the same one for its own taps (chosen from its device id),
+and hearts arriving from other people take one at random, because the database
+sends a count rather than a name. People share colours in any real room, which
+is fine — nothing depends on telling them apart.
+
+| Token | Value | | Token | Value |
+| :--- | :--- | --- | :--- | :--- |
+| `--heart-1` | `#d0342c` | | `--heart-5` | `#0f766e` |
+| `--heart-2` | `#c2410c` | | `--heart-6` | `#1d4ed8` |
+| `--heart-3` | `#a16207` | | `--heart-7` | `#6d28d9` |
+| `--heart-4` | `#15803d` | | `--heart-8` | `#be185d` |
+
+Each is dark enough on white to read as a shape at 1.5–3rem. The big heart
+itself stays `--wrong` red — it's the app's own mark on that screen, not
+anybody's colour.
 
 ### On air
 
@@ -273,6 +308,12 @@ operated on phones and an iPad. **Set it explicitly.** The old buttons had no
 height at all; their height was whatever their padding and font produced, which
 is why a button and an icon button next to each other never matched.
 
+For buttons it is a **floor**, not a fixed number: `min-height`, so a label
+that outgrows a narrow phone makes its own button taller instead of pushing
+out of the card. German is the test — it needs half as many words again as
+English for the same button. A short label still measures exactly 44px, so
+anything lined up beside an icon button still lines up.
+
 `min-height` is not enough on a `<select>`: a native one is laid out from the
 browser's own menulist metrics, and Safari ignores the property entirely, so
 the picker sat shorter than the round buttons beside it. Selects take
@@ -346,14 +387,16 @@ Questions, Settings — so three labels doing the same job look the same. A
 
 | Part | Device |
 | :--- | :--- |
-| Account | `.group` |
+| App bar (mark, QR, sign in/out) | Neither — one row, no box |
+| Signed in as… | A quiet line under the tabs, Setup only |
 | Polls | `.section-title`, then the button and a `.group` |
 | Create a new poll | Neither — an outline button, distinct by treatment |
 | Or pick an existing poll | `.field-label` inside that `.group` |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
-| Run: Prev / counter / Next | `.group` |
-| Run: hide, reset, start over | `.group` |
+| Run: Prev / counter / Next | Sticky to the bottom, one rule above it |
+| Run: hide, reset, start over | An even grid, above the sticky bar |
+| Writing a question | `.overlay--sheet` — it takes the screen |
 | Footer | A rule of its own |
 
 The box is a hairline on white rather than a fill, so the fields inside keep
@@ -375,14 +418,21 @@ the fill is what says "type here".
 
 | What | Duration | Easing |
 | :--- | ---: | :--- |
-| Meter fill and needle | 1400ms | `cubic-bezier(.22, 1, .36, 1)` |
+| A share filling its card | 1000ms | `cubic-bezier(.22, 1, .36, 1)` |
+| A screen arriving | 320ms | `cubic-bezier(.22, 1, .36, 1)` |
+| The sheet coming up | 280ms | `cubic-bezier(.22, 1, .36, 1)` |
 | Colour and background | 250ms | `ease` |
-| Overlay appearing | 150ms | `ease-out` |
+| A card being pressed | 120ms | `ease` |
+| The clock draining | 250ms | `linear` |
 
-The meters are slow on purpose: votes arriving should look like a needle
-settling, not a bar jumping. Everything else is quick enough not to be noticed.
+Shares are slow on purpose: votes arriving should look like something
+settling, not a number jumping. The clock is linear because it is measuring
+time and anything else would be a lie about it. Everything else is quick
+enough not to be noticed.
 
-All of it sits behind `@media (prefers-reduced-motion: no-preference)`.
+Every one of them is switched off under `prefers-reduced-motion: reduce`,
+including the animations that bring a screen in — a room where someone has
+asked for less movement gets none.
 
 ---
 
@@ -407,6 +457,37 @@ Any column in a grid that holds text needs `min-width: 0`, and any text that
 can be pasted needs `overflow-wrap: anywhere`. A `1fr` column will not shrink
 below its content otherwise, and one long unbroken string pushes the panel off
 screen.
+
+---
+
+### Dark
+
+The same interface with the paper turned down — a palette, not a second
+design, which is the whole return on tokenising it in the first place. It
+follows the phone (`prefers-color-scheme`) rather than offering a switch: a
+room reads this in whatever their phone is already set to, and a toggle is one
+more thing to find in the dark.
+
+| Token | Light | Dark |
+| :--- | :--- | :--- |
+| `--bg` | `#f4f4f5` | `#0b0b0e` |
+| `--surface` | `#ffffff` | `#16161b` |
+| `--sunken` | `#f0f0f1` | `#1f1f26` |
+| `--border` | `#e3e3e6` | `#2c2c35` |
+| `--ink` | `#17171a` | `#f2f2f4` |
+| `--muted` | `#67676d` | `#a0a0aa` |
+| `--accent` | `#1d4ed8` | `#7aa2ff` |
+| `--vote` | `#0b7d88` | `#4fd1de` |
+| `--right` | `#17743c` | `#58d68d` |
+| `--wrong` | `#d0342c` | `#ff7b72` |
+
+The accent and the result colours all lift: a royal blue that reads on white
+disappears on black. Both palettes are checked by the same script, and the
+dark one clears every pair by a wider margin than the light one.
+
+The wordmark is the single exception — it is an image drawn in ink chosen for
+white paper, so it is inverted with a filter. Nothing else in the stylesheet
+holds a colour outside a token.
 
 ---
 
@@ -527,7 +608,41 @@ rows become 52px targets.
 
 ---
 
-## 13. Adding to this
+## 13. Installed, not visited
+
+The app ships an icon set, a web manifest and a `theme-color`, so adding it to
+a home screen gives a real icon and opens it without browser chrome. It is
+half a kilobyte of markup and it is the difference between a tool and a link
+someone bookmarked.
+
+| File | What it is |
+| :--- | :--- |
+| `img/icon.svg` | The mark on a white ground, rounded — tab and any size |
+| `img/icon-180.png` | `apple-touch-icon`, what iOS puts on a home screen |
+| `img/icon-192/512.png` | The manifest's icons |
+| `img/icon-maskable-512.png` | Padded, edge to edge, for platforms that crop |
+| `site.webmanifest` | Name, colours, `display: standalone`, portrait |
+
+The icon is the wordmark's own O — the same paths as `img/votr-logo.svg`,
+generated from it rather than redrawn, so the two can never drift apart.
+
+---
+
+## 14. Contrast is checked, not judged
+
+Every pair of colours that ends up as text on a ground is measured by a script
+in both palettes — twenty pairs each, forty in all. Text needs 4.5:1; a border
+or a dot, being a shape rather than a word, needs 3:1.
+
+It has already earned its keep twice: it caught `--muted` at 4.42:1 inside a
+tinted answer card, and it is the reason the dark palette's accent is a
+lighter blue than the light one's rather than the same value on a dark ground.
+
+A new colour is not added to this file until it has been through it.
+
+---
+
+## 15. Adding to this
 
 1. **Reach for an existing token first.** Two elements a pixel apart is the
    problem this file exists to stop.

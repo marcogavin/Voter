@@ -57,6 +57,18 @@ every attendee's phone, because the room should read one language rather than
 each person hunting for a setting. Available in English, Portuguese, Spanish,
 French and German.
 
+### The end of a poll
+
+Past the last question every phone shows **Like VOTR?** and a heart. It takes
+as many taps as anyone wants to give it — there's nothing to win, so there's
+nothing to protect against — and the count is kept with the poll.
+
+A tap sends a heart up on **every** screen in the room, including the host's,
+so the applause is shared rather than private. Your own hearts always fly in
+the same colour; hearts from other people take one of eight at random, since
+the database sends a count and not a name. Anyone who has asked for reduced
+motion gets the count without the animation.
+
 ### The clock
 
 A question accepts votes for a set number of seconds, then closes itself. You
@@ -88,24 +100,38 @@ For a question with a right answer, **Next** does two things in turn: the first
 press **reveals the answer** and closes voting, the second moves on. Questions
 with no right answer advance on a single press.
 
-Colours carry the result, alongside the tick, ✓ and ✗ so the meaning survives
-for anyone who can't separate red from green:
+Each answer is a card, and its share of the vote is the ground it sits on.
+Colour carries the result alongside a mark, so it survives for anyone who
+can't separate red from green:
 
 | | |
 | :--- | :--- |
-| **Blue tick** | the option this phone voted for |
+| **Teal ✓** | the answer this phone voted for |
 | **Green ✓** | the right answer, once revealed |
-| **Red ✗** | the wrong answers, once revealed |
+| **Red ✗** | **your own** wrong answer |
+
+Options nobody picked stay neutral. Marking every wrong answer red says "all
+of this was wrong" — the one thing worth seeing is which one wasn't.
 
 Closing voting is enforced by the security rules, not just hidden in the
 interface — a vote arriving after the reveal is rejected by the database.
 
 **Reopen voting** puts the current question back in play, and stepping back with
 **Prev** reopens it too. Anyone who already voted still can't vote twice; use
-**Reset votes** to clear a question and start it over.
+**Reset this question's votes** to clear it and start it over.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
+
+### Add it to a home screen
+
+Both pages ship an icon, a manifest and a theme colour, so **Add to Home
+Screen** gives a real icon and opens without browser chrome — the audience
+page as a voting app, the host page as a remote. There is no reload button in
+that mode, which is what the freshness check inside each page is for.
+
+The interface follows the phone's **light or dark** setting. There's no switch:
+a room reads this in whatever their phone is already set to.
 
 ## Setup
 
@@ -179,11 +205,14 @@ remove with ✕.
 4. Move through with **Prev** / **Next**
 5. **Hide screen** blanks every phone while keeping your place, for talking
    between questions. **Show screen** brings it back
-6. **Start over** takes the question down and returns to the top of the poll.
-   Votes are kept — use **Reset votes** to clear a question's results
+6. **Start over** clears every answer in the poll and returns to the top, with
+   nothing on screen — so the room doesn't get question 1 before you're ready.
+   One press of **Start** begins the run
 
-**Reset votes** clears the current question only, so you can re-run one without
-disturbing the rest.
+**Start over** asks first, but only when there is something to lose: a poll
+nobody has answered yet just goes back to the top. **Reset this question's
+votes** clears the one on screen and nothing else, for re-running a single
+question without disturbing the rest.
 
 ## What attendees can see
 
