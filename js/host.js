@@ -158,6 +158,15 @@ async function start() {
 
   try {
     wireUp();
+
+    // The page ships gated, and render() only opens it once the database
+    // answers. Auth is settled by the time connect() resolves, so the gate is
+    // decided here too — otherwise a host who is already signed in reads
+    // "sign in to set up and run polls" for the second before the first
+    // snapshot lands.
+    signedIn = !isAnonymous();
+    applyViews();
+
     onEventChange(render);
   } catch (error) {
     setStatus("broken", "error");

@@ -29,17 +29,21 @@
         <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
       </div>
 
-      <div class="tabs" id="tabs" role="tablist">
+      <!-- Hidden until a Google account signs in. The gate is applied by the
+           script too, but only once the database answers — so the page ships
+           closed rather than opening for the second or two before that, or
+           staying open for good if the script never loads at all. -->
+      <div class="tabs" id="tabs" role="tablist" hidden>
         <button type="button" class="tab is-active" id="tab-setup" role="tab" data-i18n="tabSetup">Setup poll</button>
         <button type="button" class="tab" id="tab-run" role="tab" data-i18n="tabRun">Run poll</button>
       </div>
 
-      <p class="panel-message" id="signed-out" data-i18n="signedOutNote" hidden>
+      <p class="panel-message" id="signed-out" data-i18n="signedOutNote">
         Sign in with Google to set up and run polls.
       </p>
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
-      <section id="view-setup">
+      <section id="view-setup" hidden>
         <h2 class="section-title section-title--first" data-i18n="pollsSection">Polls</h2>
 
         <button type="button" class="btn btn--wide btn--outline" id="deck-new">
