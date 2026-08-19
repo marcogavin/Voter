@@ -41,11 +41,12 @@
           <span class="btn-label" data-i18n="newSurvey">Create a new survey</span>
         </button>
 
+        <h2 class="section-title" data-i18n="currentSurvey">Current survey</h2>
+
         <div class="deckbar group">
-          <label class="field field--pick deckbar-pick">
-            <span class="field-label" data-i18n="currentSurvey">Current survey</span>
+          <div class="field field--pick deckbar-pick">
             <select id="deck"></select>
-          </label>
+          </div>
           <div class="deckbtns">
             <button type="button" class="iconbtn" id="deck-rename" data-icon="edit"></button>
             <button type="button" class="iconbtn" id="deck-delete" data-icon="remove"></button>
@@ -159,7 +160,7 @@
   <div class="overlay" id="qr-overlay" hidden>
     <div class="qr-card">
       <div id="qr-art"></div>
-      <p class="qr-url" id="qr-url"></p>
+      <a class="qr-url" id="qr-url" target="_blank" rel="noopener"></a>
       <button type="button" class="btn btn--primary" id="qr-close"><span class="btn-label" data-i18n="close">Close</span></button>
     </div>
   </div>
@@ -174,7 +175,7 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["surveys", "timer", "qr", "icons"];
+      var NEEDS = ["surveys", "timer", "qr", "icons", "groups", "sections"];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
         "js/firebase-config.js", "js/icons.js", "css/style.css",
@@ -184,7 +185,13 @@
       addEventListener("load", function () { setTimeout(check, 1500); });
 
       function check() {
-        var built = window.VOTR_BUILD || [];
+        // The stylesheet is cached separately from both the page and the
+        // script, and a stale one looks just as broken, so it says what it
+        // is too — through a custom property the page can read back.
+        var styled = getComputedStyle(document.documentElement)
+          .getPropertyValue("--build").replace(/["']/g, "").trim();
+        var built = (window.VOTR_BUILD || [])
+          .concat(styled ? styled.split(/\s+/) : []);
         var missing = NEEDS.filter(function (name) {
           return built.indexOf(name) === -1;
         });

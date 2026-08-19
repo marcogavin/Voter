@@ -91,6 +91,19 @@ who can't separate red from green.
 | `--right` | `#17743c` | The right answer, once revealed |
 | `--wrong` | `#d0342c` | Wrong answers, once revealed; also the heart |
 
+### On air
+
+| Token | Value | Where |
+| :--- | :--- | :--- |
+| `--live` | `#e5484d` | The pulsing dot beside the Live badge |
+| `--live-glow` | `rgba(229, 72, 77, 0.4)` | The pulse at its widest |
+| `--live-fade` | `rgba(229, 72, 77, 0)` | The pulse at its faintest |
+
+Broadcast red, and deliberately not `--wrong`: one says *this is on air*, the
+other says *you got this wrong*. The badge is not always Live — it also reads
+Connecting, Offline, Refused and every transient the host triggers — so the
+light belongs to that one state, not to the badge.
+
 Teal for "your pick" rather than another blue, so it can't be read as the
 accent. All four clear 4.5:1 against white **in both directions** — each is
 used as text on the card and as a ground under white marks:
@@ -321,11 +334,15 @@ border round half a screen. `--text-label`, weight 700, in `--accent`, with a
 `--border` rule above. Coloured because a heading here is a landmark to find,
 not a line to read.
 
+Every heading that names a section is a `.section-title` — Current survey,
+Questions, Settings — so three labels doing the same job look the same. A
+`.field-label` names one control; it never names a section.
+
 | Part | Device |
 | :--- | :--- |
 | Account | `.group` |
 | Create a new survey | Neither — an outline button, distinct by treatment |
-| Current survey | `.group` |
+| Current survey | `.section-title`, then a `.group` |
 | Questions | `.section-title` |
 | Settings | `.section-title` |
 | Run: Prev / counter / Next | `.group` |
