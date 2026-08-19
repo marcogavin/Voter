@@ -24,7 +24,7 @@
         </button>
         <button type="button" class="btn" id="signin">
           <span class="btn-icon" data-icon="signIn"></span>
-          <span class="btn-label" data-i18n="signIn">Sign in</span>
+          <span class="btn-label" data-i18n="signIn">Sign in with Google</span>
         </button>
         <button type="button" class="iconbtn" id="signout" data-icon="signOut" hidden></button>
       </div>
@@ -40,9 +40,7 @@
 
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup">
-        <h2 class="section-title section-title--first" data-i18n="pickOrCreatePoll">
-          Pick an existing poll or create a new one
-        </h2>
+        <h2 class="section-title section-title--first" data-i18n="pollsSection">Polls</h2>
 
         <button type="button" class="btn btn--wide btn--outline" id="deck-new">
           <span class="btn-icon" data-icon="plus"></span>
@@ -51,6 +49,7 @@
 
         <div class="deckbar group">
           <div class="field field--pick deckbar-pick">
+            <span class="field-label" data-i18n="pickExisting">Or pick an existing poll</span>
             <select id="deck"></select>
           </div>
           <div class="deckbtns">
@@ -72,7 +71,7 @@
                    placeholder="Enter your question here" autocomplete="off">
           </label>
           <label class="field">
-            <span class="field-label" data-i18n="optionsLabel">Options — one per line</span>
+            <span class="field-label" data-i18n="optionsLabel">Answers — one per line</span>
             <textarea id="options-input" rows="3" required
                       data-i18n-placeholder="optionsPlaceholder"
                       placeholder="Answer option 1&#10;Answer option 2&#10;Answer option 3"></textarea>
@@ -86,7 +85,7 @@
           <div class="actions">
             <button type="submit" class="btn btn--primary" id="save"><span class="btn-label" data-i18n="addQuestion">Add question</span></button>
             <button type="button" class="btn" id="cancel" hidden><span class="btn-label" data-i18n="cancel">Cancel</span></button>
-            <span class="actions-note" data-i18n="editHint">You can edit, delete and move your questions</span>
+            <span class="actions-note" data-i18n="editHint">Below you can edit, delete and move your questions</span>
           </div>
         </form>
 
@@ -182,7 +181,10 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["polls", "timer", "qr", "icons", "gate", "groups", "sections", "hint"];
+      var NEEDS = [
+        "polls", "timer", "qr", "icons", "gate", "picker",
+        "groups", "sections", "hint", "pickerfield",
+      ];
       var FILES = [
         "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
         "js/firebase-config.js", "js/icons.js", "css/style.css",

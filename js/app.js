@@ -32,6 +32,8 @@ let busy = false; // guards against double-taps while a write is in flight
 let latest = null; // the last event seen, so the ticker can redraw from it
 let ticker = null;
 let renaming = false; // true while someone is changing a name they already gave
+let joinDraft = ""; // what was typed into the join field, kept across a rebuild
+let joinError = ""; // why the last join was refused, if it was
 
 start();
 
@@ -322,38 +324,56 @@ function showJoin(existing) {
         <button type="submit" class="btn btn--primary btn--wide">
           <span class="btn-label">${t("join")}</span>
         </button>
-        <p class="panel-message" id="join-note">${t("joinNote")}</p>
+        <p class="panel-message" id="join-note"></p>
       </form>
     `;
     optionsEl.querySelector("#join").addEventListener("submit", onJoin);
     const field = optionsEl.querySelector("#join-name");
-    field.value = existing ?? "";
+    // A refused write is rolled back, which re-renders this screen from
+    // scratch. Whatever was typed has to come back with it, or the refusal
+    // looks like the name simply vanishing.
+    field.value = joinDraft || existing || "";
     field.focus();
     field.select();
   }
+
+  // Painted every time rather than once at build: the message explaining a
+  // refusal arrives *after* the rollback has already rebuilt the form, so a
+  // note written straight to the DOM would land on a discarded element.
+  const note = optionsEl.querySelector("#join-note");
+  note.textContent = joinError || t("joinNote");
+  note.classList.toggle("is-error", Boolean(joinError));
 }
 
 async function onJoin(submitEvent) {
   submitEvent.preventDefault();
 
   const field = optionsEl.querySelector("#join-name");
-  const note = optionsEl.querySelector("#join-note");
   const name = field.value.trim();
 
   // A blank name puts a blank row on the leaderboard. Refuse by putting the
   // cursor back rather than by doing nothing at all.
   if (!name) return field.focus();
 
+  joinDraft = name;
+  joinError = "";
+
   try {
     await saveName(name.slice(0, NAME_MAX));
     renaming = false;
-    // Re-typing the same name is not a change, so no snapshot follows it.
-    // Waiting for one would leave this screen up for good.
+    joinDraft = "";
+    // Re-typing the same name is not a change, so no snapshot follows it, and
+    // the snapshot for a new one lands a moment later. Neither is worth
+    // waiting on with the join screen still up, so the name goes into the
+    // event we already hold and this screen redraws from that.
+    latest.players[getUid()] = name.slice(0, NAME_MAX);
     render(latest);
   } catch (error) {
-    note.textContent = `${t("joinRefused")} ${error.message}`;
-    note.classList.add("is-error");
+    // Held as state, not written to the note directly: the failed write has
+    // already been rolled back, and the rollback rebuilt this screen.
+    joinError = `${t("joinRefused")} ${error.message}`;
     setStatus("refused", "error");
+    showJoin(name);
     console.error(error);
   }
 }

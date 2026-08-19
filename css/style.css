@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint";
+  --build: "groups sections names hint pickerfield";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -935,6 +935,11 @@ h1.is-centred {
 
 .hostbar {
   display: flex;
+  /* Signed out, "Sign in with Google" and the QR button together are wider
+     than a phone: without this they pushed straight out of the panel and the
+     whole page scrolled sideways. Signed in, the account line shrinks instead
+     and everything still fits on one row. */
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -1022,6 +1027,23 @@ h1.is-centred {
 .setup textarea {
   padding: var(--space-2) var(--space-3);
   resize: vertical;
+}
+
+/* A native select is sized by the browser's own menulist metrics, and Safari
+   ignores min-height on one — which is why the poll picker sat visibly
+   shorter than the round buttons beside it. Dropping the native appearance
+   makes it obey the control height like everything else, and the chevron it
+   takes away is drawn back here. The colour is --muted, spelled out because
+   a data URI can't read a custom property. */
+.field--pick select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: var(--control-h);
+  padding-right: var(--space-6);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c6c72' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-3) center;
+  background-size: 1.15rem 1.15rem;
 }
 
 .field--pick select:disabled {
