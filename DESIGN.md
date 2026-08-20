@@ -143,6 +143,26 @@ interface that has none. `--gold` is darker than gold wants to be because a
 border is a shape, and a shape needs 3:1 against the paper behind it — the
 first pick measured 2.47:1 and the contrast script refused it.
 
+### The tour
+
+| Token | Light | Dark | What it is |
+| :--- | :--- | :--- | :--- |
+| `--tour` | `#b0106b` | `#ff8ac4` | what the tour says, the ring, the arrow |
+| `--tour-soft` | `#fdeaf4` | `#3a1330` | its tint |
+| `--tour-ink` | `#ffffff` | `#14040d` | on its one button |
+| `--scrim-deep` | `rgba(14,14,18,0.74)` | — | everything the tour isn't pointing at |
+
+**Deliberately not the accent.** The tour points *at* the interface, so it has
+to be a colour the interface never uses — in the app's own blue it reads as one
+more control rather than as something drawing attention to one. Dark pink is
+far enough from the accent, from the two result colours and from the on-air red
+to be unmistakable, and it is used nowhere else.
+
+The dimming is **one element, not four**: a box with a 9999px spread shadow
+paints everything except itself, so the lit control is genuinely un-dimmed
+rather than approximately so. The scrim is painted once — a second layer over
+the hole is what makes a "highlight" look like a slightly lighter grey.
+
 ### On air
 
 | Token | Value | Where |

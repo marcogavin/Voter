@@ -8,6 +8,7 @@ import {
   castVote,
   likePoll,
   saveName,
+  touch,
   getUid,
   serverNow,
   NAME_MAX,
@@ -23,7 +24,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-  "speed",
+  "speed", "presence",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -85,6 +86,7 @@ async function start() {
   }
 
   setStatus("live", "live");
+  keepPresent();
   whoamiEl.addEventListener("click", () => {
     renaming = true;
     render(latest);
@@ -181,6 +183,28 @@ function render(event) {
   // between the question going up and its time running out.
   if (!event.revealed && secondsLeft() > 0) startTicking();
   else stopTicking();
+}
+
+/* ── Being here ────────────────────────────────────────────────────────── */
+
+/** Often enough to stay inside the hour, rarely enough to be free. */
+const HEARTBEAT_MS = 10 * 60 * 1000;
+
+/**
+ * Says this phone is still in the room, so the count on the wall means the
+ * people looking at it rather than everyone who has ever opened the page.
+ *
+ * Only while the page is actually being looked at: a tab left open in the
+ * background for the afternoon is not somebody waiting to vote, and should
+ * drop out of the count like anyone else who wandered off.
+ */
+function keepPresent() {
+  const beat = () => {
+    if (document.visibilityState === "visible") touch();
+  };
+  beat();
+  setInterval(beat, HEARTBEAT_MS);
+  document.addEventListener("visibilitychange", beat);
 }
 
 /* ── Countdown ─────────────────────────────────────────────────────────── */
@@ -324,6 +348,7 @@ async function submitVote(questionId, optionId) {
 
   try {
     await castVote(questionId, optionId, elapsed());
+    touch();
     drawStatus();
   } catch (error) {
     setStatus("voteRefused", "error");

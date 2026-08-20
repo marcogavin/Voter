@@ -38,6 +38,7 @@ import {
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons, waitingArt } from "./icons.js";
+import { startTour, isFirstTime } from "./tour.js";
 import { flyHearts, celebrate } from "./hearts.js";
 import {
   screenAt,
@@ -46,6 +47,7 @@ import {
   fillNames,
   isScorable,
   isTimed,
+  roomSize,
 } from "./scores.js";
 import {
   t,
@@ -60,7 +62,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause", "scores", "bigscreen", "speed", "signin",
+  "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
 ];
 
 const els = {
@@ -118,6 +120,7 @@ const els = {
   askCancel: document.getElementById("ask-cancel"),
 
   qr: document.getElementById("qr"),
+  tour: document.getElementById("tour"),
   qrOverlay: document.getElementById("qr-overlay"),
   qrArt: document.getElementById("qr-art"),
   qrUrl: document.getElementById("qr-url"),
@@ -147,6 +150,7 @@ let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
 let players = {}; // everyone in the room, by the name they gave
+let seen = {}; // and when each of them last showed signs of life
 let likes = 0; // applause on the closing screen
 let likesSeen = null; // the applause already drawn, so only new taps fly
 let questions = []; // the live poll's questions, in running order
@@ -287,6 +291,7 @@ function wireUp() {
   els.seconds.addEventListener("change", onSecondsChange);
 
   els.qr.addEventListener("click", showQr);
+  els.tour.addEventListener("click", () => showAround());
   els.qrClose.addEventListener("click", hideQr);
   els.qrCopy.addEventListener("click", onQrCopy);
   els.qrCopyLink.addEventListener("click", onQrCopyLink);
@@ -408,6 +413,7 @@ function render(event) {
   revealed = event.revealed;
   blanked = event.blanked;
   players = event.players;
+  seen = event.seen;
   askedAt = event.askedAt;
   pausedAt = event.pausedAt;
   seconds = event.seconds;
@@ -435,10 +441,7 @@ function render(event) {
   // line is the only place two other things get said: why a sign-in failed,
   // and — while Google has the screen — which tab to come back to. Neither
   // survives being overwritten a second later by "Sign in to run this poll".
-  const spoken = ["is-error", "is-waiting"].some((state) =>
-    els.account.classList.contains(state),
-  );
-  if (!spoken) {
+  if (!spoken(els.account)) {
     els.account.textContent = signedIn
       ? t("signedInAs", { name: accountName() ?? "—" })
       : t("signInPrompt");
@@ -455,6 +458,7 @@ function render(event) {
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
   nameButton(els.signout, t("signOut"));
   nameButton(els.bigScreen, t("bigScreen"));
+  nameButton(els.tour, t("tourStart"));
   // Its label goes on a narrow screen, so its name has to come from here.
   nameButton(els.qr, t("qrCode"));
 
@@ -481,6 +485,11 @@ function render(event) {
   drawEditorLabels();
   drawList();
   drawRun();
+
+  // Once, unasked, the first time somebody signs in on this browser. After
+  // the first render, so the controls it points at are the real ones rather
+  // than the empty page they are drawn on.
+  if (signedIn && isFirstTime()) showAround();
 }
 
 function drawList() {
@@ -713,9 +722,16 @@ function drawRun() {
 
   watchClock();
 
+  // The same count the room is looking at, in the same words — a presenter
+  // deciding when to reveal shouldn't have to reconcile two numbers.
+  const room = roomSize({ players, seen }, serverNow());
   els.hint.textContent = blanked
     ? t("screenHiddenNote")
-    : (total === 1 ? t("voteCountOne") : t("voteCount", { n: total })) +
+    : (room
+        ? t("votesOfRoom", { n: total, of: Math.max(room, total) })
+        : total === 1
+          ? t("voteCountOne")
+          : t("voteCount", { n: total })) +
       (revealed ? t("votingClosedSuffix") : "");
 }
 
@@ -1245,8 +1261,7 @@ async function onSignIn() {
     // Report next to the button that was pressed. The status badge and hint
     // sit in the footer, which on a phone is below the fold exactly when
     // sign-in fails — so a failure looked like nothing happening at all.
-    els.account.textContent = explain(error);
-    els.account.classList.add("is-error");
+    say(explain(error), "is-error");
     console.error(error);
   }
 }
@@ -1254,11 +1269,46 @@ async function onSignIn() {
 /** The button, and the page, while Google has the screen. */
 function waiting(on) {
   els.signin.disabled = on;
-  if (!on) els.account.classList.remove("is-waiting");
   setLabel(els.signin, t(on ? "signingIn" : "signIn"));
-  els.account.classList.remove("is-error");
-  els.account.textContent = on ? t("comeBackHere") : "";
-  els.account.classList.toggle("is-waiting", on);
+  if (on) say(t("comeBackHere"), "is-waiting");
+  else quiet();
+}
+
+/**
+ * Says something to the host, on whichever line they can actually see.
+ *
+ * There are two, and only ever one of them is on screen: the account line
+ * belongs to a signed-in host and is hidden otherwise, and the note under
+ * the tabs is the opposite. Both messages this puts up — a sign-in failing,
+ * and which tab to come back to — happen while signed *out*, and both were
+ * being written to the hidden one, which is why neither was ever seen.
+ */
+function say(text, state) {
+  const seen = signedIn ? els.account : els.signedOut;
+  const unseen = signedIn ? els.signedOut : els.account;
+
+  unseen.classList.remove("is-error", "is-waiting");
+  seen.textContent = text;
+  seen.classList.remove("is-error", "is-waiting");
+  seen.classList.add(state);
+}
+
+/** Puts both lines back to whatever they say when nothing has happened. */
+function quiet() {
+  for (const element of [els.account, els.signedOut]) {
+    element.classList.remove("is-error", "is-waiting");
+  }
+  els.signedOut.textContent = t("signedOutNote");
+  els.account.textContent = signedIn
+    ? t("signedInAs", { name: accountName() ?? "—" })
+    : t("signInPrompt");
+}
+
+/** True while a line is carrying something no render should overwrite. */
+function spoken(element) {
+  return ["is-error", "is-waiting"].some((state) =>
+    element.classList.contains(state),
+  );
 }
 
 /** Firebase's own messages don't say which console setting is missing. */
@@ -1439,6 +1489,7 @@ function applyViews() {
   els.signin.hidden = signedIn;
   els.signout.hidden = !signedIn;
   els.qr.hidden = !signedIn; // nothing to share until there's an event to run
+  els.tour.hidden = !signedIn; // and nothing to be shown around
   els.tabs.hidden = !signedIn;
   els.signedOut.hidden = signedIn;
   els.viewSetup.hidden = !signedIn || !setup;
@@ -1459,6 +1510,42 @@ function toOption(label) {
 function setLabel(element, text) {
   const slot = element.querySelector(".btn-label");
   (slot ?? element).textContent = text;
+}
+
+/* ── The guided tour ───────────────────────────────────────────────────── */
+
+/**
+ * The seven things worth knowing, in the order somebody meets them.
+ *
+ * Each step names the control it lights up. The one that crosses into Run
+ * carries the switch with it, so the tour walks the page rather than telling
+ * anybody to go and find the other half of it.
+ */
+function tourStops() {
+  return [
+    { at: () => els.tabs, says: "tourTabs" },
+    { at: () => document.querySelector(".pollbtns"), says: "tourPolls" },
+    { at: () => els.addQuestion, says: "tourQuestions" },
+    { at: () => document.querySelector(".settings"), says: "tourSettings" },
+    { at: () => document.querySelector(".hostbtns"), says: "tourShare" },
+    {
+      at: () => document.querySelector(".runbar"),
+      says: "tourRun",
+      before: () => showView("run"),
+    },
+    { at: () => document.querySelector(".toolbar"), says: "tourControls" },
+  ];
+}
+
+/**
+ * Shows the host around. Only where there is something to be shown around:
+ * signed out, the page is one button and a sentence, and a tour of it would
+ * be a tour of a locked door.
+ */
+function showAround() {
+  if (!signedIn) return;
+  const was = mode;
+  startTour(tourStops(), () => showView(was));
 }
 
 /** Names an icon-only button, for a screen reader and for a long press. */

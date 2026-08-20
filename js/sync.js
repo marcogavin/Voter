@@ -14,6 +14,9 @@
 //                   so every device counts down from the same instant
 //     seconds:      how long a question stays open, or 0 for no limit
 //     players/      { uid: "Marco" } — who is in the room, by their own name
+//     seen/         { uid: 1755689400000 } — when that phone last showed signs
+//                   of life, so "the room" can mean the people in it rather
+//                   than everybody who has ever opened the page
 //     decks/
 //       d000: { title: "Team offsite", likes: 12, questions/
 //                 q000: { text, correct: "b", options: { a: {label, votes} },
@@ -289,6 +292,9 @@ function normalise(raw) {
     // Everyone in the room, by the name they gave. Readable by every device,
     // which is what a shared leaderboard needs.
     players: raw?.players || {},
+    // …and when each of them was last awake. A name with no entry here is
+    // from before this existed, which is the same thing as long gone.
+    seen: raw?.seen || {},
     lang: typeof raw?.lang === "string" ? raw.lang : "en",
 
     // Only the live poll is unpacked. The rest are named and counted, which
@@ -592,6 +598,23 @@ export function saveSeconds(seconds) {
 export function saveName(name) {
   requireConnection();
   return database.update(eventRef, { [`players/${uid}`]: name });
+}
+
+/**
+ * Says this device is still here.
+ *
+ * Written on its own, never folded into a vote or a name: those are the
+ * writes that must not fail, and a rules file that hasn't been republished
+ * yet would refuse the whole update if this rode along with them. A refused
+ * heartbeat costs a place in the count; a refused vote costs the vote.
+ */
+export function touch() {
+  if (!eventRef) return Promise.resolve();
+  return database
+    .update(eventRef, { [`seen/${uid}`]: database.serverTimestamp() })
+    .catch((error) => {
+      console.error("Couldn't report being here:", error);
+    });
 }
 
 /**

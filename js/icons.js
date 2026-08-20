@@ -75,6 +75,11 @@ export const icons = {
       `<path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>`,
   ),
   clock: ICON(`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`),
+  help: ICON(
+    `<circle cx="12" cy="12" r="9"/>` +
+      `<path d="M9.2 9.2a2.8 2.8 0 0 1 5.5.7c0 1.9-2.7 2.4-2.7 4"/>` +
+      `<path d="M12 17.5v.01"/>`,
+  ),
   screen: ICON(
     `<rect x="2" y="4" width="20" height="13" rx="2"/>` +
       `<path d="M12 17v4"/><path d="M8 21h8"/>`,

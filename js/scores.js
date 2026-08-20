@@ -19,6 +19,33 @@ import { t, getLanguage } from "./i18n.js";
 import { icons } from "./icons.js";
 
 /**
+ * How long a device counts as being in the room after its last sign of life.
+ *
+ * A name is written once and would otherwise be there forever: yesterday's
+ * tab, the phone that joined and went back in a pocket, the browser somebody
+ * closed without leaving. An hour is longer than any break in a session and
+ * shorter than the gap to the next one.
+ */
+export const PRESENT_MS = 60 * 60 * 1000;
+
+/**
+ * How many people are actually here — the denominator of "Votes 7/12".
+ *
+ * Read from `seen`, which every phone refreshes while it is being looked at.
+ * A name with no entry at all is from before any of this was recorded, which
+ * for this purpose is the same as long gone.
+ *
+ * Both screens that show the count read this, so the wall and the host can't
+ * disagree about the size of the room they are both in.
+ */
+export function roomSize(event, now = Date.now()) {
+  const seen = event?.seen ?? {};
+  return Object.keys(event?.players ?? {}).filter(
+    (uid) => now - (seen[uid] ?? 0) < PRESENT_MS,
+  ).length;
+}
+
+/**
  * True when there is anything to score. A poll of opinion questions has no
  * right answers, so a leaderboard would be a table of zeroes — those go
  * straight from the last question to the closing screen.

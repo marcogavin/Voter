@@ -45,6 +45,12 @@
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
           }
         },
+        "seen": {
+          "$playerUid": {
+            ".write": "auth != null && $playerUid === auth.uid",
+            ".validate": "newData.isNumber()"
+          }
+        },
         "decks": {
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$deckId": {
