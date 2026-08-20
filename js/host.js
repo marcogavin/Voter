@@ -21,6 +21,7 @@ import {
   accountName,
   signInWithGoogle,
   signOutHost,
+  onSignedIn,
   saveLanguage,
   saveSeconds,
   newDeck,
@@ -44,6 +45,7 @@ import {
   boardMarkup,
   fillNames,
   isScorable,
+  isTimed,
 } from "./scores.js";
 import {
   t,
@@ -189,6 +191,22 @@ async function start() {
     // snapshot lands.
     signedIn = !isAnonymous();
     applyViews();
+
+    // The sign-in tab may never manage to tell this one that it worked —
+    // iPadOS opens it as a separate tab and the message home doesn't always
+    // arrive. The session does, so the page watches for the account itself
+    // and picks up whenever it appears, however it got here.
+    onSignedIn(() => {
+      if (!signedIn) location.reload();
+    });
+
+    // Coming back to this tab is also a moment to check: if the account
+    // arrived while this page was in the background and nothing woke it, the
+    // page you return to would still be the signed-out one.
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      if (!signedIn && !isAnonymous()) location.reload();
+    });
 
     onEventChange(render);
   } catch (error) {
@@ -572,7 +590,15 @@ function drawRun() {
     // celebrated, and neither should happen again on every vote that lands.
     if (els.options.dataset.screen !== "scores") {
       els.options.dataset.screen = "scores";
-      els.options.innerHTML = boardMarkup(event, null);
+      els.options.innerHTML =
+        boardMarkup(event, null) +
+        // A board with no clock on it, in a poll that is timed and has been
+        // answered, means the times were refused — which is what an
+        // unpublished rules file looks like from here. Said out loud, because
+        // the alternative is a column that is silently missing.
+        (seconds > 0 && votesCast() > 0 && !isTimed(event)
+          ? `<p class="panel-message">${t("timesRefused")}</p>`
+          : "");
       fillNames(els.options, event);
       celebrate(els.options.querySelector(".board-row.is-first"));
     }
@@ -1199,19 +1225,32 @@ function secondsLeft() {
 }
 
 async function onSignIn() {
-  // Report next to the button that was pressed. The status badge and hint sit
-  // in the footer, which on a phone is below the fold exactly when sign-in
-  // fails — so a failure looked like nothing happening at all.
-  els.account.textContent = "…";
+  // Google opens in a tab of its own, and on a phone that tab is all you can
+  // see — so this page says, before it goes, that it is the one to come back
+  // to. Nothing else on screen would tell you.
+  waiting(true);
 
   try {
     await signInWithGoogle();
   } catch (error) {
+    waiting(false);
     setStatus("refused", "error");
+    // Report next to the button that was pressed. The status badge and hint
+    // sit in the footer, which on a phone is below the fold exactly when
+    // sign-in fails — so a failure looked like nothing happening at all.
     els.account.textContent = explain(error);
     els.account.classList.add("is-error");
     console.error(error);
   }
+}
+
+/** The button, and the page, while Google has the screen. */
+function waiting(on) {
+  els.signin.disabled = on;
+  setLabel(els.signin, t(on ? "signingIn" : "signIn"));
+  els.account.classList.remove("is-error");
+  els.account.textContent = on ? t("comeBackHere") : "";
+  els.account.classList.toggle("is-waiting", on);
 }
 
 /** Firebase's own messages don't say which console setting is missing. */

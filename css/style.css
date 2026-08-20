@@ -1411,6 +1411,14 @@ a.iconbtn {
   font-weight: 600;
 }
 
+/* While Google has the screen. Not an error and not a result — an
+   instruction, and the only one on the page that matters until you come
+   back to it. */
+.account.is-waiting {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 /* ─── Polls ────────────────────────────────────────────────────────────
    Two ways in, the same size, because they are two of the same kind of
    thing. One of them used to be a filled accent button and the other a grey
@@ -2257,6 +2265,10 @@ body.screen {
 }
 
 .big {
+  /* How big the code in the corner is, and therefore how much of the strip
+     along the bottom it is entitled to. One number, read by both. */
+  --big-code: clamp(4.5rem, 14vmin, 12rem);
+
   /* The whole scale, in one place. Each clamp holds a floor for a laptop
      window and a ceiling so a 4K wall doesn't turn into three words. */
   --big-pad: clamp(1rem, 3vmin, 3.5rem);
@@ -2279,10 +2291,8 @@ body.screen {
   gap: var(--big-gap);
 }
 
-/* The mark takes the left, everything else is pushed to the right. Said with
-   a margin rather than with space-between, which shared the row out evenly
-   between three items and left the join code stranded in the middle. */
-.big-corner {
+/* The mark takes the left; the one control is pushed to the right. */
+.big-full {
   margin-left: auto;
 }
 
@@ -2291,18 +2301,30 @@ body.screen {
   flex: none;
 }
 
-/* The way in, shrunk. Big enough to scan from a few rows back, small enough
-   that nobody reads it instead of the question. */
+/* The way in, kept in the bottom corner while a question is up: big enough
+   to scan from the back of a room, and clear of the thing being asked.
+
+   Positioned rather than placed in a row, so it can be this size without the
+   strip along the bottom growing to meet it — the strip just keeps its width
+   free. Bottom right because that is where a code sits on every conference
+   slide ever made. */
 .big-corner {
   flex: none;
+  /* As wide as the address needs, so it reads as one line under the code
+     rather than breaking after the colon — but never wider than a corner,
+     and never narrower than the code it sits under. */
+  min-width: var(--big-code);
+  width: max-content;
+  max-width: 30vw;
+  margin-left: auto;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: var(--space-1);
 }
 
 .big-corner-art {
-  width: clamp(3.5rem, 9vmin, 8rem);
+  width: var(--big-code);
   border-radius: var(--radius-control);
   overflow: hidden;
 }
@@ -2315,9 +2337,12 @@ body.screen {
 
 .big-corner-url {
   margin: 0;
+  max-width: 100%;
   font-size: var(--big-note);
   font-weight: 600;
   color: var(--muted);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 /* ── The stage ──────────────────────────────────────────────────────── */
@@ -2499,6 +2524,14 @@ body.screen {
   background: var(--right);
 }
 
+/* The question screen carries the code in its footer, and a tall footer is
+   already holding the block up off the bottom of the wall — so it takes only
+   a token bias of its own. Counting both left five answers with nowhere to
+   go. */
+.big-stage[data-screen="question"] {
+  padding-bottom: clamp(0.5rem, 4vh, 3rem);
+}
+
 /* A leaderboard is a list read from the top down, and the longer it is the
    more of the wall it should be allowed to use. So this one screen anchors
    rather than centres: the heading sits just under the mark, and every row
@@ -2599,9 +2632,12 @@ body.screen {
 
 /* ── The strip along the bottom ─────────────────────────────────────── */
 
+/* The strip along the bottom, and the code in its right-hand corner. Ends
+   are aligned rather than centres: the code is much taller than a line of
+   text, and what should line up is the bottom of the wall. */
 .big-foot {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: clamp(1rem, 3.2vmin, 3rem);
   font-size: var(--big-note);
   color: var(--muted);
@@ -2621,6 +2657,7 @@ body.screen {
   display: flex;
   align-items: center;
   gap: var(--big-gap);
+  padding-bottom: 0.15em;
 }
 
 .big-clock-track {

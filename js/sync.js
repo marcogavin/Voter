@@ -185,6 +185,22 @@ export function accountName() {
  * Reloads on success: the device's uid changes, and everything already drawn
  * was drawn for the old one.
  */
+/**
+ * Calls back the moment a real account appears on this device, whatever put
+ * it there — this tab's own sign-in, or a sign-in that happened in the tab
+ * Google opened and reached us through the session store.
+ *
+ * The popup's promise is not reliable on a phone: iPadOS opens it as a
+ * separate tab, and the message that would resolve the promise doesn't always
+ * make it back. The session does, so that is what this listens to.
+ */
+export function onSignedIn(callback) {
+  if (!authApi) return () => {};
+  return authApi.onAuthStateChanged(auth, (user) => {
+    if (user && !user.isAnonymous) callback(user);
+  });
+}
+
 export async function signInWithGoogle() {
   const provider = new authApi.GoogleAuthProvider();
 

@@ -91,8 +91,8 @@ What it shows follows the host, one screen behind nobody:
   and how many people are already in. This is also what it shows while you have
   the screen hidden: a blank wall is a wasted wall.
 - **A question** — the question, the answers lettered A, B, C, the clock, and
-  how many votes are in. The join code shrinks into the corner so latecomers
-  still have something to scan.
+  how many votes are in. The join code moves down to the bottom-right corner,
+  with the address under it, so latecomers always have something to scan.
 - **The scores and the applause** — the same leaderboard and the same heart the
   phones show, at the size of the room.
 
@@ -132,6 +132,11 @@ Only questions with a right answer count towards either number: an opinion
 question isn't something anyone can be quick at. **A question you sat out costs
 the full time limit**, so skipping is never a way to post a faster time — and
 neither is a vote that arrived without a time, which costs the same.
+
+**If no times were recorded at all**, the board leaves the column out rather
+than showing a row of zeroes — and the host's copy says why: the rules haven't
+been republished since `times` was added. One paste in the console and the next
+run has a clock.
 
 With no time limit set there is no clock at all: the board is right answers
 alone, people level on them share a place, and the next place skips — two on 5
@@ -367,8 +372,17 @@ real change to both the rules and how `sync.js` listens, not a setting.
 
 ## Who can host
 
-The host signs in with Google; the first signed-in account to save questions
-owns the event. Only that account can write questions, move between them, or
+The host signs in with Google, which opens **in a tab of its own**. On a phone
+that tab is the whole screen, and when it closes nothing says which of the
+others to go back to — so before it goes, this page says *"Finished with
+Google? Come back to this tab."* and holds that until you do.
+
+Coming back is enough. The page doesn't wait for the sign-in tab to report
+success — that message doesn't always survive iPadOS — it watches for the
+account appearing on the device, and picks it up whether it hears from the
+popup, from the session store, or from you simply switching back.
+
+The first signed-in account to save questions owns the event. Only that account can write questions, move between them, or
 reveal an answer — enforced by the rules, not just hidden in the interface.
 
 Attendees stay anonymous and need no account. An anonymous device can vote and
