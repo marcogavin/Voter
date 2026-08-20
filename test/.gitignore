@@ -1,0 +1,6 @@
+node_modules
+# Everything the suites run against is generated from the files that ship.
+build/
+# And anything a suite drew while it ran.
+shots/
+*.png

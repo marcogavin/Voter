@@ -1,0 +1,14 @@
+{
+  "name": "votr-tests",
+  "private": true,
+  "type": "module",
+  "description": "The app ships with no dependencies and no build step. Its tests are allowed both.",
+  "scripts": {
+    "test": "sh run.sh",
+    "build": "sh lib/build.sh"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0",
+    "playwright": "^1.44.0"
+  }
+}

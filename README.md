@@ -478,6 +478,27 @@ Larger audiences need the pay-as-you-go Blaze plan.
 Anonymous auth identifies a browser, not a person: someone determined can vote
 again from a private tab. Fine for a friendly audience, not a ballot box.
 
+## Tests
+
+Twenty-four suites, about 380 assertions, in [`test/`](test/):
+
+```sh
+cd test && npm install && npx playwright install chromium && npm test
+```
+
+They run against the files that ship — `test/lib/build.sh` copies the real page
+scripts and swaps only the imports that would reach the network. Logic runs in
+jsdom; layout runs in Chromium against the whole app, checking nothing
+overflows, nothing touches, nothing is cut off, and every step of the guided
+tour points at what it talks about. Every check has been broken on purpose once
+to confirm it catches the thing.
+
+They also run on every push and every pull request — see
+[`.github/workflows/test.yml`](.github/workflows/test.yml).
+
+The app itself still has no dependencies and no build step. That trade stops at
+`test/`, and nothing in there is served to anybody.
+
 ## Design
 
 Sizes, spacing, control heights and the rules behind them live in
