@@ -60,7 +60,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause", "scores", "bigscreen", "speed",
+  "pause", "scores", "bigscreen", "speed", "signin",
 ];
 
 const els = {

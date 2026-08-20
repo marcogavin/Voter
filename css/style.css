@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
