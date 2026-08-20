@@ -37,7 +37,14 @@ import {
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons, waitingArt } from "./icons.js";
-import { flyHearts } from "./hearts.js";
+import { flyHearts, celebrate } from "./hearts.js";
+import {
+  screenAt,
+  lastIndex,
+  boardMarkup,
+  fillNames,
+  isScorable,
+} from "./scores.js";
 import {
   t,
   setLanguage,
@@ -51,7 +58,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause",
+  "pause", "scores",
 ];
 
 const els = {
@@ -136,6 +143,7 @@ let currentDeck = null; // the one being edited here and presented to the room
 let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
+let players = {}; // everyone in the room, by the name they gave
 let likes = 0; // applause on the closing screen
 let likesSeen = null; // the applause already drawn, so only new taps fly
 let questions = []; // the live poll's questions, in running order
@@ -380,6 +388,7 @@ function render(event) {
   currentIndex = event.currentIndex;
   revealed = event.revealed;
   blanked = event.blanked;
+  players = event.players;
   askedAt = event.askedAt;
   pausedAt = event.pausedAt;
   seconds = event.seconds;
@@ -494,13 +503,19 @@ function drawRun() {
 
   // One past the last question is the closing screen rather than nothing at
   // all: a poll should finish somewhere rather than just stop responding.
-  const atEnd = questions.length > 0 && currentIndex === questions.length;
+  // The run ends in two screens when there is anything to score: how it went,
+  // then what the room thought of it.
+  const event = { questions, currentIndex, players };
+  const screen = screenAt(event);
+  const atEnd = screen === "scores" || screen === "ending";
 
   els.counter.textContent = !questions.length
     ? "—"
-    : atEnd
-      ? t("theEnd")
-      : `${question ? currentIndex + 1 : "—"} / ${questions.length}`;
+    : screen === "scores"
+      ? t("scoresTitle")
+      : screen === "ending"
+        ? t("theEnd")
+        : `${question ? currentIndex + 1 : "—"} / ${questions.length}`;
 
   // Next does double duty, but only where there's something to reveal:
   // questions with no right answer advance on a single press. And with
@@ -513,7 +528,7 @@ function drawRun() {
 
   els.prev.disabled = !isOwner || currentIndex <= 0;
   els.next.disabled =
-    !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
+    !isOwner || !questions.length || (!willReveal && currentIndex >= lastIndex(event));
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
   setLabel(els.reopen, t("reopenVotingShort"));
@@ -542,7 +557,22 @@ function drawRun() {
   els.blank.setAttribute("aria-pressed", String(blanked));
   els.blank.disabled = !isOwner || (!question && !atEnd && !blanked);
 
-  if (atEnd) {
+  if (screen === "scores") {
+    shownQuestionId = null;
+    els.runQuestion.textContent = t("scoresTitle");
+
+    // Built once on arrival: the rows come in in order and the winner is
+    // celebrated, and neither should happen again on every vote that lands.
+    if (els.options.dataset.screen !== "scores") {
+      els.options.dataset.screen = "scores";
+      els.options.innerHTML = boardMarkup(event, null);
+      fillNames(els.options, event);
+      celebrate(els.options.querySelector(".board-row.is-first"));
+    }
+    return;
+  }
+
+  if (screen === "ending") {
     shownQuestionId = null;
     els.runQuestion.textContent = t("likeVotr");
     // Rebuilt only on arrival now: this used to be redrawn on every snapshot,
@@ -1104,8 +1134,10 @@ async function reveal(show) {
 }
 
 async function go(index) {
-  // questions.length is the closing screen; anything past it is nothing.
-  const target = index < 0 || index > questions.length ? -1 : index;
+  // Past the last screen there is means nothing on screen, which is where a
+  // run starts and where Start over puts it back.
+  const last = lastIndex({ questions, currentIndex, players });
+  const target = index < 0 || index > last ? -1 : index;
   // Going from nothing on screen to something is a run beginning, which is
   // what the picker means by "last run".
   const starting = currentIndex < 0 && target >= 0;

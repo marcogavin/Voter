@@ -57,6 +57,11 @@ export const icons = {
   down: ICON(`<path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/>`),
   close: ICON(`<path d="M18 6L6 18"/><path d="M6 6l12 12"/>`),
   check: ICON(`<path d="M20 6L9 17l-5-5"/>`),
+  trophy: ICON(
+    `<path d="M8 4h8v5a4 4 0 0 1-8 0V4Z"/>` +
+      `<path d="M8 6H5a3 3 0 0 0 3 3"/><path d="M16 6h3a3 3 0 0 1-3 3"/>` +
+      `<path d="M12 13v3"/><path d="M9 20h6"/><path d="M10 20a2 2 0 0 1 4 0"/>`,
+  ),
   copy: ICON(
     `<rect x="9" y="9" width="11" height="11" rx="2"/>` +
       `<path d="M5 15V5a2 2 0 0 1 2-2h10"/>`,

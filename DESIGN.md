@@ -126,6 +126,19 @@ Each is dark enough on white to read as a shape at 1.5–3rem. The big heart
 itself stays `--wrong` red — it's the app's own mark on that screen, not
 anybody's colour.
 
+### First place
+
+| Token | Light | Dark | Where |
+| :--- | :--- | :--- | :--- |
+| `--gold` | `#a97f0a` | `#d8b23a` | The winning row's border |
+| `--gold-soft` | `#fbf1d8` | `#33290c` | Its ground |
+| `--gold-ink` | `#7a5c05` | `#f0d071` | Its place, its cup, its "of" |
+
+A colour, not a metal. A gradient here would be the one piece of chrome in an
+interface that has none. `--gold` is darker than gold wants to be because a
+border is a shape, and a shape needs 3:1 against the paper behind it — the
+first pick measured 2.47:1 and the contrast script refused it.
+
 ### On air
 
 | Token | Value | Where |
@@ -440,6 +453,21 @@ happened rather than something that was decided. `grid-auto-flow: column` with
 70px cell there is room for two short words. The sentence the button really
 means goes on `aria-label` and `title`, where it is still said — and still
 read out — without being drawn.
+
+---
+
+### Celebrating
+
+Three things, in this order, and none of them under `prefers-reduced-motion`:
+
+1. **The rows arrive from the bottom up**, 90ms apart, so the eye finishes at
+   the top of the table — which is where the winner is.
+2. **The winner's row bounces once** as it lands, 620ms in.
+3. **Confetti** from that row: eighteen squares in the applause palette, the
+   same mechanics as a flying heart. Squares because a shape nobody can name
+   reads as celebration; anything recognisable reads as another icon.
+
+Everyone who ties for first gets all three. Sharing a win is still winning.
 
 ---
 

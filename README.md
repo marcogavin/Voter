@@ -71,6 +71,28 @@ With nothing on screen, Run shows you the audience's own waiting screen
 rather than an empty space — the presenter shouldn't be the one person in the
 building who doesn't know what's on the phones.
 
+### Scores
+
+A poll with at least one right answer in it ends on a **leaderboard**: who
+answered, how many they got right, best first. The winner's row is gold, wears
+a cup and gets a burst of confetti; your own row is marked so you don't have to
+hunt for your name.
+
+It is worked out from what is already stored — who answered what, which answer
+was right, and the name each device gave — so it is right for polls that were
+run before this existed, and it can't disagree with the votes it is counting.
+
+**Ranked on right answers alone.** People on the same score share a place, and
+the next place skips: two on 5 are both second, and the next is fourth. Ranking
+on speed as well would mean storing a timestamp beside every vote — one field
+and one line of rules, worth doing if you want it, but it changes what a vote
+writes and the rules would have to be published before anyone could vote again.
+
+Somebody who never answered isn't listed. Being in the room isn't a score.
+
+**A poll with no right answers has no leaderboard** — it would be a table of
+zeroes — so an opinion poll goes from its last question straight to the heart.
+
 ### The end of a poll
 
 Past the last question every phone shows **Like VOTR?** and a heart. It takes
@@ -231,7 +253,8 @@ with the arrows, fix wording with ✎, remove with ✕.
 2. Share the audience URL — the **QR code** button puts it on screen, with
    **Copy image** for a slide and **Copy link** for a message
 3. **Start** puts the first question up; every phone follows within about a second
-4. Move through with **Prev** / **Next**
+4. Move through with **Prev** / **Next**. Past the last question comes the
+   leaderboard, and then the heart
 5. **Hide screen** blanks every phone while keeping your place, for talking
    between questions — and **stops the clock**. Take a question from the
    floor, then **Show screen** and the room gets back the seconds it had

@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -69,6 +69,14 @@
 
   /* Broadcast red, and only ever a status. Deliberately a different red from
      the one that means a wrong answer: this one says "on air". */
+  /* First place. A gold that is a colour rather than a metal — a gradient
+     here would be the one piece of chrome in an interface that has none.
+     Darker than gold wants to be, because a border is a shape and a shape
+     needs 3:1 against the paper behind it. */
+  --gold: #a97f0a;
+  --gold-soft: #fbf1d8;
+  --gold-ink: #7a5c05;
+
   --live: #e5484d;
   --live-glow: rgba(229, 72, 77, 0.4);
   --live-fade: rgba(229, 72, 77, 0);
@@ -155,6 +163,10 @@
     --vote-soft: #10333a;
     --right-soft: #12331f;
     --wrong-soft: #3a1c1b;
+
+    --gold: #d8b23a;
+    --gold-soft: #33290c;
+    --gold-ink: #f0d071;
 
     --live: #ff6169;
     --live-glow: rgba(255, 97, 105, 0.45);
@@ -898,6 +910,148 @@ h1.is-centred {
 @media (hover: hover) {
   .whoami:hover {
     background: var(--sunken);
+  }
+}
+
+/* ─── The leaderboard ──────────────────────────────────────────────────
+   How it went, before what the room thought of it. Rows are cards like the
+   answers were, arriving one after another from the bottom so the top of the
+   table is the last thing to land.                                         */
+
+.board {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.board-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-h-lg);
+  padding: var(--space-2) var(--space-4);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  animation: board-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Last row first: the eye ends up at the top, which is where the winner is. */
+  animation-delay: calc((6 - var(--i)) * 90ms);
+}
+
+@keyframes board-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.board-place {
+  flex: none;
+  min-width: 1.5em;
+  font-size: var(--text-body);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: center;
+}
+
+.board-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--text-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.board-score {
+  font-size: var(--text-lead);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The total is context, not the score. */
+.board-of {
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Your own row, marked the way your own answer is. */
+.board-row.is-me {
+  border-color: var(--vote);
+  background: var(--vote-soft);
+}
+
+/* ── The winner ─────────────────────────────────────────────────────────
+   Gold, a cup, and one bounce as the row lands. Everyone who tied for first
+   gets it: sharing a win is still winning.                                */
+
+.board-row.is-first {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  animation:
+    board-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both,
+    board-win 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: calc((6 - var(--i)) * 90ms), 620ms;
+}
+
+@keyframes board-win {
+  0%,
+  60% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.035);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.board-row.is-first .board-place,
+.board-row.is-first .board-of {
+  color: var(--gold-ink);
+}
+
+.board-crown {
+  flex: none;
+  display: inline-flex;
+  color: var(--gold-ink);
+}
+
+.board-crown svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+}
+
+/* One piece of the burst over the winner's row. Squares, because a shape
+   nobody can name reads as celebration rather than as another icon. */
+.confetti {
+  position: absolute;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 1px;
+  pointer-events: none;
+  animation: confetti-fly var(--fall) cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+}
+
+@keyframes confetti-fly {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--drift), -9rem) rotate(var(--spin));
+    opacity: 0;
   }
 }
 
@@ -2029,6 +2183,8 @@ body.audience .panel {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .board-row,
+  .board-row.is-first,
   .choice,
   .choice-fill,
   .choice-pct,

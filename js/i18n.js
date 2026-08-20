@@ -31,6 +31,8 @@ const strings = {
     likeHint: "Tap the heart as often as you like",
     likeHostNote: "The taps come from the audience — you can’t add to this.",
     theEnd: "The end",
+    scoresTitle: "Scores",
+    noScoresYet: "Nobody answered a question with a right answer.",
     tabSetup: "Setup poll",
 
     pollsSection: "My polls",
@@ -155,6 +157,8 @@ const strings = {
     likeHint: "Toca no coração as vezes que quiseres",
     likeHostNote: "Os toques vêm do público — daqui não podes somar.",
     theEnd: "Fim",
+    scoresTitle: "Classificação",
+    noScoresYet: "Ninguém respondeu a uma pergunta com resposta certa.",
     tabSetup: "Preparar votação",
 
     pollsSection: "As minhas votações",
@@ -279,6 +283,8 @@ const strings = {
     likeHint: "Toca el corazón tantas veces como quieras",
     likeHostNote: "Los toques llegan del público — desde aquí no puedes sumar.",
     theEnd: "Fin",
+    scoresTitle: "Clasificación",
+    noScoresYet: "Nadie respondió a una pregunta con respuesta correcta.",
     tabSetup: "Preparar votación",
 
     pollsSection: "Mis votaciones",
@@ -403,6 +409,8 @@ const strings = {
     likeHint: "Touche le cœur autant de fois que tu veux",
     likeHostNote: "Les cœurs viennent du public — tu ne peux pas en ajouter d'ici.",
     theEnd: "Fin",
+    scoresTitle: "Classement",
+    noScoresYet: "Personne n'a répondu à une question ayant une bonne réponse.",
     tabSetup: "Préparer le vote",
 
     pollsSection: "Mes votes",
@@ -527,6 +535,8 @@ const strings = {
     likeHint: "Tippe das Herz, so oft du magst",
     likeHostNote: "Die Herzen kommen vom Publikum — von hier kannst du nichts hinzufügen.",
     theEnd: "Ende",
+    scoresTitle: "Rangliste",
+    noScoresYet: "Niemand hat eine Frage mit richtiger Antwort beantwortet.",
     tabSetup: "Umfrage vorbereiten",
 
     pollsSection: "Meine Umfragen",

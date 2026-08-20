@@ -13,7 +13,8 @@ import {
   NAME_MAX,
 } from "./sync.js";
 import { icons, drawIcons, waitingArt } from "./icons.js";
-import { flyHearts, heartColour } from "./hearts.js";
+import { flyHearts, heartColour, celebrate } from "./hearts.js";
+import { screenAt, boardMarkup, fillNames } from "./scores.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
@@ -21,7 +22,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
-  "polls", "timer", "ending", "names", "applause", "stage", "pause",
+  "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -119,10 +120,25 @@ function render(event) {
     ? null
     : (event.questions[event.currentIndex] ?? null);
 
-  // One past the last question: the poll is over and the room gets a way to
-  // say what it thought, which is nicer than a screen that simply stops.
-  if (!event.blanked && event.questions.length &&
-      event.currentIndex === event.questions.length) {
+  // A poll ends in two screens: how it went, then what the room thought of
+  // it. Which of them an index lands on is decided in one place, so the host
+  // and every phone step through the same sequence.
+  const screen = event.blanked ? "none" : screenAt(event);
+
+  if (screen === "scores") {
+    shownQuestionId = null;
+    drawProgress(null);
+    stageEl.classList.add("is-ending");
+    questionEl.hidden = false;
+    questionEl.textContent = t("scoresTitle");
+    questionEl.classList.add("is-centred");
+    noteEl.textContent = "";
+    stopTicking();
+    showScores(event);
+    return;
+  }
+
+  if (screen === "ending") {
     shownQuestionId = null;
     drawProgress(null);
     stageEl.classList.add("is-ending");
@@ -316,6 +332,19 @@ function showWaiting() {
       <p class="panel-message">${t("waitingForHost")}</p>
     </div>
   `;
+}
+
+/**
+ * How it went. Built once on arrival — the rows arrive in order and the
+ * winner's row is celebrated, and neither should happen again every time
+ * somebody's phone reports something.
+ */
+function showScores(event) {
+  if (optionsEl.dataset.screen === "scores") return;
+  optionsEl.dataset.screen = "scores";
+  optionsEl.innerHTML = boardMarkup(event, getUid());
+  fillNames(optionsEl, event);
+  celebrate(optionsEl.querySelector(".board-row.is-first"));
 }
 
 /**
