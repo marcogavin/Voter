@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -2291,9 +2291,31 @@ body.screen {
   gap: var(--big-gap);
 }
 
-/* The mark takes the left; the one control is pushed to the right. */
+/* The mark takes the left; the count takes the middle of what's left, and
+   the one control sits past it on the right. */
+.big-votes {
+  flex: 1;
+  margin: 0;
+  /* Bigger than a note and smaller than the question: this is the number the
+     room is meant to notice, and noticing it is what makes the rest of them
+     vote. */
+  font-size: clamp(1.1rem, 4vmin, 3.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-flat);
+  text-align: right;
+  transition: color 0.3s ease;
+}
+
+/* Everyone in the room has answered. The only moment on this screen worth
+   changing colour for, and the cue for a presenter to move on. */
+.big-votes.is-all {
+  color: var(--right);
+}
+
 .big-full {
-  margin-left: auto;
+  flex: none;
+  margin-left: var(--big-gap);
 }
 
 .logo--big {

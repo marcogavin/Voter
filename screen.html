@@ -23,6 +23,11 @@
     <header class="big-top">
       <img class="logo logo--big" src="img/votr-logo.svg" alt="VOTR">
 
+      <!-- How much of the room has answered, at the top where the room can
+           see it. A number that is visibly short of the number of people
+           standing there is the most direct way of asking for the rest. -->
+      <p class="big-votes" id="votes" hidden></p>
+
       <!-- For whoever is setting the screen up, not for the room: it fades
            out with the mouse. Hidden outright where the browser can't do
            it. -->
@@ -68,7 +73,7 @@
     (function () {
       var NEEDS = [
         "screen", "scores", "pause", "timer", "speed", "bigscreen", "times",
-        "cornercode", "cornerfoot",
+        "cornercode", "cornerfoot", "votecount", "votesbadge",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",

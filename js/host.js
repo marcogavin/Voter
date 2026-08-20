@@ -431,7 +431,14 @@ function render(event) {
   applyViews();
   isOwner = signedIn && (!event.ownerUid || event.ownerUid === getUid());
 
-  if (!els.account.classList.contains("is-error")) {
+  // A snapshot arrives every time anyone in the room does anything, and this
+  // line is the only place two other things get said: why a sign-in failed,
+  // and — while Google has the screen — which tab to come back to. Neither
+  // survives being overwritten a second later by "Sign in to run this poll".
+  const spoken = ["is-error", "is-waiting"].some((state) =>
+    els.account.classList.contains(state),
+  );
+  if (!spoken) {
     els.account.textContent = signedIn
       ? t("signedInAs", { name: accountName() ?? "—" })
       : t("signInPrompt");
@@ -1247,6 +1254,7 @@ async function onSignIn() {
 /** The button, and the page, while Google has the screen. */
 function waiting(on) {
   els.signin.disabled = on;
+  if (!on) els.account.classList.remove("is-waiting");
   setLabel(els.signin, t(on ? "signingIn" : "signIn"));
   els.account.classList.remove("is-error");
   els.account.textContent = on ? t("comeBackHere") : "";

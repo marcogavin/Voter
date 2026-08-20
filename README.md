@@ -90,9 +90,12 @@ What it shows follows the host, one screen behind nobody:
 - **Nothing on screen** — a join code the size of a door, the address under it,
   and how many people are already in. This is also what it shows while you have
   the screen hidden: a blank wall is a wasted wall.
-- **A question** — the question, the answers lettered A, B, C, the clock, and
-  how many votes are in. The join code moves down to the bottom-right corner,
-  with the address under it, so latecomers always have something to scan.
+- **A question** — the question, the answers lettered A, B, C, and the clock.
+  **Votes 7/12** sits at the top, counted against how many people are in the
+  room: a number visibly short of the number of people standing there asks the
+  rest of them to vote better than any wording would, and it turns green when
+  everyone is in. The join code moves down to the bottom-right corner, with the
+  address under it, so latecomers always have something to scan.
 - **The scores and the applause** — the same leaderboard and the same heart the
   phones show, at the size of the room.
 
