@@ -7,6 +7,12 @@
 // Newest first. `on` is a real date, formatted per language by Intl rather
 // than written out, so a new entry needs no translation to carry its month.
 //
+// A version that has shipped does not change. Two lines were added to 1.4
+// after it was already released, which is how "what is in 1.4?" stops having
+// one answer — they are 1.5 now, and one of them is gone entirely for saying
+// "nothing you can see here", which is the definition of a line that does not
+// belong in this file.
+//
 // The lines are in English. Everything else in this app is in five languages
 // because a room reads it; this is read once, by a host, out of curiosity —
 // and a changelog that has to be translated five times is a changelog that
@@ -14,13 +20,18 @@
 
 export const CHANGES = [
   {
+    version: "1.5",
+    on: "2026-08-20",
+    lines: [
+      "The countdown bar no longer hangs about on the scores or the closing screen, or after a question is taken down.",
+    ],
+  },
+  {
     version: "1.4",
     on: "2026-08-20",
     lines: [
       "A guided tour the first time you sign in. The ? in the top bar brings it back whenever you want it.",
       "The host page now says which version it is running — this box.",
-      "The countdown bar no longer hangs about on the scores or the closing screen, or after a question is taken down.",
-      "Nothing you can see here, but the tests that keep all of this honest now live in the repository and run on every change.",
     ],
   },
   {

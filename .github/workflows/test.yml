@@ -8,6 +8,22 @@ on:
   pull_request:
 
 jobs:
+  # The one thing no suite can check for you: that the changelog is current.
+  # A test can tell you the log is tidy; only this can tell you it is true.
+  changelog:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Did anything visible change without a line about it?
+        run: >
+          sh .github/changelog-check.sh
+          "${{ github.event.pull_request.base.sha }}"
+          "${{ github.event.pull_request.head.sha }}"
+
   suites:
     runs-on: ubuntu-latest
     steps:

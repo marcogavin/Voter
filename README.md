@@ -447,8 +447,19 @@ Two things belong in the same commit as any change somebody can see:
 
 1. **A line in `js/changes.js`**, written the way a person would say it. That's
    what the version number in the host's footer opens. Bump the version at the
-   top; leave out anything that changed nothing anybody can notice.
+   top; leave out anything that changed nothing anybody can notice. **A version
+   that has shipped doesn't change** — new lines go in a new version, or "what's
+   in 1.4?" stops having one answer.
 2. **A word in `VOTR_BUILD` and `NEEDS`** — see below.
+
+The first of those is enforced: a pull request that touches `js/`, `css/`,
+`img/` or the pages without touching `js/changes.js` fails
+[the changelog check](.github/changelog-check.sh). For a change that really is
+invisible from the outside, put `no-changelog` in a commit message — and mean
+it. An escape hatch used lazily turns the check into theatre.
+
+Nothing can check whether the line is any *good*. That part is still on
+whoever writes it.
 
 The version in the footer is also the quickest answer to "am I looking at the
 new one?", which is worth knowing for the ten minutes GitHub Pages serves the
