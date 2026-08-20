@@ -441,6 +441,19 @@ past the cache once and reload themselves. If that doesn't help, a red bar
 appears saying so rather than leaving you guessing; GitHub Pages caches assets
 for ten minutes, so it clears on its own.
 
+### Shipping something
+
+Two things belong in the same commit as any change somebody can see:
+
+1. **A line in `js/changes.js`**, written the way a person would say it. That's
+   what the version number in the host's footer opens. Bump the version at the
+   top; leave out anything that changed nothing anybody can notice.
+2. **A word in `VOTR_BUILD` and `NEEDS`** — see below.
+
+The version in the footer is also the quickest answer to "am I looking at the
+new one?", which is worth knowing for the ten minutes GitHub Pages serves the
+old one.
+
 When adding a feature that changes the markup, add its name to `VOTR_BUILD` in
 `js/host.js`, `js/app.js` or `js/screen.js` and to `NEEDS` in the matching
 page. That's what makes an old script detectable — **and a change shipped

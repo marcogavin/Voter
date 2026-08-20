@@ -39,6 +39,7 @@ import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons, waitingArt } from "./icons.js";
 import { startTour, isFirstTime } from "./tour.js";
+import { CHANGES, VERSION } from "./changes.js";
 import { flyHearts, celebrate } from "./hearts.js";
 import {
   screenAt,
@@ -63,6 +64,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
+  "version",
 ];
 
 const els = {
@@ -121,6 +123,10 @@ const els = {
 
   qr: document.getElementById("qr"),
   tour: document.getElementById("tour"),
+  version: document.getElementById("version"),
+  newsSheet: document.getElementById("news-sheet"),
+  news: document.getElementById("news"),
+  newsClose: document.getElementById("news-close"),
   qrOverlay: document.getElementById("qr-overlay"),
   qrArt: document.getElementById("qr-art"),
   qrUrl: document.getElementById("qr-url"),
@@ -292,6 +298,11 @@ function wireUp() {
 
   els.qr.addEventListener("click", showQr);
   els.tour.addEventListener("click", () => showAround());
+  els.version.addEventListener("click", showNews);
+  els.newsClose.addEventListener("click", () => { els.newsSheet.hidden = true; });
+  els.newsSheet.addEventListener("click", (event) => {
+    if (event.target === els.newsSheet) els.newsSheet.hidden = true;
+  });
   els.qrClose.addEventListener("click", hideQr);
   els.qrCopy.addEventListener("click", onQrCopy);
   els.qrCopyLink.addEventListener("click", onQrCopyLink);
@@ -459,6 +470,8 @@ function render(event) {
   nameButton(els.signout, t("signOut"));
   nameButton(els.bigScreen, t("bigScreen"));
   nameButton(els.tour, t("tourStart"));
+  els.version.textContent = `v${VERSION}`;
+  nameButton(els.version, t("whatsNew"));
   // Its label goes on a narrow screen, so its name has to come from here.
   nameButton(els.qr, t("qrCode"));
 
@@ -1510,6 +1523,50 @@ function toOption(label) {
 function setLabel(element, text) {
   const slot = element.querySelector(".btn-label");
   (slot ?? element).textContent = text;
+}
+
+/* ── What changed ──────────────────────────────────────────────────────── */
+
+/**
+ * The list of changes, newest first, in whatever language the room is in for
+ * everything except the lines themselves — those are English, and say so by
+ * being the only English on the page.
+ *
+ * Written as text rather than as markup: every line here is prose, and prose
+ * assembled into innerHTML is how a stray angle bracket becomes a bug.
+ */
+function showNews() {
+  els.news.innerHTML = "";
+
+  for (const entry of CHANGES) {
+    const head = document.createElement("p");
+    head.className = "news-version";
+    head.textContent = `${t("versionIs", { v: entry.version })} · ${monthOf(entry.on)}`;
+    els.news.appendChild(head);
+
+    const list = document.createElement("ul");
+    list.className = "news-list";
+    for (const line of entry.lines) {
+      const item = document.createElement("li");
+      item.textContent = line;
+      list.appendChild(item);
+    }
+    els.news.appendChild(list);
+  }
+
+  els.newsSheet.hidden = false;
+}
+
+/** "August 2026", in the room's language, without a string to translate. */
+function monthOf(date) {
+  try {
+    return new Intl.DateTimeFormat(getLanguage(), {
+      month: "long",
+      year: "numeric",
+    }).format(new Date(date));
+  } catch (error) {
+    return date;
+  }
 }
 
 /* ── The guided tour ───────────────────────────────────────────────────── */

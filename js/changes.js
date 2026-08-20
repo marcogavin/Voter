@@ -1,0 +1,63 @@
+// What changed, in the words somebody who uses this would use.
+//
+// Not a commit log. A commit log says "rekeyed the pulsing dot to data-key";
+// this says "the red dot only pulses when a poll is actually live", and
+// leaves out everything that changed nothing anybody can see.
+//
+// Newest first. `on` is a real date, formatted per language by Intl rather
+// than written out, so a new entry needs no translation to carry its month.
+//
+// The lines are in English. Everything else in this app is in five languages
+// because a room reads it; this is read once, by a host, out of curiosity —
+// and a changelog that has to be translated five times is a changelog that
+// stops being written.
+
+export const CHANGES = [
+  {
+    version: "1.4",
+    on: "2026-08-20",
+    lines: [
+      "A guided tour the first time you sign in. The ? in the top bar brings it back whenever you want it.",
+      "The host page now says which version it is running — this box.",
+    ],
+  },
+  {
+    version: "1.3",
+    on: "2026-08-20",
+    lines: [
+      "Quiz scores count time as well as right answers, so a tie is broken by whoever was quicker.",
+      "The vote count sits at the top of the big screen and counts against the size of the room: Votes 7/12.",
+      "Somebody who has closed their phone stops being counted after an hour.",
+    ],
+  },
+  {
+    version: "1.2",
+    on: "2026-08-20",
+    lines: [
+      "A big screen for a projector or a TV, with a join code the room can scan from the back.",
+      "It shows the question, the clock, the scores and the applause — and never anything you can press by accident.",
+    ],
+  },
+  {
+    version: "1.1",
+    on: "2026-08-20",
+    lines: [
+      "A poll with right answers now ends on a leaderboard, with confetti for whoever won.",
+      "Hiding the screen stops the clock, so a question you paused comes back with the seconds it had.",
+    ],
+  },
+  {
+    version: "1.0",
+    on: "2026-08-19",
+    lines: [
+      "A new look: one colour, cards, dark mode, and everything sized for a thumb.",
+      "Polls — keep a separate set of questions for each talk instead of one growing list.",
+      "Everyone gives a name when they join, which is what puts them on the leaderboard.",
+      "A clock on each question, and a Reveal step for quizzes.",
+      "A heart to tap at the end, and everyone in the room sees it fly.",
+    ],
+  },
+];
+
+/** What this build is. Shown on the host page, and the newest entry above. */
+export const VERSION = CHANGES[0].version;
