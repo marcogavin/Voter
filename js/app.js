@@ -129,27 +129,21 @@ function render(event) {
   const screen = event.blanked ? "none" : screenAt(event);
 
   if (screen === "scores") {
-    shownQuestionId = null;
-    drawProgress(null);
+    resting();
     stageEl.classList.add("is-ending");
     questionEl.hidden = false;
     questionEl.textContent = t("scoresTitle");
     questionEl.classList.add("is-centred");
-    noteEl.textContent = "";
-    stopTicking();
     showScores(event);
     return;
   }
 
   if (screen === "ending") {
-    shownQuestionId = null;
-    drawProgress(null);
+    resting();
     stageEl.classList.add("is-ending");
     questionEl.hidden = false;
     questionEl.textContent = t("likeVotr");
     questionEl.classList.add("is-centred");
-    noteEl.textContent = "";
-    stopTicking();
     showEnding(event.likes);
     return;
   }
@@ -158,11 +152,8 @@ function render(event) {
   stageEl.classList.remove("is-ending");
 
   if (!question) {
-    shownQuestionId = null;
-    drawProgress(null);
+    resting();
     questionEl.hidden = true;
-    noteEl.textContent = "";
-    stopTicking();
     showWaiting();
     return;
   }
@@ -205,6 +196,26 @@ function keepPresent() {
   beat();
   setInterval(beat, HEARTBEAT_MS);
   document.addEventListener("visibilitychange", beat);
+}
+
+/**
+ * Puts the stage back to nothing-is-being-asked: no place in the poll, no
+ * clock, no note, and no ticker running behind it.
+ *
+ * Shared by every screen that isn't a question, because a screen that only
+ * says what it *wants* leaves the last screen's furniture on the page — which
+ * is how the closing screen ended up with a countdown bar for a poll that had
+ * already finished, and the waiting screen with one for a question that had
+ * been taken down.
+ */
+function resting() {
+  shownQuestionId = null;
+  drawProgress(null);
+  clockEl.hidden = true;
+  clockEl.classList.remove("is-urgent");
+  noteEl.textContent = "";
+  noteEl.classList.remove("is-urgent");
+  stopTicking();
 }
 
 /* ── Countdown ─────────────────────────────────────────────────────────── */
@@ -406,16 +417,11 @@ function drawWhoami(name) {
  * answers are about to be attributed to them.
  */
 function showJoin(existing) {
+  resting();
   whoamiEl.hidden = true;
   questionEl.hidden = false;
   questionEl.textContent = t("whatsYourName");
   questionEl.classList.add("is-centred");
-  noteEl.textContent = "";
-  stopTicking();
-
-  // The rows that were on screen are gone now, so the guard that remembers
-  // them has to go too, or they never come back.
-  shownQuestionId = null;
 
   if (optionsEl.dataset.screen !== "join") {
     optionsEl.dataset.screen = "join";
