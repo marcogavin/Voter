@@ -101,8 +101,10 @@ reveal, or until the clock runs out. On a wall in front of everyone, a bar that
 fills as the votes land is a quiz being copied. An opinion question has nothing
 to copy and watching it move is most of the point, so that one counts live.
 
-The leaderboard stops at eight names with the rest counted underneath: a wall
-can't be scrolled, and the names worth reading are at the top.
+The leaderboard is drawn and then measured against the display, keeping as many
+places as fit and counting the rest underneath — eight or nine on a 720p
+projector, more on a bigger one. It is always **one column**: a list read across
+two puts fourth place level with first and reads as two separate tables.
 
 ### Scores
 
@@ -410,7 +412,13 @@ Sizes, spacing, control heights and the rules behind them live in
 [`DESIGN.md`](DESIGN.md). One scale covers the phone screens — there is no host
 variant and no audience variant. The big screen is the one page with a scale of
 its own, and only because a size meant for arm's length can't survive being
-twelve metres away. A value that isn't in that file doesn't go in
+twelve metres away.
+
+The card grows with the window up to 900px — around 75 characters, where a line
+stops being comfortable to read — and then stops, so a wide display gets margin
+rather than a wider sentence. Where there is genuinely more to show, the answer
+is a second column: the projector puts six answers two-up and keeps five in one,
+and never splits the leaderboard at all. A value that isn't in that file doesn't go in
 the stylesheet.
 
 ## How it's put together

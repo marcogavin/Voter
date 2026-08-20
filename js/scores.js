@@ -183,7 +183,10 @@ export function boardMarkup(event, me, limit = Infinity) {
   const hidden = all.length - rows.length;
 
   return (
-    `<ol class="board">` +
+    // The row count rides along as a custom property: the rows arrive from
+    // the bottom up, so how long that takes — and when the winner's row is
+    // finally there to be celebrated — depends on how many there are.
+    `<ol class="board" style="--n: ${rows.length}">` +
     rows
       .map((row, index) => {
         const classes =

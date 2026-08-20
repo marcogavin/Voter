@@ -237,10 +237,31 @@ body {
    The bezel and its dark surround are gone. What's left is a plain wrapper
    that sets the measure, and one white card on a near-white page.        */
 
+/* ── How wide the card gets ──────────────────────────────────────────────
+   It grows with the window until a line of text stops being readable, and
+   then it stops. 640px is the phone measure; past a tablet it opens up to
+   900, which is around 75 characters at body size — the point where the eye
+   starts losing its place coming back to the left margin.
+
+   Everything beyond that becomes margin on purpose. A 5K display doesn't
+   want a 5K-wide sentence; if there is ever more to show on a big screen,
+   the answer is a second column, not a longer line.                       */
+
 .frame {
   width: 100%;
   max-width: 640px;
   display: flex;
+}
+
+@media (min-width: 760px) {
+  .frame {
+    max-width: min(94vw, 900px);
+  }
+
+  /* A bigger card can afford a bigger margin inside it. */
+  .panel {
+    padding: var(--space-6);
+  }
 }
 
 .panel {
@@ -926,9 +947,17 @@ a.iconbtn {
    table is the last thing to land.                                         */
 
 .board {
+  /* Overwritten per board by the markup; here so the animation below has
+     something to read on a board drawn some other way. */
+  --n: 6;
+  /* How far apart the rows land. Slow enough to be a thing you watch rather
+     than a thing that has already happened. */
+  --step: 130ms;
   list-style: none;
   margin: 0;
   padding: 0;
+  /* One column, always. A leaderboard read across two columns puts fourth
+     place level with first, and a room reads it as two separate tables. */
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -944,15 +973,17 @@ a.iconbtn {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  animation: board-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-  /* Last row first: the eye ends up at the top, which is where the winner is. */
-  animation-delay: calc((6 - var(--i)) * 90ms);
+  animation: board-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Last row first: the eye ends up at the top, which is where the winner is.
+     Counted from the number of rows there actually are, so the last one in is
+     always the first place however long the board is. */
+  animation-delay: calc((var(--n) - 1 - var(--i)) * var(--step));
 }
 
 @keyframes board-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(18px);
   }
 }
 
@@ -1014,18 +1045,21 @@ a.iconbtn {
   border-color: var(--gold);
   background: var(--gold-soft);
   animation:
-    board-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both,
-    board-win 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  animation-delay: calc((6 - var(--i)) * 90ms), 620ms;
+    board-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both,
+    board-win 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  /* The bounce waits for the row to have landed, whenever that is. */
+  animation-delay:
+    calc((var(--n) - 1 - var(--i)) * var(--step)),
+    calc((var(--n) - 1) * var(--step) + 380ms);
 }
 
 @keyframes board-win {
   0%,
-  60% {
+  40% {
     transform: scale(1);
   }
-  75% {
-    transform: scale(1.035);
+  62% {
+    transform: scale(1.06);
   }
   100% {
     transform: scale(1);
@@ -1065,14 +1099,18 @@ a.iconbtn {
 .confetti {
   position: absolute;
   top: 50%;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 1px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 2px;
   pointer-events: none;
   /* How far it goes. Overridden on the big screen, where nine rem is a
      twitch rather than a burst. */
-  --rise: 9rem;
-  animation: confetti-fly var(--fall) cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  --rise: 12rem;
+  /* `both`, not `forwards`: every piece waits its turn, and until then a
+     forwards-only animation leaves it sitting where it started at full
+     opacity — two dozen squares parked on the winner's row for a second and
+     a half before any of them moved. */
+  animation: confetti-fly var(--fall) cubic-bezier(0.2, 0.6, 0.3, 1) both;
 }
 
 @keyframes confetti-fly {
@@ -1192,7 +1230,9 @@ a.iconbtn {
   margin: calc(var(--size) / -2);
   color: var(--wrong);
   pointer-events: none;
-  animation: heart-fly 1.5s cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
+  /* `both` for the same reason as the confetti: hearts are released a beat
+     apart, and each has to be invisible until its own beat. */
+  animation: heart-fly 1.5s cubic-bezier(0.2, 0.6, 0.3, 1) both;
 }
 
 .heart-fly svg {
@@ -2236,8 +2276,14 @@ body.screen {
 .big-top {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: var(--big-gap);
+}
+
+/* The mark takes the left, everything else is pushed to the right. Said with
+   a margin rather than with space-between, which shared the row out evenly
+   between three items and left the join code stranded in the middle. */
+.big-corner {
+  margin-left: auto;
 }
 
 .logo--big {
@@ -2276,6 +2322,10 @@ body.screen {
 
 /* ── The stage ──────────────────────────────────────────────────────── */
 
+/* Centred, but not on the middle of the display: the eye starts at the top
+   of a wall and the question is the thing it should land on, so the block is
+   biased upward by padding the foot of the stage. A screen with three short
+   answers used to put its question on the horizon. */
 .big-stage {
   min-height: 0;
   display: flex;
@@ -2283,6 +2333,7 @@ body.screen {
   align-items: center;
   justify-content: center;
   gap: var(--big-gap);
+  padding-bottom: clamp(1.5rem, 14vh, 11rem);
   text-align: center;
 }
 
@@ -2350,8 +2401,13 @@ body.screen {
 
 /* ── The answers ────────────────────────────────────────────────────────
    The same card as a phone's vote row, with the tap taken out and the type
-   let off its leash. Five or six answers go into two columns where the
-   display is wide enough to hold them, and stay in one where it isn't.    */
+   let off its leash.
+
+   One column up to five answers. A single column is a list you read down;
+   two is a grid you have to scan, and it puts B beside A rather than under
+   it — which is the wrong order for something a presenter reads out. Only at
+   six does the height start costing more than the scan does, and only on a
+   display wide enough to hold two of them.                                 */
 
 .big-choices {
   list-style: none;
@@ -2362,7 +2418,6 @@ body.screen {
 }
 
 @media (min-width: 900px) {
-  .big-choices[data-n="5"],
   .big-choices[data-n="6"] {
     grid-template-columns: 1fr 1fr;
   }
@@ -2444,6 +2499,16 @@ body.screen {
   background: var(--right);
 }
 
+/* A leaderboard is a list read from the top down, and the longer it is the
+   more of the wall it should be allowed to use. So this one screen anchors
+   rather than centres: the heading sits just under the mark, and every row
+   that fits underneath is a name somebody in the room gets to see.        */
+.big-stage[data-screen="scores"] {
+  justify-content: flex-start;
+  padding-top: clamp(0.25rem, 2.5vh, 2.5rem);
+  padding-bottom: var(--big-gap);
+}
+
 /* ── The standings ──────────────────────────────────────────────────── */
 
 .big-board {
@@ -2517,10 +2582,19 @@ body.screen {
   --rise: clamp(13rem, 34vmin, 30rem);
 }
 
+/* Bigger pieces, and a shorter climb than the phone's. The board is anchored
+   near the top of the wall, so there is only so much sky above the winner —
+   a burst that clears the header is a burst nobody sees the end of. */
 .big-board .confetti {
-  width: clamp(0.5rem, 1.3vmin, 1.125rem);
-  height: clamp(0.5rem, 1.3vmin, 1.125rem);
-  --rise: clamp(9rem, 26vmin, 24rem);
+  width: clamp(0.75rem, 2.2vmin, 2rem);
+  height: clamp(0.75rem, 2.2vmin, 2rem);
+  --rise: clamp(6rem, 18vmin, 15rem);
+}
+
+/* A wall has room for the rows to take their time, and is looked at from far
+   enough away that a fast one is over before anyone has found it. */
+.big-board .board {
+  --step: 160ms;
 }
 
 /* ── The strip along the bottom ─────────────────────────────────────── */

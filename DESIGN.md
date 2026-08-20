@@ -513,9 +513,26 @@ asked for less movement gets none.
 
 | | |
 | :--- | :--- |
-| Both frames | `max-width: 640px`, height from content |
-| Panel padding | `--space-4` on phones, `--space-5` above 480px |
+| Both frames | `max-width: 640px`, opening to `min(94vw, 900px)` above 760px |
+| Panel padding | `--space-4` on phones, `--space-5` above 480px, `--space-6` above 760px |
 | Portrait phones | `100dvh` and `env(safe-area-inset-*)` with `viewport-fit=cover` |
+
+### How wide the card gets, and why it stops
+
+**The card grows with the window until a line of text stops being readable,
+then it stops.** 640px is the phone measure. Past a tablet it opens to 900,
+which is about 75 characters at body size — the width where the eye starts
+losing its place on the way back to the left margin. On a 5K display it is
+still 900, centred, and the rest is margin.
+
+That is the whole principle, and it cuts both ways: a 640px column marooned in
+the middle of an iPad is meanly narrow, and a 1400px-wide question is
+unreadable. Neither is "using the screen".
+
+**If there is ever more to show on a big screen, the answer is a second column,
+not a longer line.** The projector already works this way — six answers go
+two-up, five stay in one column, and the leaderboard never splits at all
+because a list read across two columns puts fourth place level with first.
 
 **Neither frame is locked to 16:9, and that's settled.** The stylesheet carried
 a `16 / 9` on the base `.frame` that both pages overrode, so it had never

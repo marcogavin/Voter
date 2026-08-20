@@ -24,11 +24,13 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 window.VOTR_BUILD = ["screen", "scores", "pause", "timer", "speed"];
 
 /**
- * As many rows as fit a 720p projector without the last one falling off the
- * bottom, which is also about as many as anyone reads from the back of a
- * room. The rest are counted underneath.
+ * The most names worth putting on a wall, and the fewest worth calling a
+ * leaderboard. What actually shows is measured — see showScores — because a
+ * 4K display holds half again what a 720p projector does, and a fixed number
+ * is either short on one or falling off the bottom of the other.
  */
-const BOARD_ROWS = 8;
+const BOARD_MOST = 14;
+const BOARD_FEWEST = 3;
 
 /** How long the fullscreen control stays up after the mouse stops moving. */
 const CHROME_MS = 2500;
@@ -272,7 +274,14 @@ function showQuestion(event) {
   else stopTicking();
 }
 
-/** How it went, capped at what a room can read from the back. */
+/**
+ * How it went — as many places as the display will hold, in one column.
+ *
+ * Nothing here can be scrolled to, so the board is drawn and then measured,
+ * and a row is dropped until it fits. Two columns would be the other way to
+ * hold more, and it is the wrong one: it puts fourth place level with first
+ * and reads as two separate tables.
+ */
 function showScores(event) {
   if (els.stage.dataset.screen !== "scores") {
     els.stage.dataset.screen = "scores";
@@ -282,11 +291,44 @@ function showScores(event) {
       `<div class="big-board"></div>`;
 
     const holder = els.stage.querySelector(".big-board");
-    holder.innerHTML = boardMarkup(event, null, BOARD_ROWS);
-    fillNames(holder, event);
+    const draw = (rows) => {
+      holder.innerHTML = boardMarkup(event, null, rows);
+      fillNames(holder, event);
+    };
+
+    let rows = BOARD_MOST;
+    draw(rows);
+    // clientHeight is 0 in a page that isn't being laid out, which would take
+    // this straight down to the floor; measuring only when there is a height
+    // to measure leaves such a page with the full board.
+    while (rows > BOARD_FEWEST && els.stage.clientHeight > 0 && spills()) {
+      rows -= 1;
+      draw(rows);
+    }
+
     celebrate(holder.querySelector(".board-row.is-first"));
   }
   foot({});
+}
+
+/**
+ * True while the stage is holding more than it can show.
+ *
+ * Not scrollHeight: the stage centres its contents, so anything too tall
+ * overflows the top as well as the bottom, and scrollHeight only ever counts
+ * the bottom half of that. The first thing on the stage running up under the
+ * header is exactly the failure this exists to catch.
+ */
+function spills() {
+  const kids = [...els.stage.children];
+  if (!kids.length) return false;
+
+  const box = els.stage.getBoundingClientRect();
+  const foot = parseFloat(window.getComputedStyle(els.stage).paddingBottom) || 0;
+  const first = kids[0].getBoundingClientRect();
+  const last = kids[kids.length - 1].getBoundingClientRect();
+
+  return first.top < box.top - 1 || last.bottom > box.bottom - foot + 1;
 }
 
 /**
