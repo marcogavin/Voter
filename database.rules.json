@@ -85,6 +85,12 @@
                     ".validate": "newData.isString() && newData.val().length <= 4"
                   }
                 },
+                "times": {
+                  "$voterUid": {
+                    ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
+                  }
+                },
                 "$otherField": {
                   ".validate": false
                 }
@@ -122,6 +128,12 @@
               "$voterUid": {
                 ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                 ".validate": "newData.isString() && newData.val().length <= 4"
+              }
+            },
+            "times": {
+              "$voterUid": {
+                ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
               }
             },
             "$otherField": {

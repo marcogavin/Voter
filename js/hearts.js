@@ -62,7 +62,27 @@ export function flyHearts(stage, count, colour = null) {
 /* ── The winner ────────────────────────────────────────────────────────── */
 
 /** How many pieces a win is worth. Enough to read as a burst, not a mess. */
-const CONFETTI = 18;
+const CONFETTI = 26;
+
+/**
+ * When the row this is bursting from will have finished arriving.
+ *
+ * The rows land from the bottom up, so the winner's is the *last* one there —
+ * and confetti thrown before it has arrived is a burst over an empty space,
+ * which is most of what made the old one read as a glitch. The pace comes from
+ * the stylesheet, which is where it is decided.
+ */
+function landing(row) {
+  const board = row.closest?.(".board");
+  if (!board) return 0;
+
+  // Through `window`, like matchMedia above: the bare global isn't there in
+  // every environment this file is asked to run in.
+  const step =
+    parseFloat(window.getComputedStyle(board).getPropertyValue("--step")) || 130;
+  const rows = board.querySelectorAll(".board-row").length;
+  return Math.max(0, (rows - 1) * step + 300);
+}
 
 /**
  * A burst of colour from the top of the standings, in the same palette the
@@ -76,15 +96,19 @@ export function celebrate(stage) {
   if (!stage) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+  const after = landing(stage);
+
   for (let i = 0; i < CONFETTI; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti";
     piece.style.background = `var(--heart-${anyColour()})`;
     piece.style.left = `${Math.round(Math.random() * 100)}%`;
-    piece.style.setProperty("--drift", `${Math.round((Math.random() - 0.5) * 120)}px`);
+    piece.style.setProperty("--drift", `${Math.round((Math.random() - 0.5) * 220)}px`);
     piece.style.setProperty("--spin", `${Math.round((Math.random() - 0.5) * 720)}deg`);
-    piece.style.setProperty("--fall", `${(1.1 + Math.random() * 0.9).toFixed(2)}s`);
-    piece.style.animationDelay = `${Math.round(Math.random() * 260)}ms`;
+    // Slower than a heart, and spread over half a second: a burst that is
+    // over in one is a flicker somebody at the back never sees at all.
+    piece.style.setProperty("--fall", `${(1.9 + Math.random() * 1.2).toFixed(2)}s`);
+    piece.style.animationDelay = `${after + Math.round(Math.random() * 480)}ms`;
     piece.addEventListener("animationend", () => piece.remove());
     stage.appendChild(piece);
   }

@@ -23,6 +23,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
+  "speed",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -197,6 +198,20 @@ function secondsLeft() {
   return Math.max(0, Math.ceil(latest.seconds - gone));
 }
 
+/**
+ * How long this phone took to answer, in milliseconds, or null when nothing
+ * is being timed — which is what a poll with no time limit is.
+ *
+ * Clamped to the limit at both ends. A phone whose clock disagrees with the
+ * server's by a minute would otherwise post a negative time and win, and the
+ * rules would refuse it besides.
+ */
+function elapsed() {
+  if (!latest?.askedAt || !latest?.seconds) return null;
+  const gone = (latest.pausedAt ?? serverNow()) - latest.askedAt;
+  return Math.min(Math.max(gone, 0), latest.seconds * 1000);
+}
+
 /** "Question 2 of 3", or nothing at all when no question is up. */
 function drawProgress(index, total) {
   const show = index !== null;
@@ -308,7 +323,7 @@ async function submitVote(questionId, optionId) {
   busy = true;
 
   try {
-    await castVote(questionId, optionId);
+    await castVote(questionId, optionId, elapsed());
     drawStatus();
   } catch (error) {
     setStatus("voteRefused", "error");

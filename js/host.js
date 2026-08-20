@@ -58,7 +58,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause", "scores", "bigscreen",
+  "pause", "scores", "bigscreen", "speed",
 ];
 
 const els = {
@@ -509,7 +509,10 @@ function drawRun() {
   // all: a poll should finish somewhere rather than just stop responding.
   // The run ends in two screens when there is anything to score: how it went,
   // then what the room thought of it.
-  const event = { questions, currentIndex, players };
+  // `seconds` rides along because the leaderboard reads it: it is what an
+  // unanswered question costs, and without it the host's copy of the board
+  // would quietly be the untimed one while the room saw the times.
+  const event = { questions, currentIndex, players, seconds };
   const screen = screenAt(event);
   const atEnd = screen === "scores" || screen === "ending";
 

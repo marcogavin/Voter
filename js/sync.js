@@ -17,9 +17,15 @@
 //     decks/
 //       d000: { title: "Team offsite", likes: 12, questions/
 //                 q000: { text, correct: "b", options: { a: {label, votes} },
-//                         voters: { uid: "a" } } }
+//                         voters: { uid: "a" }, times: { uid: 4200 } } }
 //
 // `correct` is optional: plenty of questions have no right answer.
+//
+// `times` is how long each person took, in milliseconds from the moment the
+// question went up, and is only written while a time limit is set. It is a
+// node of its own rather than a field inside `voters` so that a vote written
+// before it existed is still a vote, and so that adding it needed one new
+// rule rather than a change to the one that guards every vote in the room.
 //
 // Keys at both levels are zero-padded and sort into presentation order, so key
 // order is the running order and no separate sort field is needed.
@@ -309,6 +315,7 @@ function readQuestions(stored) {
       text: question.text || "",
       correct: question.correct ?? null,
       voters: question.voters || {},
+      times: question.times || {},
       options: Object.entries(question.options || {})
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([optionId, option]) => ({
@@ -366,6 +373,11 @@ export function saveQuestions(questions) {
       ...(question.correct ? { correct: question.correct } : {}),
       ...(question.voters && Object.keys(question.voters).length
         ? { voters: question.voters }
+        : {}),
+      // Re-saving to fix a typo keeps the answers; it has to keep how long
+      // they took as well, or the leaderboard changes under the room.
+      ...(question.times && Object.keys(question.times).length
+        ? { times: question.times }
         : {}),
     };
   });
@@ -582,14 +594,37 @@ export function likePoll() {
  * Records one vote. The counter bump and the voter record are written as a
  * single atomic update, and the increment happens on the server — so two
  * people tapping at the same instant can't overwrite each other.
+ *
+ * `ms` is how long this person took, from the moment the question went up.
+ * Pass null when nothing is being timed.
+ *
+ * The time rides along in the same atomic update, which means the rules have
+ * to know about `times` before any of it lands. They may not: the repository
+ * is the documentation and the console is what enforces it, and there is
+ * always a window between deploying this and republishing them. So a refusal
+ * is retried once without the time — a room that can vote but isn't being
+ * timed is a working poll; a room that can't vote is not.
  */
-export function castVote(questionId, optionId) {
+export async function castVote(questionId, optionId, ms = null) {
   requireConnection();
-  return database.update(eventRef, {
+
+  const vote = {
     [`${questionsPath}/${questionId}/options/${optionId}/votes`]:
       database.increment(1),
     [`${questionsPath}/${questionId}/voters/${uid}`]: optionId,
-  });
+  };
+
+  if (ms === null) return database.update(eventRef, vote);
+
+  try {
+    await database.update(eventRef, {
+      ...vote,
+      [`${questionsPath}/${questionId}/times/${uid}`]: Math.round(ms),
+    });
+  } catch (error) {
+    console.error("Timing this vote was refused; voting without it.", error);
+    await database.update(eventRef, vote);
+  }
 }
 
 /**
@@ -604,6 +639,7 @@ export function resetAllVotes(questions) {
   const updates = { [`decks/${liveDeck}/likes`]: 0 };
   for (const question of questions) {
     updates[`${questionsPath}/${question.id}/voters`] = null;
+    updates[`${questionsPath}/${question.id}/times`] = null;
     for (const option of question.options) {
       updates[`${questionsPath}/${question.id}/options/${option.id}/votes`] = 0;
     }
@@ -615,7 +651,10 @@ export function resetAllVotes(questions) {
 export function resetVotes(question) {
   requireConnection();
 
-  const updates = { [`${questionsPath}/${question.id}/voters`]: null };
+  const updates = {
+    [`${questionsPath}/${question.id}/voters`]: null,
+    [`${questionsPath}/${question.id}/times`]: null,
+  };
   for (const option of question.options) {
     updates[`${questionsPath}/${question.id}/options/${option.id}/votes`] = 0;
   }

@@ -6,13 +6,16 @@
 // which means it is right for a poll that was run before this existed, and
 // there is no way for it to disagree with the votes it is counting.
 //
-// **Ranked on right answers alone.** Ranking on speed as well would need a
-// timestamp beside every vote, and a vote is one atomic write that the rules
-// would have to be republished to accept — worth doing, but not worth a poll
-// that quietly refuses votes until the rules catch up. People who got the same
-// number right share a place, which is also the honest answer.
+// **Right answers first, then the clock.** Where a time limit is set, every
+// vote records how long it took, and the total breaks ties between people on
+// the same score — which is what makes a quiz a race rather than a poll with
+// a winner. Where nothing is timed, the board is exactly what it was: right
+// answers, and a shared place for everyone level on them.
+//
+// Only questions with a right answer count towards either number. An opinion
+// question is not something anyone can be quick at.
 
-import { t } from "./i18n.js";
+import { t, getLanguage } from "./i18n.js";
 import { icons } from "./icons.js";
 
 /**
@@ -25,45 +28,110 @@ export function isScorable(event) {
 }
 
 /**
+ * How long a question was open, in milliseconds, or null when it wasn't timed.
+ *
+ * This doubles as the cost of not answering one. A question you sat out has
+ * to cost the whole clock: anything less and skipping would be a way to post
+ * a faster time than the people who actually answered.
+ */
+function limit(event) {
+  const seconds = event?.seconds ?? 0;
+  return seconds > 0 ? seconds * 1000 : null;
+}
+
+/**
+ * True when there are real times to rank on: a limit is set *and* something
+ * was actually recorded. A poll run before timing existed, or one whose votes
+ * arrived while the rules still refused the times, shows no clock at all
+ * rather than a column of identical numbers.
+ */
+export function isTimed(event) {
+  if (limit(event) === null) return false;
+  return (event?.questions ?? []).some(
+    (question) =>
+      question.correct !== null && Object.keys(question.times ?? {}).length > 0,
+  );
+}
+
+/**
  * Everyone who answered anything, best first.
  *
- * Ties share a place and the next one skips, the way places work: two people
- * on 5 are both second, and the next is fourth. Within a tie it is by name, so
- * the order doesn't shuffle between two renders of the same scores.
+ * Right answers decide it; the clock separates people level on them. Ties that
+ * survive both share a place and the next one skips, the way places work: two
+ * people on 5 are both second, and the next is fourth. Within a tie it is by
+ * name, so the order doesn't shuffle between two renders of the same scores.
  */
 export function standings(event) {
   const scored = (event?.questions ?? []).filter((q) => q.correct !== null);
   const players = event?.players ?? {};
+  const timed = isTimed(event);
+  const full = limit(event) ?? 0;
 
   const rows = Object.entries(players)
     .map(([uid, name]) => {
       let right = 0;
       let answered = 0;
+      let ms = 0;
       for (const question of scored) {
         const pick = question.voters?.[uid];
-        if (pick === undefined) continue;
+        if (pick === undefined) {
+          // Never answered: the whole clock.
+          ms += full;
+          continue;
+        }
         answered += 1;
         if (pick === question.correct) right += 1;
+        // Answered but untimed — a vote from before this existed, or one the
+        // rules took without its time. Costs the whole clock too: a missing
+        // time must never read as an instant one.
+        ms += question.times?.[uid] ?? full;
       }
-      return { uid, name, right, answered, of: scored.length };
+      return { uid, name, right, answered, of: scored.length, ms: timed ? ms : null };
     })
     // Somebody who never answered anything isn't in the running; they were in
     // the room, which is not the same thing.
     .filter((row) => row.answered > 0)
-    .sort((a, b) => b.right - a.right || a.name.localeCompare(b.name));
+    .sort(
+      (a, b) =>
+        b.right - a.right ||
+        (timed ? a.ms - b.ms : 0) ||
+        a.name.localeCompare(b.name),
+    );
 
   let place = 0;
   let seen = 0;
   let last = null;
   for (const row of rows) {
     seen += 1;
-    if (row.right !== last) {
+    // Level on everything that decides the order — which with a clock running
+    // is a rarer thing than it used to be.
+    const key = timed ? `${row.right}:${row.ms}` : `${row.right}`;
+    if (key !== last) {
       place = seen;
-      last = row.right;
+      last = key;
     }
     row.place = place;
   }
   return rows;
+}
+
+/**
+ * A total, as a stopwatch reads it: seconds and a tenth up to a minute, then
+ * minutes and seconds. The tenth is what stops two people who tied being shown
+ * the same number and ranked differently.
+ */
+export function clockText(ms) {
+  const total = Math.round(ms / 100) / 10;
+  if (total < 60) {
+    const digits = new Intl.NumberFormat(getLanguage(), {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(total);
+    return `${digits}s`;
+  }
+  const minutes = Math.floor(total / 60);
+  const seconds = Math.floor(total % 60);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
 /**
@@ -115,7 +183,10 @@ export function boardMarkup(event, me, limit = Infinity) {
   const hidden = all.length - rows.length;
 
   return (
-    `<ol class="board">` +
+    // The row count rides along as a custom property: the rows arrive from
+    // the bottom up, so how long that takes — and when the winner's row is
+    // finally there to be celebrated — depends on how many there are.
+    `<ol class="board" style="--n: ${rows.length}">` +
     rows
       .map((row, index) => {
         const classes =
@@ -127,6 +198,9 @@ export function boardMarkup(event, me, limit = Infinity) {
           `<span class="board-place">${row.place}</span>` +
           `<span class="board-name"></span>` +
           `<span class="board-score">${row.right}<span class="board-of">/${row.of}</span></span>` +
+          (row.ms === null
+            ? ""
+            : `<span class="board-time">${clockText(row.ms)}</span>`) +
           `</li>`
         );
       })
