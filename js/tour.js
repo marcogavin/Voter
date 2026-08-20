@@ -26,6 +26,29 @@ const HALO = 6;
 /** Kept clear of the edges of the screen. */
 const EDGE = 12;
 
+/**
+ * What a step lights up, as a list.
+ *
+ * A step may name one control or several: "two ways in" points at the QR
+ * button and the big screen button, and lighting the whole row they live in
+ * would light the sign-out button too — which is how a tour ends up talking
+ * about one thing while pointing at four.
+ */
+function shown(step) {
+  return [].concat(step?.at() ?? []).filter(Boolean);
+}
+
+/** The smallest box holding all of them. */
+function around(elements) {
+  const boxes = elements.map((element) => element.getBoundingClientRect());
+  return {
+    top: Math.min(...boxes.map((b) => b.top)),
+    left: Math.min(...boxes.map((b) => b.left)),
+    right: Math.max(...boxes.map((b) => b.right)),
+    bottom: Math.max(...boxes.map((b) => b.bottom)),
+  };
+}
+
 let steps = [];
 let at = 0;
 let root = null;
@@ -63,7 +86,7 @@ function remember() {
  */
 export function startTour(list, done = null) {
   if (root) return;
-  steps = list.filter((step) => step.at());
+  steps = list.filter((step) => shown(step).length);
   if (!steps.length) return;
   at = 0;
   onClose = done;
@@ -136,7 +159,12 @@ function draw() {
   const back = root.querySelector(".tour-back");
   back.hidden = at === 0;
   back.textContent = t("tourBack");
-  root.querySelector(".tour-skip").textContent = t("tourSkip");
+
+  // Skip and Done do the same thing on the last step, and offering both is
+  // asking somebody to choose between two words for finishing.
+  const skip = root.querySelector(".tour-skip");
+  skip.hidden = at === steps.length - 1;
+  skip.textContent = t("tourSkip");
 
   const next = root.querySelector(".tour-next");
   next.innerHTML =
@@ -144,9 +172,9 @@ function draw() {
     (at === steps.length - 1 ? "" : `<span class="btn-icon">${icons.next}</span>`);
 
   // The control has to be on screen before anything can be measured against
-  // it, and a step further down the page is a step nobody can see.
-  // Not every environment this runs in has a viewport to scroll.
-  step.at()?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+  // it, and a step further down the page is a step nobody can see. Not every
+  // environment this runs in has a viewport to scroll.
+  shown(step)[0]?.scrollIntoView?.({ block: "center", behavior: "smooth" });
   place();
   next.focus();
 }
@@ -160,15 +188,16 @@ function draw() {
  */
 function place() {
   if (!root) return;
-  const target = steps[at]?.at();
-  if (!target) return;
+  const targets = shown(steps[at]);
+  if (!targets.length) return;
 
-  const box = target.getBoundingClientRect();
+  const box = around(targets);
+  const width = box.right - box.left;
   const ring = root.querySelector(".tour-ring");
   ring.style.top = `${box.top - HALO}px`;
   ring.style.left = `${box.left - HALO}px`;
-  ring.style.width = `${box.width + HALO * 2}px`;
-  ring.style.height = `${box.height + HALO * 2}px`;
+  ring.style.width = `${width + HALO * 2}px`;
+  ring.style.height = `${box.bottom - box.top + HALO * 2}px`;
 
   const note = root.querySelector(".tour-note");
   const size = note.getBoundingClientRect();
@@ -179,7 +208,7 @@ function place() {
   note.classList.toggle("is-above", !fits);
   note.style.top = `${fits ? below : Math.max(EDGE, above)}px`;
 
-  const wanted = box.left + box.width / 2 - size.width / 2;
+  const wanted = box.left + width / 2 - size.width / 2;
   const left = Math.min(
     Math.max(EDGE, wanted),
     window.innerWidth - size.width - EDGE,
@@ -189,7 +218,7 @@ function place() {
   // The arrow points at the middle of the control, wherever the note ended up.
   const arrow = root.querySelector(".tour-arrow");
   arrow.style.left = `${Math.min(
-    Math.max(16, box.left + box.width / 2 - left),
+    Math.max(16, box.left + width / 2 - left),
     size.width - 16,
   )}px`;
 }

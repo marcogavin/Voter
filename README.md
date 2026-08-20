@@ -25,11 +25,16 @@ different jobs:
 ### The tour
 
 The first time somebody signs in on a browser, the host page shows itself:
-seven steps, one sentence each, dimming the screen and lighting up one control
+eight steps, one sentence each, dimming the screen and lighting up one control
 at a time — the two tabs, polls, questions, the settings that belong to the
-room, how people join, and the two rows of controls you drive a poll with. It
-walks from Setup into Run on its way, so nobody has to be told where the other
-half is.
+room, how people join, and the controls you drive a poll with. It walks from
+Setup into Run on its way, so nobody has to be told where the other half is,
+and it ends pointing at the **?** it can be reopened from.
+
+Each step lights **only what the sentence is about**. A step that says "two
+ways in" and lights up the whole row — including sign-out — has stopped being
+an explanation, so a browser test measures every ring against the controls it
+should and shouldn't cover.
 
 It runs once and then never again on that browser. The **?** in the top bar
 brings it back. Skip, Escape, or a tap outside leaves it at any point, and the
