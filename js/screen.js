@@ -22,7 +22,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
-  "screen", "scores", "pause", "timer", "speed", "cornercode",
+  "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
 ];
 
 /**
@@ -38,6 +38,7 @@ const BOARD_FEWEST = 3;
 const CHROME_MS = 2500;
 
 const els = {
+  votes: document.getElementById("votes"),
   join: document.getElementById("join"),
   joinArt: document.getElementById("join-art"),
   joinUrl: document.getElementById("join-url"),
@@ -154,8 +155,10 @@ function render(event) {
 
   // The corner code is for latecomers while something else is up. On the join
   // screen the code *is* the screen, and at the end it would be an invitation
-  // to something that has finished.
+  // to something that has finished. The count of votes keeps it company: it
+  // means nothing on any other screen.
   els.join.hidden = screen !== "question";
+  els.votes.hidden = screen !== "question";
 
   if (screen === "question") return showQuestion(event);
 
@@ -260,6 +263,11 @@ function showQuestion(event) {
   const left = secondsLeft();
   const running = left !== null && left > 0 && !event.revealed;
 
+  // Out of how many people are in the room, and at the top of the wall rather
+  // than in the strip along the bottom: 7/12 with everyone watching is a
+  // better way of asking the other five to vote than any wording would be.
+  drawVotes(total, Object.keys(event.players ?? {}).length);
+
   drawTime();
   foot({
     progress: t("questionProgress", {
@@ -267,7 +275,6 @@ function showQuestion(event) {
       of: event.questions.length,
     }),
     clock: running,
-    tally: total === 1 ? t("voteCountOne") : t("voteCount", { n: total }),
   });
 
   // Nothing arrives from the database between a question going up and its
@@ -361,6 +368,18 @@ function showEnding(event) {
 
   document.getElementById("big-count").textContent = count;
   foot({});
+}
+
+/**
+ * How much of the room has answered. Nobody in it means nobody could have
+ * voted, so there is nothing to say — and "0/0" on a wall reads as broken
+ * rather than as early.
+ */
+function drawVotes(votes, room) {
+  els.votes.hidden = room === 0;
+  if (room === 0) return;
+  els.votes.textContent = t("votesOfRoom", { n: votes, of: room });
+  els.votes.classList.toggle("is-all", votes >= room);
 }
 
 /* ── The strip along the bottom ────────────────────────────────────────── */
