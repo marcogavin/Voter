@@ -1,0 +1,43 @@
+name: Tests
+
+# Every push and every pull request. The point is that a red suite is red
+# whether or not anybody remembered to run it.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  suites:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: test/package-lock.json
+
+      - name: Install
+        working-directory: test
+        run: npm ci
+
+      # Only Chromium. The layout suites measure one engine on purpose —
+      # they check this app's own geometry, not the browsers'.
+      - name: Install Chromium
+        working-directory: test
+        run: npx playwright install --with-deps chromium
+
+      - name: Run every suite
+        working-directory: test
+        run: npm test
+
+      # A failing layout suite is much easier to read as a picture.
+      - name: Keep what the browser saw
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: test/shots/
+          if-no-files-found: ignore

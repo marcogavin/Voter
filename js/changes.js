@@ -20,6 +20,7 @@ export const CHANGES = [
       "A guided tour the first time you sign in. The ? in the top bar brings it back whenever you want it.",
       "The host page now says which version it is running — this box.",
       "The countdown bar no longer hangs about on the scores or the closing screen, or after a question is taken down.",
+      "Nothing you can see here, but the tests that keep all of this honest now live in the repository and run on every change.",
     ],
   },
   {
