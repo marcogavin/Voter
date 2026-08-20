@@ -23,17 +23,9 @@
     <header class="big-top">
       <img class="logo logo--big" src="img/votr-logo.svg" alt="VOTR">
 
-      <!-- The way in, shrunk into the corner while something else is up, so
-           somebody arriving late never has to be told where to go. -->
-      <div class="big-corner" id="join" hidden>
-        <div class="big-corner-art" id="join-art"></div>
-        <p class="big-corner-url" id="join-url"></p>
-      </div>
-
       <!-- For whoever is setting the screen up, not for the room: it fades
-           out with the mouse. Hidden outright where the browser can't do it,
-           and up here rather than floating over the bottom corner, which is
-           where the count of votes lives. -->
+           out with the mouse. Hidden outright where the browser can't do
+           it. -->
       <button type="button" class="iconbtn big-full" id="full" hidden
               data-icon="expand" aria-label="Full screen"></button>
     </header>
@@ -51,8 +43,17 @@
         <span class="big-clock-time" id="clock-time"></span>
       </div>
       <p class="big-tally" id="tally" hidden></p>
-    </footer>
 
+      <!-- The way in, kept in the corner while something else is on, so
+           somebody arriving late never has to be told where to go. Bottom
+           right, where a code sits on every conference slide ever made — and
+           part of the strip rather than floating over it, so a bigger code
+           takes room from the question rather than landing on top of it. -->
+      <div class="big-corner" id="join" hidden>
+        <div class="big-corner-art" id="join-art"></div>
+        <p class="big-corner-url" id="join-url"></p>
+      </div>
+    </footer>
   </div>
 
   <script type="module" src="js/screen.js"></script>
