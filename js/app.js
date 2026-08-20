@@ -13,7 +13,8 @@ import {
   NAME_MAX,
 } from "./sync.js";
 import { icons, drawIcons, waitingArt } from "./icons.js";
-import { flyHearts, heartColour } from "./hearts.js";
+import { flyHearts, heartColour, celebrate } from "./hearts.js";
+import { screenAt, boardMarkup, fillNames } from "./scores.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
@@ -21,7 +22,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
-  "polls", "timer", "ending", "names", "applause", "stage", "pause",
+  "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -42,6 +43,7 @@ let ticker = null;
 let renaming = false; // true while someone is changing a name they already gave
 let joinDraft = ""; // what was typed into the join field, kept across a rebuild
 let joinError = ""; // why the last join was refused, if it was
+let connection = { key: "connecting", state: "pending" }; // what the badge says
 let likesSeen = null; // the applause already drawn, so only new taps fly
 
 start();
@@ -101,7 +103,7 @@ function render(event) {
     shownQuestionId = null;
     delete optionsEl.dataset.screen;
   }
-  setStatus(statusEl.dataset.key, statusEl.dataset.state);
+  drawStatus();
 
   // Nobody votes anonymously any more: the name is what puts a person on the
   // leaderboard, so it is asked for once, before anything else is shown.
@@ -118,10 +120,25 @@ function render(event) {
     ? null
     : (event.questions[event.currentIndex] ?? null);
 
-  // One past the last question: the poll is over and the room gets a way to
-  // say what it thought, which is nicer than a screen that simply stops.
-  if (!event.blanked && event.questions.length &&
-      event.currentIndex === event.questions.length) {
+  // A poll ends in two screens: how it went, then what the room thought of
+  // it. Which of them an index lands on is decided in one place, so the host
+  // and every phone step through the same sequence.
+  const screen = event.blanked ? "none" : screenAt(event);
+
+  if (screen === "scores") {
+    shownQuestionId = null;
+    drawProgress(null);
+    stageEl.classList.add("is-ending");
+    questionEl.hidden = false;
+    questionEl.textContent = t("scoresTitle");
+    questionEl.classList.add("is-centred");
+    noteEl.textContent = "";
+    stopTicking();
+    showScores(event);
+    return;
+  }
+
+  if (screen === "ending") {
     shownQuestionId = null;
     drawProgress(null);
     stageEl.classList.add("is-ending");
@@ -217,6 +234,7 @@ function startTicking() {
     drawTime();
     if (secondsLeft() === 0) {
       updateRows(question, true);
+      drawStatus(); // voting just closed, so Live stops being true
       stopTicking();
     }
   }, 250);
@@ -291,6 +309,7 @@ async function submitVote(questionId, optionId) {
 
   try {
     await castVote(questionId, optionId);
+    drawStatus();
   } catch (error) {
     setStatus("voteRefused", "error");
     console.error(error);
@@ -313,6 +332,19 @@ function showWaiting() {
       <p class="panel-message">${t("waitingForHost")}</p>
     </div>
   `;
+}
+
+/**
+ * How it went. Built once on arrival — the rows arrive in order and the
+ * winner's row is celebrated, and neither should happen again every time
+ * somebody's phone reports something.
+ */
+function showScores(event) {
+  if (optionsEl.dataset.screen === "scores") return;
+  optionsEl.dataset.screen = "scores";
+  optionsEl.innerHTML = boardMarkup(event, getUid());
+  fillNames(optionsEl, event);
+  celebrate(optionsEl.querySelector(".board-row.is-first"));
 }
 
 /**
@@ -500,10 +532,38 @@ function showRetry(text) {
   optionsEl.appendChild(button);
 }
 
-/** Takes a translation key, so the badge can be re-rendered on a language change. */
+/**
+ * The badge is about *this phone's* connection, and it only says Live when
+ * live means something: a question is up and your vote would count.
+ *
+ * It used to say Live whenever the page had a database behind it, which is
+ * true and useless — it was on screen while the room waited, while the answer
+ * was up, and after voting had closed.
+ */
 function setStatus(key, state) {
   if (!key) return;
-  statusEl.dataset.key = key;
-  statusEl.textContent = t(key);
-  statusEl.dataset.state = state;
+  connection = { key, state };
+  drawStatus();
+}
+
+function drawStatus() {
+  // Anything wrong outranks everything: that is what a badge is for.
+  const wrong = connection.state !== "live";
+  const votable = wrong ? false : canVote();
+
+  statusEl.hidden = !wrong && !votable;
+  statusEl.dataset.key = wrong ? connection.key : "live";
+  statusEl.dataset.state = wrong ? connection.state : "live";
+  statusEl.textContent = t(statusEl.dataset.key);
+}
+
+/** True while a question is on screen and this phone could still answer it. */
+function canVote() {
+  const question = latest?.blanked
+    ? null
+    : (latest?.questions[latest.currentIndex] ?? null);
+
+  if (!question || latest.revealed) return false;
+  if (secondsLeft() === 0) return false;
+  return question.voters[getUid()] === undefined;
 }

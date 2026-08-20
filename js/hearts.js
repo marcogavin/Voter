@@ -58,3 +58,34 @@ export function flyHearts(stage, count, colour = null) {
     stage.appendChild(fly);
   }
 }
+
+/* ── The winner ────────────────────────────────────────────────────────── */
+
+/** How many pieces a win is worth. Enough to read as a burst, not a mess. */
+const CONFETTI = 18;
+
+/**
+ * A burst of colour from the top of the standings, in the same palette the
+ * hearts use — the app has one set of celebratory colours and this is it.
+ *
+ * Same mechanics as a heart: a few absolutely positioned pieces that remove
+ * themselves when they are done, and none at all for anyone who has asked
+ * for less movement.
+ */
+export function celebrate(stage) {
+  if (!stage) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  for (let i = 0; i < CONFETTI; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti";
+    piece.style.background = `var(--heart-${anyColour()})`;
+    piece.style.left = `${Math.round(Math.random() * 100)}%`;
+    piece.style.setProperty("--drift", `${Math.round((Math.random() - 0.5) * 120)}px`);
+    piece.style.setProperty("--spin", `${Math.round((Math.random() - 0.5) * 720)}deg`);
+    piece.style.setProperty("--fall", `${(1.1 + Math.random() * 0.9).toFixed(2)}s`);
+    piece.style.animationDelay = `${Math.round(Math.random() * 260)}ms`;
+    piece.addEventListener("animationend", () => piece.remove());
+    stage.appendChild(piece);
+  }
+}

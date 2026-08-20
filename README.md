@@ -3,12 +3,13 @@
 Live audience voting for events. The repository is named `Voter`; the app is
 VOTR.
 
-Two screens, no build step, no server to run:
+Three screens, no build step, no server to run:
 
 | Page | Who opens it | What it does |
 | :--- | :--- | :--- |
 | `host.html` | you | write the questions, then put them on screen one at a time |
 | `index.html` | the audience | one tap to vote, results appear live |
+| `screen.html` | the projector | the room's shared view: the question, the scores, and the way in |
 
 The host page has two modes, because writing questions and presenting them are
 different jobs:
@@ -70,6 +71,60 @@ French and German.
 With nothing on screen, Run shows you the audience's own waiting screen
 rather than an empty space — the presenter shouldn't be the one person in the
 building who doesn't know what's on the phones.
+
+### The big screen
+
+`screen.html` is the room's shared view, for a projector, a TV, or the second
+monitor. Open it from the screen icon in the host's top bar — it opens in its
+own tab, so you can drag that one onto the projector and keep the host page in
+your hand. There is a fullscreen control in its top corner that fades away when
+you stop moving the mouse, and the page asks the browser to keep the display
+awake.
+
+It only ever **reads**. There is nothing to tap and no way to drive the poll
+from it, so a laptop can sit plugged into the projector all day, and the
+projector never turns up on the leaderboard as somebody who answered nothing.
+
+What it shows follows the host, one screen behind nobody:
+
+- **Nothing on screen** — a join code the size of a door, the address under it,
+  and how many people are already in. This is also what it shows while you have
+  the screen hidden: a blank wall is a wasted wall.
+- **A question** — the question, the answers lettered A, B, C, the clock, and
+  how many votes are in. The join code shrinks into the corner so latecomers
+  still have something to scan.
+- **The scores and the applause** — the same leaderboard and the same heart the
+  phones show, at the size of the room.
+
+**Shares are held back on a question that has a right answer** until you
+reveal, or until the clock runs out. On a wall in front of everyone, a bar that
+fills as the votes land is a quiz being copied. An opinion question has nothing
+to copy and watching it move is most of the point, so that one counts live.
+
+The leaderboard stops at eight names with the rest counted underneath: a wall
+can't be scrolled, and the names worth reading are at the top.
+
+### Scores
+
+A poll with at least one right answer in it ends on a **leaderboard**: who
+answered, how many they got right, best first. The winner's row is gold, wears
+a cup and gets a burst of confetti; your own row is marked so you don't have to
+hunt for your name.
+
+It is worked out from what is already stored — who answered what, which answer
+was right, and the name each device gave — so it is right for polls that were
+run before this existed, and it can't disagree with the votes it is counting.
+
+**Ranked on right answers alone.** People on the same score share a place, and
+the next place skips: two on 5 are both second, and the next is fourth. Ranking
+on speed as well would mean storing a timestamp beside every vote — one field
+and one line of rules, worth doing if you want it, but it changes what a vote
+writes and the rules would have to be published before anyone could vote again.
+
+Somebody who never answered isn't listed. Being in the room isn't a score.
+
+**A poll with no right answers has no leaderboard** — it would be a table of
+zeroes — so an opinion poll goes from its last question straight to the heart.
 
 ### The end of a poll
 
@@ -136,6 +191,18 @@ interface — a vote arriving after the reveal is rejected by the database.
 
 Votes sync through **Firebase Realtime Database**, so every screen updates within
 about a second of anyone voting.
+
+### The badges
+
+On a phone, **LIVE** means *your vote would count right now* — a question is
+up, the clock is running and you haven't answered yet. It goes as soon as any
+of that stops being true, so an empty corner means there is nothing to do.
+Anything wrong with the connection outranks it and says so.
+
+On the host, the badge is the connection, and a confirmation — Saved, Hidden,
+Reset — borrows it for a second and a half with a ✓ before handing it back.
+It used to keep the last one on screen indefinitely, which made a thing that
+happened look like a thing that was still true.
 
 ### Add it to a home screen
 
@@ -217,9 +284,13 @@ with the arrows, fix wording with ✎, remove with ✕.
 1. Open `host.html`, check the poll named under **My polls**, and switch to
    **Run**
 2. Share the audience URL — the **QR code** button puts it on screen, with
-   **Copy image** for a slide and **Copy link** for a message
+   **Copy image** for a slide and **Copy link** for a message. If there's a
+   projector, open the **big screen** (the screen icon beside it) in its own
+   tab and put that on the wall: it shows the same code the size of a door
+   until the first question goes up
 3. **Start** puts the first question up; every phone follows within about a second
-4. Move through with **Prev** / **Next**
+4. Move through with **Prev** / **Next**. Past the last question comes the
+   leaderboard, and then the heart
 5. **Hide screen** blanks every phone while keeping your place, for talking
    between questions — and **stops the clock**. Take a question from the
    floor, then **Show screen** and the room gets back the seconds it had
@@ -238,6 +309,10 @@ question without disturbing the rest.
 
 The host page shows nothing but the sign-in prompt until a Google account signs
 in. That's tidiness, not secrecy — and the difference matters.
+
+The big screen is the exception, deliberately: it is meant to be looked at by
+everyone, it signs in anonymously like an attendee's phone, and it can't write
+anything at all.
 
 **The questions are readable by anyone in the room.** The rules let any
 signed-in device, including an anonymous attendee, read the whole event. That
@@ -277,8 +352,8 @@ appears saying so rather than leaving you guessing; GitHub Pages caches assets
 for ten minutes, so it clears on its own.
 
 When adding a feature that changes the markup, add its name to `VOTR_BUILD` in
-`js/host.js` or `js/app.js` and to `NEEDS` in the matching page. That's what
-makes an old script detectable.
+`js/host.js`, `js/app.js` or `js/screen.js` and to `NEEDS` in the matching
+page. That's what makes an old script detectable.
 
 ## Limits worth knowing
 
@@ -294,17 +369,23 @@ again from a private tab. Fine for a friendly audience, not a ballot box.
 ## Design
 
 Sizes, spacing, control heights and the rules behind them live in
-[`DESIGN.md`](DESIGN.md). One scale covers both screens — there is no host
-variant and no audience variant. A value that isn't in that file doesn't go in
+[`DESIGN.md`](DESIGN.md). One scale covers the phone screens — there is no host
+variant and no audience variant. The big screen is the one page with a scale of
+its own, and only because a size meant for arm's length can't survive being
+twelve metres away. A value that isn't in that file doesn't go in
 the stylesheet.
 
 ## How it's put together
 
 ```
-index.html → js/app.js  ─┐
-                         ├→ js/sync.js → Firebase
-host.html  → js/host.js ─┘
+index.html  → js/app.js    ─┐
+host.html   → js/host.js   ─┼→ js/sync.js → Firebase
+screen.html → js/screen.js ─┘
 ```
 
 `js/sync.js` is the only file that knows Firebase exists, so swapping the backend
 later means changing one file.
+
+Which screen an index lands on — question, scores, applause — is decided in
+`js/scores.js` and read by all three pages, so the wall, the phones and the
+host step through a poll together and none of them owns the rule.

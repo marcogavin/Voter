@@ -1,8 +1,12 @@
 # VOTR design system
 
-One scale for everything. Both screens — the host's control panel and the
-audience's phone — use the same type sizes, the same spacing, the same control
-heights. There is no host variant and no audience variant.
+One scale for everything held in a hand. Both of those screens — the host's
+control panel and the audience's phone — use the same type sizes, the same
+spacing, the same control heights. There is no host variant and no audience
+variant.
+
+The projector (§16) is the single exception, and it is a scale rather than a
+set of overrides: everything but size is borrowed from the tokens below.
 
 This file is the contract. A value that isn't here doesn't go in the
 stylesheet.
@@ -125,6 +129,19 @@ is fine — nothing depends on telling them apart.
 Each is dark enough on white to read as a shape at 1.5–3rem. The big heart
 itself stays `--wrong` red — it's the app's own mark on that screen, not
 anybody's colour.
+
+### First place
+
+| Token | Light | Dark | Where |
+| :--- | :--- | :--- | :--- |
+| `--gold` | `#a97f0a` | `#d8b23a` | The winning row's border |
+| `--gold-soft` | `#fbf1d8` | `#33290c` | Its ground |
+| `--gold-ink` | `#7a5c05` | `#f0d071` | Its place, its cup, its "of" |
+
+A colour, not a metal. A gradient here would be the one piece of chrome in an
+interface that has none. `--gold` is darker than gold wants to be because a
+border is a shape, and a shape needs 3:1 against the paper behind it — the
+first pick measured 2.47:1 and the contrast script refused it.
 
 ### On air
 
@@ -443,6 +460,21 @@ read out — without being drawn.
 
 ---
 
+### Celebrating
+
+Three things, in this order, and none of them under `prefers-reduced-motion`:
+
+1. **The rows arrive from the bottom up**, 90ms apart, so the eye finishes at
+   the top of the table — which is where the winner is.
+2. **The winner's row bounces once** as it lands, 620ms in.
+3. **Confetti** from that row: eighteen squares in the applause palette, the
+   same mechanics as a flying heart. Squares because a shape nobody can name
+   reads as celebration; anything recognisable reads as another icon.
+
+Everyone who ties for first gets all three. Sharing a win is still winning.
+
+---
+
 ## 8. Motion
 
 | What | Duration | Easing |
@@ -581,6 +613,7 @@ The implementation contract — every element, and the tokens it takes.
 | :--- | :--- | :--- | :--- | :--- |
 | Section title | `body` | 700 | sentence | — |
 | Status badge | `micro` | 700 | UPPER | — |
+| Engaged control (`.btn--on`) | `body` | 600 | sentence | min `control-h` |
 | Tab | `body` | 600 | sentence | `control-h` |
 | Button | `body` | 600 | sentence | min `control-h` |
 | Icon button | `lead` | 400 | — | `control-h` square |
@@ -667,6 +700,24 @@ generated from it rather than redrawn, so the two can never drift apart.
 
 ---
 
+### A state and an event are not the same badge
+
+The status badge carries the connection: Live, Connecting, Offline. A
+confirmation — Saved, Hidden, Reset — **visits** it for 1.8 seconds with a ✓
+on a tinted ground, then it goes back to the connection.
+
+The old version wrote confirmations into the badge and left them there, so
+"Hidden" sat on screen long after the screen came back. If a thing that
+happened and a thing that is still true share one place, the place has to say
+which of the two you are looking at, and give the state back.
+
+**A pressed toggle is not the primary action.** `.btn--on` is outlined and
+tinted in the accent, never filled: filled is what the one primary action on
+a screen looks like, and Hide screen sitting next to Next in the same clothes
+read as "press me next".
+
+---
+
 ## 14. Nothing touches
 
 A box a hairline away from another box reads as a mistake, and it is the
@@ -700,7 +751,48 @@ A new colour is not added to this file until it has been through it.
 
 ---
 
-## 16. Adding to this
+## 16. The big screen
+
+`screen.html` is the one page in this app that isn't held in a hand, and it is
+the one place the rules above bend. They bend in exactly one direction.
+
+**Everything except size is borrowed.** Colour, radius, borders, the answer
+card, the leaderboard row, the confetti, the heart — all of it is the same
+component the phones draw, with the same tokens. Nothing on the wall is a
+second design of something that already exists.
+
+**Size is the exception, and it is scaled rather than re-chosen.** The type
+scale in §3 is built for arm's length: `--text-title` at 22px is right on a
+phone and invisible twelve metres away. So this page carries five values of its
+own, all of them `clamp(floor, Nvmin, ceiling)`:
+
+| Token | What it sizes |
+| :--- | :--- |
+| `--big-title` | the question, the headings, "Scan to join" |
+| `--big-row` | an answer, a name on the board, a percentage |
+| `--big-note` | the strip along the bottom, the poll's name |
+| `--big-pad` | the margin around the whole wall |
+| `--big-gap` | between anything and the thing under it |
+
+`vmin` and not `vw`: the smaller side of the display is what limits how much
+fits, and it makes a 1280×720 projector, a 4:3 boardroom screen and a 4K wall
+the same design at three sizes. The floor keeps it legible in a laptop window;
+the ceiling stops a 4K display turning the question into three words.
+
+**Nothing can be scrolled to.** The body clips, and nobody in the room has a
+mouse — so anything that doesn't fit isn't there. Two rules follow from that:
+the leaderboard stops at eight names and counts the rest, and a script measures
+every screen at four display shapes, in the language with the longest words, in
+both palettes, and fails if a single box falls outside the wall.
+
+**One control, and it apologises for existing.** A screen with nothing to press
+has a fullscreen button because someone has to plug the laptop in. It fades out
+2.5 seconds after the mouse stops, and it isn't there at all in a browser that
+can't do it.
+
+---
+
+## 17. Adding to this
 
 1. **Reach for an existing token first.** Two elements a pixel apart is the
    problem this file exists to stop.
@@ -709,5 +801,7 @@ A new colour is not added to this file until it has been through it.
 3. **Never a raw size in a component rule.** `font-size: 15px` is a bug even
    when 15px is right; it's `var(--text-body)`.
 4. **Never a screen-specific override.** If the host needs something the
-   audience doesn't, that's a different component, not a different size.
+   audience doesn't, that's a different component, not a different size. The
+   wall is not a loophole in this: it has its own scale, declared in one place
+   and derived from the display, and it borrows every other decision.
 5. **Check the target.** Anything a finger touches is `--control-h` or larger.

@@ -2,76 +2,71 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<!-- viewport-fit=cover lets the page reach the screen edges on a notched
-     phone, which is also what makes env(safe-area-inset-*) report real
-     values — the stylesheet uses them to keep clear of the notch and the
-     home indicator. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>VOTR</title>
-<meta name="description" content="Vote from your phone and watch the room's answers land live.">
+<title>VOTR — Big screen</title>
+<meta name="description" content="The room's shared screen: the question everyone is answering, the scores, and the way in.">
 <link rel="icon" href="img/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="img/icon-180.png">
 <link rel="manifest" href="site.webmanifest">
-<!-- Added to a home screen this opens without browser chrome, which is what
-     makes it feel like an app rather than a page someone bookmarked. The
-     freshness check inside the page is what replaces the reload button. -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="VOTR">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101014" media="(prefers-color-scheme: dark)">
 <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="audience">
-  <div class="frame">
-    <div class="panel">
-      <div class="top-row top-row--centred">
-        <div class="mark">
-          <img class="logo logo--banner" src="img/votr-logo.svg" alt="VOTR">
-        </div>
-        <button type="button" class="whoami" id="whoami" hidden>
-          <span class="whoami-name"></span>
-          <span class="btn-icon" data-icon="edit"></span>
-        </button>
+<body class="screen">
+  <!-- No card and no measure: this page is the whole wall. Three rows —
+       what's on, the thing itself, and where it is in the poll. -->
+  <div class="big">
+    <header class="big-top">
+      <img class="logo logo--big" src="img/votr-logo.svg" alt="VOTR">
+      <p class="big-poll" id="poll"></p>
+
+      <!-- The way in, shrunk into the corner while something else is up, so
+           somebody arriving late never has to be told where to go. -->
+      <div class="big-corner" id="join" hidden>
+        <div class="big-corner-art" id="join-art"></div>
+        <p class="big-corner-url" id="join-url"></p>
       </div>
 
-      <!-- The question, its clock and its answers are one block, centred in
-           what's left of the screen rather than stacked at the top. -->
-      <main class="stage">
-        <p class="progress" id="progress" hidden></p>
-        <h1 id="question">Connecting…</h1>
-        <div class="clock" id="clock" hidden>
-          <span class="clock-track">
-            <span class="clock-fill" id="clock-fill"></span>
-          </span>
-          <span class="clock-time" id="clock-time"></span>
-        </div>
-        <div id="options" class="choices"></div>
-      </main>
+      <!-- For whoever is setting the screen up, not for the room: it fades
+           out with the mouse. Hidden outright where the browser can't do it,
+           and up here rather than floating over the bottom corner, which is
+           where the count of votes lives. -->
+      <button type="button" class="iconbtn big-full" id="full" hidden
+              data-icon="expand" aria-label="Full screen"></button>
+    </header>
 
-      <div class="foot">
-        <p class="note" id="note"></p>
-        <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
+    <main class="big-stage" id="stage">
+      <p class="big-message" data-i18n="connecting">Connecting</p>
+    </main>
+
+    <footer class="big-foot" id="foot" hidden>
+      <p class="big-progress" id="progress" hidden></p>
+      <div class="big-clock" id="clock" hidden>
+        <span class="big-clock-track">
+          <span class="big-clock-fill" id="clock-fill"></span>
+        </span>
+        <span class="big-clock-time" id="clock-time"></span>
       </div>
-    </div>
+      <p class="big-tally" id="tally" hidden></p>
+    </footer>
+
   </div>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/screen.js"></script>
 
   <!-- The page and its scripts are cached separately, so a browser can serve a
-       fresh host.html against yesterday's js/host.js: the new controls appear
+       fresh screen.html against yesterday's js/screen.js: the new parts appear
        and quietly do nothing, which looks like a broken feature rather than a
        stale file. This runs from the page itself — the half that's fresh — and
        fetches past the cache once before reloading. Deliberately not a module:
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = [
-        "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-        "groups", "sections", "hearts", "choices", "clock", "paper", "board",
-      ];
+      var NEEDS = ["screen", "scores", "pause", "timer", "bigscreen"];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
         "js/qr.js", "js/firebase-config.js", "js/icons.js", "js/hearts.js",
@@ -82,9 +77,6 @@
       addEventListener("load", function () { setTimeout(check, 1500); });
 
       function check() {
-        // The stylesheet is cached separately from both the page and the
-        // script, and a stale one looks just as broken, so it says what it
-        // is too — through a custom property the page can read back.
         var styled = getComputedStyle(document.documentElement)
           .getPropertyValue("--build").replace(/["']/g, "").trim();
         var built = (window.VOTR_BUILD || [])
@@ -95,8 +87,6 @@
 
         if (!missing.length) return sessionStorage.removeItem(TRIED);
 
-        // Once only. If the refetch didn't help, the old copy is what's being
-        // served, and reloading again would just spin.
         if (sessionStorage.getItem(TRIED)) return report(missing);
         sessionStorage.setItem(TRIED, "1");
 
@@ -109,7 +99,7 @@
         var note = document.createElement("p");
         note.className = "stale";
         note.textContent =
-          "This page is running an older copy of VOTR, so some controls " +
+          "This page is running an older copy of VOTR, so some of it " +
           "won't respond (missing: " + missing.join(", ") + "). It updates " +
           "itself within about ten minutes — or close this tab and open it again.";
         document.body.appendChild(note);

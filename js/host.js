@@ -37,7 +37,14 @@ import {
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons, waitingArt } from "./icons.js";
-import { flyHearts } from "./hearts.js";
+import { flyHearts, celebrate } from "./hearts.js";
+import {
+  screenAt,
+  lastIndex,
+  boardMarkup,
+  fillNames,
+  isScorable,
+} from "./scores.js";
 import {
   t,
   setLanguage,
@@ -51,11 +58,12 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause",
+  "pause", "scores", "bigscreen",
 ];
 
 const els = {
   tabs: document.getElementById("tabs"),
+  bigScreen: document.getElementById("bigscreen"),
   signedOut: document.getElementById("signed-out"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
@@ -125,6 +133,8 @@ const OPTION_MAX = 100;
 
 let askedAt = null;
 let pausedAt = null; // when the screen was hidden, and the clock with it
+let connection = { key: "connecting", state: "pending" }; // what the badge says
+let flashTimer = null; // while a confirmation is borrowing the badge
 let seconds = 0; // how long a question stays open; 0 for no limit
 let secondsMenu = null; // signature of what the duration picker currently offers
 let ticker = null;
@@ -134,6 +144,7 @@ let currentDeck = null; // the one being edited here and presented to the room
 let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
+let players = {}; // everyone in the room, by the name they gave
 let likes = 0; // applause on the closing screen
 let likesSeen = null; // the applause already drawn, so only new taps fly
 let questions = []; // the live poll's questions, in running order
@@ -378,6 +389,7 @@ function render(event) {
   currentIndex = event.currentIndex;
   revealed = event.revealed;
   blanked = event.blanked;
+  players = event.players;
   askedAt = event.askedAt;
   pausedAt = event.pausedAt;
   seconds = event.seconds;
@@ -392,7 +404,7 @@ function render(event) {
     drawCorrectChoices();
     drawCounts();
     shownQuestionId = null;
-    setStatus(els.status.dataset.key, els.status.dataset.state);
+    drawStatus();
   }
 
   // Only a signed-in account can hold or claim an event. An anonymous
@@ -417,6 +429,9 @@ function render(event) {
   drawPolls();
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
   nameButton(els.signout, t("signOut"));
+  nameButton(els.bigScreen, t("bigScreen"));
+  // Its label goes on a narrow screen, so its name has to come from here.
+  nameButton(els.qr, t("qrCode"));
 
   if (isOwner) {
     els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });
@@ -492,13 +507,19 @@ function drawRun() {
 
   // One past the last question is the closing screen rather than nothing at
   // all: a poll should finish somewhere rather than just stop responding.
-  const atEnd = questions.length > 0 && currentIndex === questions.length;
+  // The run ends in two screens when there is anything to score: how it went,
+  // then what the room thought of it.
+  const event = { questions, currentIndex, players };
+  const screen = screenAt(event);
+  const atEnd = screen === "scores" || screen === "ending";
 
   els.counter.textContent = !questions.length
     ? "—"
-    : atEnd
-      ? t("theEnd")
-      : `${question ? currentIndex + 1 : "—"} / ${questions.length}`;
+    : screen === "scores"
+      ? t("scoresTitle")
+      : screen === "ending"
+        ? t("theEnd")
+        : `${question ? currentIndex + 1 : "—"} / ${questions.length}`;
 
   // Next does double duty, but only where there's something to reveal:
   // questions with no right answer advance on a single press. And with
@@ -511,9 +532,11 @@ function drawRun() {
 
   els.prev.disabled = !isOwner || currentIndex <= 0;
   els.next.disabled =
-    !isOwner || !questions.length || (!willReveal && currentIndex >= questions.length);
+    !isOwner || !questions.length || (!willReveal && currentIndex >= lastIndex(event));
   els.reopen.hidden = !revealed;
   els.reopen.disabled = !isOwner;
+  setLabel(els.reopen, t("reopenVotingShort"));
+  nameButton(els.reopen, t("reopenVoting"));
   // Two short labels in a row of equal cells, each carrying its full
   // sentence as its accessible name — the whole of "Reset this question's
   // votes" doesn't fit under an icon on a phone, and it is the difference
@@ -524,14 +547,36 @@ function drawRun() {
   els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast() && !likes);
 
   // Blanking only means anything while something is up.
-  setLabel(els.blank, blanked ? t("showScreen") : t("hideScreen"));
+  // Two words on the tile, the whole sentence as its name — the same split
+  // the reset button uses, for the same reason: the cell is ten characters
+  // wide and German needs more than that to say "hide the screen".
+  setLabel(els.blank, blanked ? t("showScreenShort") : t("hideScreenShort"));
   nameButton(els.blank, blanked ? t("showScreen") : t("hideScreen"));
   els.blank.querySelector(".btn-icon").dataset.icon = blanked ? "show" : "hide";
   drawIcons(els.blank);
-  els.blank.classList.toggle("btn--primary", blanked);
+  // Engaged, not primary: the room's screen is off, and this is the button
+  // that turns it back on. Primary blue here read as "press me next", beside
+  // a Next button that actually is.
+  els.blank.classList.toggle("btn--on", blanked);
+  els.blank.setAttribute("aria-pressed", String(blanked));
   els.blank.disabled = !isOwner || (!question && !atEnd && !blanked);
 
-  if (atEnd) {
+  if (screen === "scores") {
+    shownQuestionId = null;
+    els.runQuestion.textContent = t("scoresTitle");
+
+    // Built once on arrival: the rows come in in order and the winner is
+    // celebrated, and neither should happen again on every vote that lands.
+    if (els.options.dataset.screen !== "scores") {
+      els.options.dataset.screen = "scores";
+      els.options.innerHTML = boardMarkup(event, null);
+      fillNames(els.options, event);
+      celebrate(els.options.querySelector(".board-row.is-first"));
+    }
+    return;
+  }
+
+  if (screen === "ending") {
     shownQuestionId = null;
     els.runQuestion.textContent = t("likeVotr");
     // Rebuilt only on arrival now: this used to be redrawn on every snapshot,
@@ -789,7 +834,7 @@ async function openDeck(id) {
 
   try {
     await setCurrentDeck(id);
-    setStatus("switched", "live");
+    flash("switched");
     closePollSheet();
   } catch (error) {
     setStatus("refused", "error");
@@ -811,7 +856,7 @@ async function onDeckNew() {
       title.slice(0, TITLE_MAX),
       decks.map((deck) => deck.id),
     );
-    setStatus("added", "live");
+    flash("added");
   } catch (error) {
     setStatus("refused", "error");
     els.hint.textContent = `Database refused the write: ${error.message}`;
@@ -827,7 +872,7 @@ async function onDeckRename(deck) {
 
   try {
     await renameDeck(deck.id, title.slice(0, TITLE_MAX));
-    setStatus("saved", "live");
+    flash("saved");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -848,7 +893,7 @@ async function onDeckDelete(deck) {
       deck.id,
       decks.map((other) => other.id),
     );
-    setStatus("deleted", "live");
+    flash("deleted");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1058,7 +1103,7 @@ function stopEditing() {
 async function commit(next, verb) {
   try {
     await saveQuestions(next);
-    setStatus(verb, "live");
+    flash(verb);
     return true;
   } catch (error) {
     setStatus("refused", "error");
@@ -1085,7 +1130,7 @@ function onNext() {
 async function reveal(show) {
   try {
     await setRevealed(show);
-    setStatus(show ? "revealed" : "reopened", "live");
+    flash(show ? "revealed" : "reopened");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1093,8 +1138,10 @@ async function reveal(show) {
 }
 
 async function go(index) {
-  // questions.length is the closing screen; anything past it is nothing.
-  const target = index < 0 || index > questions.length ? -1 : index;
+  // Past the last screen there is means nothing on screen, which is where a
+  // run starts and where Start over puts it back.
+  const last = lastIndex({ questions, currentIndex, players });
+  const target = index < 0 || index > last ? -1 : index;
   // Going from nothing on screen to something is a run beginning, which is
   // what the picker means by "last run".
   const starting = currentIndex < 0 && target >= 0;
@@ -1194,7 +1241,7 @@ async function blank(hide) {
 
   try {
     await setBlanked(hide, resumed);
-    setStatus(hide ? "hidden" : "shown", "live");
+    flash(hide ? "hidden" : "shown");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1252,7 +1299,7 @@ function fillSeconds() {
 async function onSecondsChange(changeEvent) {
   try {
     await saveSeconds(Number(changeEvent.target.value));
-    setStatus("saved", "live");
+    flash("saved");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1265,7 +1312,7 @@ async function onReset() {
 
   try {
     await resetVotes(question);
-    setStatus("reset", "live");
+    flash("reset");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1295,7 +1342,7 @@ async function onStartOver() {
 
   try {
     if (cast || likes) await resetAllVotes(questions);
-    setStatus("reset", "live");
+    flash("reset");
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1414,9 +1461,16 @@ async function onQrCopy() {
     said(els.qrCopy, "copied");
   } catch (error) {
     // Not every browser will put an image on the clipboard. The address is
-    // the useful half of the code anyway, so it goes instead of nothing.
+    // the useful half of the code anyway, so it goes instead of nothing —
+    // and the button says which of the two you actually got.
     console.error(error);
-    onQrCopyLink();
+    try {
+      await navigator.clipboard.writeText(audienceUrl());
+      said(els.qrCopy, "copiedLinkInstead");
+    } catch (also) {
+      setStatus("refused", "error");
+      console.error(also);
+    }
   }
 }
 
@@ -1443,27 +1497,42 @@ function said(button, key) {
   );
 }
 
-/** The code on screen, drawn into a PNG big enough to project. */
+/**
+ * The code, drawn into a PNG big enough to project.
+ *
+ * Painted module by module rather than by loading the SVG that is already on
+ * screen: an inline SVG carries no namespace and no intrinsic size, and Safari
+ * refuses to load one as an image — which is why "Copy image" was quietly
+ * copying the link instead. Nothing to load means nothing to refuse.
+ */
 function qrPng() {
-  const svg = els.qrArt.querySelector("svg").outerHTML;
-  const size = 1024;
+  const modules = encode(audienceUrl());
+  const quiet = 4;
+  const span = modules.length + quiet * 2;
+  const scale = Math.max(1, Math.floor(1024 / span));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = span * scale;
+  canvas.height = span * scale;
+
+  const paper = canvas.getContext("2d");
+  // The quiet zone stays white whatever the code is pasted onto.
+  paper.fillStyle = "#ffffff";
+  paper.fillRect(0, 0, canvas.width, canvas.height);
+  paper.fillStyle = "#000000";
+  modules.forEach((row, r) => {
+    row.forEach((dark, c) => {
+      if (dark) {
+        paper.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+      }
+    });
+  });
 
   return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const paper = canvas.getContext("2d");
-      // The code needs its quiet zone to stay white whatever it is pasted on.
-      paper.fillStyle = "#ffffff";
-      paper.fillRect(0, 0, size, size);
-      paper.imageSmoothingEnabled = false;
-      paper.drawImage(image, 0, 0, size, size);
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("no blob"))), "image/png");
-    };
-    image.onerror = () => reject(new Error("the code wouldn't draw"));
-    image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("no image came back"))),
+      "image/png",
+    );
   });
 }
 
@@ -1497,9 +1566,35 @@ function showMessage(text) {
 }
 
 /** Takes a translation key, so the badge survives a language change. */
+/**
+ * The badge says one thing: whether this page is talking to the database.
+ *
+ * It used to double as a log of the last thing you did — "Hidden" sat there
+ * long after the screen came back — which made a state and an event look like
+ * the same kind of thing. Confirmations now visit for a moment and leave, and
+ * they arrive with a tick so it is obvious which of the two you are reading.
+ */
 function setStatus(key, state) {
   if (!key) return;
+  connection = { key, state };
+  clearTimeout(flashTimer);
+  flashTimer = null;
+  drawStatus();
+}
+
+/** Says something just happened, then gives the badge back. */
+function flash(key) {
   els.status.dataset.key = key;
+  els.status.dataset.state = "done";
   els.status.textContent = t(key);
-  els.status.dataset.state = state;
+
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(drawStatus, 1800);
+}
+
+function drawStatus() {
+  flashTimer = null;
+  els.status.dataset.key = connection.key;
+  els.status.dataset.state = connection.state;
+  els.status.textContent = t(connection.key);
 }
