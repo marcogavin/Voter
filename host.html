@@ -34,6 +34,10 @@
             <span class="btn-icon" data-icon="qr"></span>
             <span class="btn-label" data-i18n="qrCode">QR code</span>
           </button>
+          <!-- The room's own screen, opened in its own tab so the host can
+               drag it onto the projector and keep this one in hand. -->
+          <a class="iconbtn" id="bigscreen" href="screen.html" target="_blank"
+             rel="noopener" data-icon="screen" aria-label="Big screen"></a>
           <button type="button" class="btn" id="signin">
             <span class="btn-icon" data-icon="signIn"></span>
             <span class="btn-label" data-i18n="signIn">Sign in with Google</span>
@@ -270,14 +274,14 @@
     (function () {
       var NEEDS = [
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-        "pause", "scores",
+        "pause", "scores", "bigscreen",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board",
       ];
       var FILES = [
-        "js/app.js", "js/host.js", "js/sync.js", "js/i18n.js", "js/qr.js",
-        "js/firebase-config.js", "js/icons.js", "js/hearts.js", "js/scores.js",
-        "css/style.css",
+        "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
+        "js/qr.js", "js/firebase-config.js", "js/icons.js", "js/hearts.js",
+        "js/scores.js", "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

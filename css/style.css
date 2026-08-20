@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -446,6 +446,13 @@ h1.is-centred {
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   cursor: pointer;
+}
+
+/* One of these is a link — the room's screen opens in its own tab — and a
+   link brings an underline and its own colour with it. */
+a.iconbtn {
+  text-decoration: none;
+  color: var(--accent);
 }
 
 .iconbtn svg {
@@ -1029,6 +1036,16 @@ h1.is-centred {
   display: block;
 }
 
+/* Everyone the board didn't have room for. A count rather than a scroll: the
+   rows that matter are at the top, and the ones below the fold on a wall are
+   below it for everybody at once. */
+.board-more {
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+}
+
 /* One piece of the burst over the winner's row. Squares, because a shape
    nobody can name reads as celebration rather than as another icon. */
 .confetti {
@@ -1038,6 +1055,9 @@ h1.is-centred {
   height: 0.5rem;
   border-radius: 1px;
   pointer-events: none;
+  /* How far it goes. Overridden on the big screen, where nine rem is a
+     twitch rather than a burst. */
+  --rise: 9rem;
   animation: confetti-fly var(--fall) cubic-bezier(0.2, 0.6, 0.3, 1) forwards;
 }
 
@@ -1050,7 +1070,7 @@ h1.is-centred {
     opacity: 1;
   }
   100% {
-    transform: translate(var(--drift), -9rem) rotate(var(--spin));
+    transform: translate(var(--drift), calc(var(--rise) * -1)) rotate(var(--spin));
     opacity: 0;
   }
 }
@@ -1152,6 +1172,7 @@ h1.is-centred {
   position: absolute;
   left: 50%;
   top: 50%;
+  --rise: 13rem;
   width: var(--size);
   height: var(--size);
   margin: calc(var(--size) / -2);
@@ -1175,7 +1196,8 @@ h1.is-centred {
     opacity: 0.95;
   }
   100% {
-    transform: translate(var(--drift), -13rem) scale(1) rotate(var(--tilt));
+    transform: translate(var(--drift), calc(var(--rise) * -1)) scale(1)
+      rotate(var(--tilt));
     opacity: 0;
   }
 }
@@ -2160,6 +2182,415 @@ body.audience .panel {
   }
 }
 
+/* ─── The big screen ───────────────────────────────────────────────────
+   screen.html: the room's shared view, on a projector or a TV.
+
+   The rest of this stylesheet dresses a card held in one hand. This is the
+   same interface with the measure taken off: no panel, no shadow, nothing
+   sized in rem alone. Everything here scales with the *smaller* side of the
+   display (vmin), so the wall reads the same at 1280×720 as it does at 4K,
+   and a laptop screen is just a small projector.
+
+   It borrows every colour and every shape from the tokens above. What it
+   doesn't borrow is the type scale — a body size meant for arm's length is
+   the one thing that cannot survive being twelve metres away.             */
+
+body.screen {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.big {
+  /* The whole scale, in one place. Each clamp holds a floor for a laptop
+     window and a ceiling so a 4K wall doesn't turn into three words. */
+  --big-pad: clamp(1rem, 3vmin, 3.5rem);
+  --big-gap: clamp(0.5rem, 1.7vmin, 1.75rem);
+  --big-title: clamp(1.75rem, 5.4vmin, 5rem);
+  --big-row: clamp(1rem, 2.8vmin, 2.5rem);
+  --big-note: clamp(0.875rem, 2.2vmin, 1.75rem);
+
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--big-gap);
+  padding: var(--big-pad);
+}
+
+.big-top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--big-gap);
+}
+
+.logo--big {
+  height: clamp(1.5rem, 3.6vmin, 3.25rem);
+  flex: none;
+}
+
+/* Which poll is on. Only ever a whisper: the room is here for what's under
+   it, and an unnamed poll says nothing at all rather than "Poll 1". */
+.big-poll {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--big-note);
+  font-weight: 600;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* The way in, shrunk. Big enough to scan from a few rows back, small enough
+   that nobody reads it instead of the question. */
+.big-corner {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.big-corner-art {
+  width: clamp(3.5rem, 9vmin, 8rem);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.big-corner-art svg,
+.big-code svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.big-corner-url {
+  margin: 0;
+  font-size: var(--big-note);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* ── The stage ──────────────────────────────────────────────────────── */
+
+.big-stage {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--big-gap);
+  text-align: center;
+}
+
+.big-stage > * {
+  width: 100%;
+}
+
+.big-title,
+.big-question {
+  margin: 0;
+  font-size: var(--big-title);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.big-message {
+  margin: 0;
+  font-size: var(--big-row);
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* ── Joining ────────────────────────────────────────────────────────────
+   What the room looks at while the speaker is talking, so it carries the two
+   things worth reading from the back: where to go, and nothing else.      */
+
+.big-join {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--big-gap);
+}
+
+.big-code {
+  width: min(46vmin, 52vh);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+}
+
+.big-url {
+  margin: 0;
+  font-size: clamp(1.125rem, 3.2vmin, 3rem);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+/* ── The answers ────────────────────────────────────────────────────────
+   The same card as a phone's vote row, with the tap taken out and the type
+   let off its leash. Five or six answers go into two columns where the
+   display is wide enough to hold them, and stay in one where it isn't.    */
+
+.big-choices {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--big-gap);
+}
+
+@media (min-width: 900px) {
+  .big-choices[data-n="5"],
+  .big-choices[data-n="6"] {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.big-choice {
+  --fill: var(--flat);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  text-align: left;
+}
+
+.big-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: -1;
+  width: 0;
+  background: var(--fill);
+  transition:
+    width 1s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.25s ease;
+}
+
+.big-body {
+  display: flex;
+  align-items: center;
+  gap: var(--big-gap);
+  padding: clamp(0.5rem, 1.6vmin, 1.5rem) clamp(0.75rem, 2.2vmin, 2rem);
+}
+
+/* A, B, C. On a wall the label is what people read out, and "the second one"
+   is not a way to talk about an answer. */
+.big-key {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2em;
+  height: 2em;
+  font-size: var(--big-row);
+  font-weight: 700;
+  line-height: var(--leading-flat);
+  color: var(--muted);
+  background: var(--sunken);
+  border-radius: var(--radius-control);
+}
+
+.big-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--big-row);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.big-pct {
+  font-size: var(--big-row);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.big-choice.is-counted .big-pct {
+  opacity: 1;
+}
+
+.big-choice.is-right {
+  --fill: var(--right-soft);
+  border-color: var(--right);
+}
+
+.big-choice.is-right .big-key {
+  color: var(--on-accent);
+  background: var(--right);
+}
+
+/* ── The standings ──────────────────────────────────────────────────── */
+
+.big-board {
+  max-width: min(100%, 56rem);
+  margin-inline: auto;
+}
+
+.big-board .board-row {
+  min-height: 0;
+  padding: clamp(0.375rem, 1.2vmin, 1.25rem) clamp(0.75rem, 2.2vmin, 2rem);
+  border-radius: var(--radius-card);
+  text-align: left;
+}
+
+.big-board .board-place,
+.big-board .board-name,
+.big-board .board-score {
+  font-size: var(--big-row);
+}
+
+.big-board .board-of,
+.big-board .board-more {
+  font-size: var(--big-note);
+}
+
+.big-board .board-crown svg {
+  width: clamp(1.25rem, 3.2vmin, 2.75rem);
+  height: auto;
+}
+
+/* ── The applause ───────────────────────────────────────────────────── */
+
+.big-ending {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--big-gap);
+}
+
+/* Also the launch pad for the room's hearts, so it has to be something an
+   absolutely positioned child can be measured against. */
+.big-heart {
+  position: relative;
+  width: clamp(5rem, 22vmin, 18rem);
+  height: clamp(5rem, 22vmin, 18rem);
+  margin: 0;
+  color: var(--wrong);
+}
+
+.big-heart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.big-count {
+  margin: 0;
+  font-size: clamp(2.5rem, 9vmin, 8rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-flat);
+}
+
+/* A burst measured for a wall. Both of these travel a distance written in
+   rem, which is the one unit on this page that doesn't grow with it. */
+.big-heart .heart-fly {
+  width: calc(var(--size) * 2.2);
+  height: calc(var(--size) * 2.2);
+  margin: calc(var(--size) * -1.1);
+  --rise: clamp(13rem, 34vmin, 30rem);
+}
+
+.big-board .confetti {
+  width: clamp(0.5rem, 1.3vmin, 1.125rem);
+  height: clamp(0.5rem, 1.3vmin, 1.125rem);
+  --rise: clamp(9rem, 26vmin, 24rem);
+}
+
+/* ── The strip along the bottom ─────────────────────────────────────── */
+
+.big-foot {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3.2vmin, 3rem);
+  font-size: var(--big-note);
+  color: var(--muted);
+}
+
+.big-progress,
+.big-tally {
+  flex: none;
+  margin: 0;
+  font-weight: 600;
+}
+
+/* The clock takes what's left, because from the back of a room a bar
+   emptying is legible long after a number stops being. */
+.big-clock {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--big-gap);
+}
+
+.big-clock-track {
+  flex: 1;
+  height: clamp(6px, 1.2vmin, 14px);
+  border-radius: var(--radius-pill);
+  background: var(--sunken);
+  overflow: hidden;
+}
+
+.big-clock-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  transition:
+    width 0.25s linear,
+    background 0.25s ease;
+}
+
+.big-clock-time {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 3em;
+  text-align: right;
+}
+
+.big-clock.is-urgent .big-clock-fill {
+  background: var(--live);
+}
+
+.big-clock.is-urgent .big-clock-time {
+  color: var(--live);
+}
+
+/* ── The one control ────────────────────────────────────────────────────
+   For whoever is plugging the laptop in, not for the room. It follows the
+   mouse and then gets out of the way, which is the only reason a screen
+   with nothing to press has a button on it at all.                       */
+
+.big-full {
+  flex: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+body.is-awake .big-full {
+  opacity: 1;
+}
+
+.big-full:focus-visible {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .big-fill,
+  .big-pct,
+  .big-clock-fill,
+  .big-full {
+    transition: none;
+  }
+}
+
 /* ─── Running an older copy than the page ──────────────────────────────
    Only ever seen when the freshness check in the page has already tried a
    refetch and the old script is still what's being served. It has to be
@@ -2196,6 +2627,27 @@ body.audience .panel {
 
   .waiting-bar {
     animation: none;
+  }
+}
+
+/* Three actions and the wordmark don't fit one line on a phone, and the odd
+   one out wrapping alone onto a second row reads as a mistake. The QR button
+   keeps its icon and gives up its label — it is the one with a picture nobody
+   has to be taught. Its name survives as the button's accessible name. */
+@media (max-width: 560px) {
+  .hostbtns #qr .btn-label {
+    display: none;
+  }
+
+  /* And once it is a circle with a picture in it, it is one of the icon
+     buttons beside it — three round controls in a row, one of them grey,
+     reads as one of them being different. */
+  .hostbtns #qr {
+    padding: 0;
+    width: var(--control-h);
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-color: transparent;
   }
 }
 

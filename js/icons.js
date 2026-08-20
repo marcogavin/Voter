@@ -1,6 +1,6 @@
 // A small stroke-icon set, drawn here rather than pulled from a library: five
 // files and no build step is the whole point of this app, and an icon font or
-// an npm dependency would cost more than the fourteen paths below.
+// an npm dependency would cost more than the couple of dozen paths below.
 //
 // All 24×24, stroke rather than fill, so they take their colour from the text
 // beside them and stay legible at any size.
@@ -75,6 +75,18 @@ export const icons = {
       `<path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>`,
   ),
   clock: ICON(`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`),
+  screen: ICON(
+    `<rect x="2" y="4" width="20" height="13" rx="2"/>` +
+      `<path d="M12 17v4"/><path d="M8 21h8"/>`,
+  ),
+  expand: ICON(
+    `<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/>` +
+      `<path d="M16 21h3a2 2 0 0 0 2-2v-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/>`,
+  ),
+  shrink: ICON(
+    `<path d="M3 8h3a2 2 0 0 0 2-2V3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/>` +
+      `<path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/>`,
+  ),
   heart: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">` +
     `<path d="M12 21s-8-4.9-8-10.4A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 3.6C20 16.1 12 21 12 21z"/></svg>`,
 };

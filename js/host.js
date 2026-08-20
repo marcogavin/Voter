@@ -58,11 +58,12 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause", "scores",
+  "pause", "scores", "bigscreen",
 ];
 
 const els = {
   tabs: document.getElementById("tabs"),
+  bigScreen: document.getElementById("bigscreen"),
   signedOut: document.getElementById("signed-out"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
@@ -428,6 +429,9 @@ function render(event) {
   drawPolls();
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
   nameButton(els.signout, t("signOut"));
+  nameButton(els.bigScreen, t("bigScreen"));
+  // Its label goes on a narrow screen, so its name has to come from here.
+  nameButton(els.qr, t("qrCode"));
 
   if (isOwner) {
     els.hint.innerHTML = t("attendeesHint", { url: "<b></b>" });

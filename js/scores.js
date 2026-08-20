@@ -99,12 +99,20 @@ export function lastIndex(event) {
  *
  * `me` is the device reading it, marked so nobody has to hunt for their own
  * name; on the host nobody is.
+ *
+ * `limit` caps how many rows are drawn, with the rest counted underneath. A
+ * phone can scroll and a projector can't: thirty names on a wall are thirty
+ * names nobody at the back can read, and the ones worth reading are at the
+ * top anyway.
  */
-export function boardMarkup(event, me) {
-  const rows = standings(event);
-  if (!rows.length) {
+export function boardMarkup(event, me, limit = Infinity) {
+  const all = standings(event);
+  if (!all.length) {
     return `<p class="panel-message">${t("noScoresYet")}</p>`;
   }
+
+  const rows = all.slice(0, limit);
+  const hidden = all.length - rows.length;
 
   return (
     `<ol class="board">` +
@@ -123,6 +131,7 @@ export function boardMarkup(event, me) {
         );
       })
       .join("") +
+    (hidden ? `<li class="board-more">${t("andMore", { n: hidden })}</li>` : "") +
     `</ol>`
   );
 }
