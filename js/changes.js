@@ -14,6 +14,13 @@
 
 export const CHANGES = [
   {
+    version: "1.5",
+    on: "2026-08-20",
+    lines: [
+      "A host who was already signed in no longer reads a blank line under Sign out while the page catches up with the database.",
+    ],
+  },
+  {
     version: "1.4",
     on: "2026-08-20",
     lines: [
