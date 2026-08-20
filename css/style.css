@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -38,6 +38,10 @@
   /* Behind an overlay. Light enough that the card reads as being in front of
      the page rather than in a different room. */
   --scrim: rgba(23, 23, 26, 0.45);
+
+  /* Behind the tour, which is doing the opposite job: everything but one
+     control has to stop competing for attention. */
+  --scrim-deep: rgba(14, 14, 18, 0.74);
 
   /* Result colours. Never the only signal — the tick box, ✓ and ✗ carry the
      same meaning for anyone who can't separate red from green. */
@@ -76,6 +80,14 @@
   --gold: #a97f0a;
   --gold-soft: #fbf1d8;
   --gold-ink: #7a5c05;
+
+  /* The guided tour, and nothing else in the app. It is deliberately not
+     the accent: the tour points *at* the interface, so it has to be a colour
+     the interface never uses, or the arrow reads as one more control. Dark
+     pink at 5.9:1 on white — a shape you cannot mistake for the app. */
+  --tour: #b0106b;
+  --tour-soft: #fdeaf4;
+  --tour-ink: #ffffff;
 
   --live: #e5484d;
   --live-glow: rgba(229, 72, 77, 0.4);
@@ -135,6 +147,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Dark pink disappears on near-black; this one is 6.4:1 on the sheet the
+       callout is drawn on, and its ground is a tint of it rather than the
+       washed-out light one. */
+    --tour: #ff8ac4;
+    --tour-soft: #3a1330;
+    --tour-ink: #14040d;
+
     --bg: #08080b;
     --paper: #121218;
     --surface: #22222c; /* a sheet has to read as being in front of the page */
@@ -2739,6 +2758,154 @@ body.is-awake .big-full {
   .big-pct,
   .big-clock-fill,
   .big-full {
+    transition: none;
+  }
+}
+
+/* ─── The guided tour ──────────────────────────────────────────────────
+   Coach marks: the screen dims, one control stays lit, and a note beside it
+   says what that control is for. The shape is a borrowed one — every product
+   tour looks like this because it is the version people already know how to
+   read — and the only thing invented here is the colour.
+
+   Dark pink, and the interface uses it nowhere else. A tour drawn in the
+   app's own accent reads as one more control rather than as something
+   pointing at them.                                                       */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+/* The reason nothing outside the tour can be pressed. Deliberately not
+   painted: the dimming is the ring's job below, and a second layer here
+   would dim the one control the tour is trying to light up. */
+.tour-block {
+  position: absolute;
+  inset: 0;
+}
+
+/* The lit control. One box with an enormous spread shadow paints the whole
+   screen *except* itself, which is what makes the hole a real hole rather
+   than four rectangles that nearly meet. */
+.tour-ring {
+  position: fixed;
+  border-radius: var(--radius-control);
+  border: 2px solid var(--tour);
+  box-shadow: 0 0 0 9999px var(--scrim-deep);
+  pointer-events: none;
+  transition:
+    top 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    left 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tour-note {
+  position: fixed;
+  width: min(22rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 2px solid var(--tour);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* Points at the middle of whatever is lit, from whichever side the note
+   ended up on. A square turned forty-five degrees, with two of its edges
+   painted — the other two are covered by the note. */
+.tour-arrow {
+  position: absolute;
+  top: -0.5rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-left: -0.45rem;
+  background: var(--surface);
+  border-left: 2px solid var(--tour);
+  border-top: 2px solid var(--tour);
+  transform: rotate(45deg);
+}
+
+.tour-note.is-above .tour-arrow {
+  top: auto;
+  bottom: -0.5rem;
+  border-left: none;
+  border-top: none;
+  border-right: 2px solid var(--tour);
+  border-bottom: 2px solid var(--tour);
+}
+
+.tour-text {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-body);
+  font-weight: 600;
+  line-height: var(--leading-body);
+  color: var(--tour);
+}
+
+.tour-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tour-count {
+  flex: 1;
+  font-size: var(--text-label);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.tour-skip,
+.tour-back {
+  padding: var(--space-2);
+  font-family: inherit;
+  font-size: var(--text-label);
+  font-weight: 600;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+/* The one filled button in the tour takes its colour with it: a blue Next
+   inside a pink callout belongs to the app behind it. */
+.tour-next.btn--primary {
+  min-height: var(--control-h);
+  padding: 0 var(--space-4);
+  color: var(--tour-ink);
+  background: var(--tour);
+  /* Border too: .btn--primary carries an accent-coloured one, and a blue
+     hairline around a pink button is the app leaking into the tour. */
+  border-color: var(--tour);
+}
+
+/* Including when it has focus. The app's blue ring around a pink button is
+   the interface reaching back into something that is pointing at it. */
+.tour-next:focus-visible,
+.tour-skip:focus-visible,
+.tour-back:focus-visible {
+  outline: 2px solid var(--tour);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .tour-skip:hover,
+  .tour-back:hover {
+    background: var(--sunken);
+  }
+
+  .tour-next.btn--primary:hover:not(:disabled) {
+    background: var(--tour);
+    filter: brightness(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour-ring {
     transition: none;
   }
 }

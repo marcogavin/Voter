@@ -38,6 +38,7 @@ import {
 import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons, waitingArt } from "./icons.js";
+import { startTour, isFirstTime } from "./tour.js";
 import { flyHearts, celebrate } from "./hearts.js";
 import {
   screenAt,
@@ -61,7 +62,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause", "scores", "bigscreen", "speed", "signin", "presence",
+  "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
 ];
 
 const els = {
@@ -119,6 +120,7 @@ const els = {
   askCancel: document.getElementById("ask-cancel"),
 
   qr: document.getElementById("qr"),
+  tour: document.getElementById("tour"),
   qrOverlay: document.getElementById("qr-overlay"),
   qrArt: document.getElementById("qr-art"),
   qrUrl: document.getElementById("qr-url"),
@@ -289,6 +291,7 @@ function wireUp() {
   els.seconds.addEventListener("change", onSecondsChange);
 
   els.qr.addEventListener("click", showQr);
+  els.tour.addEventListener("click", () => showAround());
   els.qrClose.addEventListener("click", hideQr);
   els.qrCopy.addEventListener("click", onQrCopy);
   els.qrCopyLink.addEventListener("click", onQrCopyLink);
@@ -455,6 +458,7 @@ function render(event) {
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
   nameButton(els.signout, t("signOut"));
   nameButton(els.bigScreen, t("bigScreen"));
+  nameButton(els.tour, t("tourStart"));
   // Its label goes on a narrow screen, so its name has to come from here.
   nameButton(els.qr, t("qrCode"));
 
@@ -481,6 +485,11 @@ function render(event) {
   drawEditorLabels();
   drawList();
   drawRun();
+
+  // Once, unasked, the first time somebody signs in on this browser. After
+  // the first render, so the controls it points at are the real ones rather
+  // than the empty page they are drawn on.
+  if (signedIn && isFirstTime()) showAround();
 }
 
 function drawList() {
@@ -1480,6 +1489,7 @@ function applyViews() {
   els.signin.hidden = signedIn;
   els.signout.hidden = !signedIn;
   els.qr.hidden = !signedIn; // nothing to share until there's an event to run
+  els.tour.hidden = !signedIn; // and nothing to be shown around
   els.tabs.hidden = !signedIn;
   els.signedOut.hidden = signedIn;
   els.viewSetup.hidden = !signedIn || !setup;
@@ -1500,6 +1510,42 @@ function toOption(label) {
 function setLabel(element, text) {
   const slot = element.querySelector(".btn-label");
   (slot ?? element).textContent = text;
+}
+
+/* ── The guided tour ───────────────────────────────────────────────────── */
+
+/**
+ * The seven things worth knowing, in the order somebody meets them.
+ *
+ * Each step names the control it lights up. The one that crosses into Run
+ * carries the switch with it, so the tour walks the page rather than telling
+ * anybody to go and find the other half of it.
+ */
+function tourStops() {
+  return [
+    { at: () => els.tabs, says: "tourTabs" },
+    { at: () => document.querySelector(".pollbtns"), says: "tourPolls" },
+    { at: () => els.addQuestion, says: "tourQuestions" },
+    { at: () => document.querySelector(".settings"), says: "tourSettings" },
+    { at: () => document.querySelector(".hostbtns"), says: "tourShare" },
+    {
+      at: () => document.querySelector(".runbar"),
+      says: "tourRun",
+      before: () => showView("run"),
+    },
+    { at: () => document.querySelector(".toolbar"), says: "tourControls" },
+  ];
+}
+
+/**
+ * Shows the host around. Only where there is something to be shown around:
+ * signed out, the page is one button and a sentence, and a tour of it would
+ * be a tour of a locked door.
+ */
+function showAround() {
+  if (!signedIn) return;
+  const was = mode;
+  startTour(tourStops(), () => showView(was));
 }
 
 /** Names an icon-only button, for a screen reader and for a long press. */

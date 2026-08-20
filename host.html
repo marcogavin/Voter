@@ -38,6 +38,10 @@
                drag it onto the projector and keep this one in hand. -->
           <a class="iconbtn" id="bigscreen" href="screen.html" target="_blank"
              rel="noopener" data-icon="screen" aria-label="Big screen"></a>
+          <!-- The way back into the tour, for anyone who skipped it or wants
+               it again. It shows itself once, unasked, the first time. -->
+          <button type="button" class="iconbtn" id="tour" data-icon="help"
+                  aria-label="Show me around"></button>
           <button type="button" class="btn" id="signin">
             <span class="btn-icon" data-icon="signIn"></span>
             <span class="btn-label" data-i18n="signIn">Sign in with Google</span>
@@ -275,13 +279,14 @@
       var NEEDS = [
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
+        "tour", "tourmarks",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
         "js/qr.js", "js/firebase-config.js", "js/icons.js", "js/hearts.js",
-        "js/scores.js", "css/style.css",
+        "js/scores.js", "js/tour.js", "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

@@ -22,6 +22,22 @@ different jobs:
 - **Run** — one question on screen, live results, and the controls to move
   through the poll. Every attendee's phone follows whatever you have up.
 
+### The tour
+
+The first time somebody signs in on a browser, the host page shows itself:
+seven steps, one sentence each, dimming the screen and lighting up one control
+at a time — the two tabs, polls, questions, the settings that belong to the
+room, how people join, and the two rows of controls you drive a poll with. It
+walks from Setup into Run on its way, so nobody has to be told where the other
+half is.
+
+It runs once and then never again on that browser. The **?** in the top bar
+brings it back. Skip, Escape, or a tap outside leaves it at any point, and the
+page goes back to the tab it was on.
+
+It is drawn in a pink the rest of the app never uses. A tour drawn in the app's
+own accent reads as one more control rather than as something pointing at them.
+
 ### Names
 
 Attendees give a name before they see the first question. It sits at the top of
