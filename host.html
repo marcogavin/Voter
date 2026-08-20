@@ -168,6 +168,10 @@
 
       <div class="foot">
         <p class="note" id="hint" data-i18n="attendeesHint">Attendees open the audience page on their phones</p>
+        <!-- Which build this is. Quiet, and the answer to "is what I'm
+             looking at the new one?" — a browser can serve an old copy for
+             ten minutes after a deploy. -->
+        <button type="button" class="version" id="version"></button>
         <span class="badge" id="status" data-state="pending" data-i18n="connecting">Connecting</span>
       </div>
     </div>
@@ -213,6 +217,20 @@
 
   <!-- Every poll, with enough about each one to tell them apart a month
        later. Tapping one opens it; renaming and deleting are per row. -->
+  <!-- What changed, in the words somebody who uses this would use. -->
+  <div class="overlay overlay--sheet" id="news-sheet" hidden>
+    <div class="sheet-card">
+      <p class="sheet-title" data-i18n="whatsNew">What's new</p>
+      <div class="news" id="news"></div>
+      <div class="actions">
+        <button type="button" class="btn btn--primary" id="news-close">
+          <span class="btn-icon" data-icon="close"></span>
+          <span class="btn-label" data-i18n="close">Close</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay overlay--sheet" id="poll-sheet" hidden>
     <div class="sheet-card">
       <p class="sheet-title" data-i18n="openPoll">Open an existing poll</p>
@@ -279,14 +297,14 @@
       var NEEDS = [
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
-        "tour", "tourmarks",
+        "tour", "tourmarks", "version", "versionsheet",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
         "js/qr.js", "js/firebase-config.js", "js/icons.js", "js/hearts.js",
-        "js/scores.js", "js/tour.js", "css/style.css",
+        "js/scores.js", "js/tour.js", "js/changes.js", "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

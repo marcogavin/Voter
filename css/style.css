@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -2760,6 +2760,60 @@ body.is-awake .big-full {
   .big-full {
     transition: none;
   }
+}
+
+/* ─── Which build this is ──────────────────────────────────────────────
+   Quiet enough to ignore, and the answer to "is what I'm looking at the new
+   one?" — a browser can serve an old copy for ten minutes after a deploy,
+   which is long enough to doubt yourself.                                 */
+
+.version {
+  padding: var(--space-1) var(--space-2);
+  font-family: inherit;
+  font-size: var(--text-micro);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .version:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+}
+
+.news {
+  max-height: 60vh;
+  margin-top: var(--space-3);
+  overflow-y: auto;
+}
+
+.news-version {
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.news-version:first-child {
+  margin-top: 0;
+}
+
+.news-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--ink);
 }
 
 /* ─── The guided tour ──────────────────────────────────────────────────
