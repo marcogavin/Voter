@@ -201,6 +201,11 @@ async function start() {
     // snapshot lands.
     signedIn = !isAnonymous();
     applyViews();
+    // applyViews() is what un-hides the account line; without this it opens
+    // empty and only gets its text from render() once the first snapshot
+    // lands, which is a second or so of a blank line where a name is about
+    // to appear. quiet() is the same text render() would write.
+    quiet();
 
     // The sign-in tab may never manage to tell this one that it worked —
     // iPadOS opens it as a separate tab and the message home doesn't always
