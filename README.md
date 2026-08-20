@@ -407,7 +407,16 @@ for ten minutes, so it clears on its own.
 
 When adding a feature that changes the markup, add its name to `VOTR_BUILD` in
 `js/host.js`, `js/app.js` or `js/screen.js` and to `NEEDS` in the matching
-page. That's what makes an old script detectable.
+page. That's what makes an old script detectable — **and a change shipped
+without a new word is a change the check can't see**, so a browser holding the
+old copy shows it as nothing having happened. The `fresh` suite checks that
+every word a page needs is declared somewhere and that nothing is declared
+that no page checks; it can't tell you that you forgot to add one.
+
+If a page looks unchanged after a deploy, it's this: GitHub Pages caches assets
+for about ten minutes, and the page fixes itself within that. To force it now,
+open the URL with anything after a `?` — `…/Voter/?v=2` — which sidesteps the
+cached copy of the page, and the fresh one re-fetches the rest.
 
 ## Limits worth knowing
 
