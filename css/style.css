@@ -1262,6 +1262,13 @@ a.iconbtn {
   font-weight: 600;
 }
 
+/* Waiting on something in another tab. An instruction, not a result. */
+.panel-message.is-waiting,
+.account.is-waiting {
+  color: var(--accent);
+  font-weight: 600;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .heart.is-beating {
     animation: heart-beat 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -1408,14 +1415,6 @@ a.iconbtn {
 
 .account.is-error {
   color: var(--wrong);
-  font-weight: 600;
-}
-
-/* While Google has the screen. Not an error and not a result — an
-   instruction, and the only one on the page that matters until you come
-   back to it. */
-.account.is-waiting {
-  color: var(--accent);
   font-weight: 600;
 }
 

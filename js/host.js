@@ -46,6 +46,7 @@ import {
   fillNames,
   isScorable,
   isTimed,
+  roomSize,
 } from "./scores.js";
 import {
   t,
@@ -60,7 +61,7 @@ import {
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
-  "pause", "scores", "bigscreen", "speed", "signin",
+  "pause", "scores", "bigscreen", "speed", "signin", "presence",
 ];
 
 const els = {
@@ -147,6 +148,7 @@ let deckMenu = null; // signature of what the poll picker currently offers
 let askResolve = null; // settles the promise the ask overlay is standing in for
 
 let players = {}; // everyone in the room, by the name they gave
+let seen = {}; // and when each of them last showed signs of life
 let likes = 0; // applause on the closing screen
 let likesSeen = null; // the applause already drawn, so only new taps fly
 let questions = []; // the live poll's questions, in running order
@@ -408,6 +410,7 @@ function render(event) {
   revealed = event.revealed;
   blanked = event.blanked;
   players = event.players;
+  seen = event.seen;
   askedAt = event.askedAt;
   pausedAt = event.pausedAt;
   seconds = event.seconds;
@@ -435,10 +438,7 @@ function render(event) {
   // line is the only place two other things get said: why a sign-in failed,
   // and — while Google has the screen — which tab to come back to. Neither
   // survives being overwritten a second later by "Sign in to run this poll".
-  const spoken = ["is-error", "is-waiting"].some((state) =>
-    els.account.classList.contains(state),
-  );
-  if (!spoken) {
+  if (!spoken(els.account)) {
     els.account.textContent = signedIn
       ? t("signedInAs", { name: accountName() ?? "—" })
       : t("signInPrompt");
@@ -713,9 +713,16 @@ function drawRun() {
 
   watchClock();
 
+  // The same count the room is looking at, in the same words — a presenter
+  // deciding when to reveal shouldn't have to reconcile two numbers.
+  const room = roomSize({ players, seen }, serverNow());
   els.hint.textContent = blanked
     ? t("screenHiddenNote")
-    : (total === 1 ? t("voteCountOne") : t("voteCount", { n: total })) +
+    : (room
+        ? t("votesOfRoom", { n: total, of: Math.max(room, total) })
+        : total === 1
+          ? t("voteCountOne")
+          : t("voteCount", { n: total })) +
       (revealed ? t("votingClosedSuffix") : "");
 }
 
@@ -1245,8 +1252,7 @@ async function onSignIn() {
     // Report next to the button that was pressed. The status badge and hint
     // sit in the footer, which on a phone is below the fold exactly when
     // sign-in fails — so a failure looked like nothing happening at all.
-    els.account.textContent = explain(error);
-    els.account.classList.add("is-error");
+    say(explain(error), "is-error");
     console.error(error);
   }
 }
@@ -1254,11 +1260,46 @@ async function onSignIn() {
 /** The button, and the page, while Google has the screen. */
 function waiting(on) {
   els.signin.disabled = on;
-  if (!on) els.account.classList.remove("is-waiting");
   setLabel(els.signin, t(on ? "signingIn" : "signIn"));
-  els.account.classList.remove("is-error");
-  els.account.textContent = on ? t("comeBackHere") : "";
-  els.account.classList.toggle("is-waiting", on);
+  if (on) say(t("comeBackHere"), "is-waiting");
+  else quiet();
+}
+
+/**
+ * Says something to the host, on whichever line they can actually see.
+ *
+ * There are two, and only ever one of them is on screen: the account line
+ * belongs to a signed-in host and is hidden otherwise, and the note under
+ * the tabs is the opposite. Both messages this puts up — a sign-in failing,
+ * and which tab to come back to — happen while signed *out*, and both were
+ * being written to the hidden one, which is why neither was ever seen.
+ */
+function say(text, state) {
+  const seen = signedIn ? els.account : els.signedOut;
+  const unseen = signedIn ? els.signedOut : els.account;
+
+  unseen.classList.remove("is-error", "is-waiting");
+  seen.textContent = text;
+  seen.classList.remove("is-error", "is-waiting");
+  seen.classList.add(state);
+}
+
+/** Puts both lines back to whatever they say when nothing has happened. */
+function quiet() {
+  for (const element of [els.account, els.signedOut]) {
+    element.classList.remove("is-error", "is-waiting");
+  }
+  els.signedOut.textContent = t("signedOutNote");
+  els.account.textContent = signedIn
+    ? t("signedInAs", { name: accountName() ?? "—" })
+    : t("signInPrompt");
+}
+
+/** True while a line is carrying something no render should overwrite. */
+function spoken(element) {
+  return ["is-error", "is-waiting"].some((state) =>
+    element.classList.contains(state),
+  );
 }
 
 /** Firebase's own messages don't say which console setting is missing. */

@@ -28,6 +28,17 @@ Attendees give a name before they see the first question. It sits at the top of
 their own screen, they can tap it to correct a typo, and it is what will put
 them on a leaderboard.
 
+**A name lasts an hour.** Every phone quietly says it is still here while the
+page is being looked at, and the room count only includes people heard from
+within the last hour — so yesterday's tab, the phone that joined and went back
+into a pocket, and the browser somebody closed all stop being counted. A tab
+left open in the background doesn't count either: the heartbeat only goes while
+the page is actually on screen.
+
+Nothing is deleted by this. The name stays, and the person reappears in the
+count the moment they look at their phone again — including on the leaderboard,
+which lists everyone who answered whether they are still in the room or not.
+
 **It is not private.** Names are stored on the event and readable by every
 device in the room — that is what a shared leaderboard requires. The app shows
 each person only their own, but it cannot keep a name secret from someone
@@ -92,9 +103,9 @@ What it shows follows the host, one screen behind nobody:
   the screen hidden: a blank wall is a wasted wall.
 - **A question** — the question, the answers lettered A, B, C, and the clock.
   **Votes 7/12** sits at the top, counted against how many people are in the
-  room: a number visibly short of the number of people standing there asks the
-  rest of them to vote better than any wording would, and it turns green when
-  everyone is in. The join code moves down to the bottom-right corner, with the
+  room *right now* (see below): a number visibly short of the number of people
+  standing there asks the rest of them to vote better than any wording would,
+  and it turns green when everyone is in. The join code moves down to the bottom-right corner, with the
   address under it, so latecomers always have something to scan.
 - **The scores and the applause** — the same leaderboard and the same heart the
   phones show, at the size of the room.
@@ -290,6 +301,7 @@ They enforce:
 
 - only signed-in devices (including anonymous ones) can read an event
 - a device can write **its own** name and nobody else's
+- and its own "still here" timestamp, and nobody else's
 - an attendee can add their own vote **once**, and can't change it afterwards
 - and the same for how long they took: written once, never edited
 - vote counters only move up by one at a time — nobody can set them to 900

@@ -17,12 +17,13 @@ import { isConfigured } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons } from "./icons.js";
 import { flyHearts, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames } from "./scores.js";
+import { screenAt, boardMarkup, fillNames, roomSize } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
+  "presence",
 ];
 
 /**
@@ -266,7 +267,7 @@ function showQuestion(event) {
   // Out of how many people are in the room, and at the top of the wall rather
   // than in the strip along the bottom: 7/12 with everyone watching is a
   // better way of asking the other five to vote than any wording would be.
-  drawVotes(total, Object.keys(event.players ?? {}).length);
+  drawVotes(total, roomSize(event, serverNow()));
 
   drawTime();
   foot({
@@ -378,7 +379,9 @@ function showEnding(event) {
 function drawVotes(votes, room) {
   els.votes.hidden = room === 0;
   if (room === 0) return;
-  els.votes.textContent = t("votesOfRoom", { n: votes, of: room });
+  // A count can outrun the room it is measured against — somebody votes and
+  // then closes the tab — and 8/7 reads as a bug rather than as arithmetic.
+  els.votes.textContent = t("votesOfRoom", { n: votes, of: Math.max(room, votes) });
   els.votes.classList.toggle("is-all", votes >= room);
 }
 
