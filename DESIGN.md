@@ -473,6 +473,18 @@ Three things, in this order, and none of them under `prefers-reduced-motion`:
 
 Everyone who ties for first gets all three. Sharing a win is still winning.
 
+### Two numbers on a row
+
+Where a clock was running, a row carries what you got right *and* how long you
+took, and they are deliberately not the same weight: the score is `lead` and
+ink, the time is `label` and muted, to its right. They read left to right in
+the order they decide the place, and an eye that only wants the winner never
+has to take the second one in.
+
+Both are `font-variant-numeric: tabular-nums`. That is what makes a column of
+numbers line up instead of wander, and it is the reason the times can be read
+down the page as a ranking rather than one at a time.
+
 ---
 
 ## 8. Motion

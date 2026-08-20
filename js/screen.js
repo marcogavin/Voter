@@ -21,7 +21,7 @@ import { screenAt, boardMarkup, fillNames } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
-window.VOTR_BUILD = ["screen", "scores", "pause", "timer"];
+window.VOTR_BUILD = ["screen", "scores", "pause", "timer", "speed"];
 
 /**
  * As many rows as fit a 720p projector without the last one falling off the
@@ -34,7 +34,6 @@ const BOARD_ROWS = 8;
 const CHROME_MS = 2500;
 
 const els = {
-  poll: document.getElementById("poll"),
   join: document.getElementById("join"),
   joinArt: document.getElementById("join-art"),
   joinUrl: document.getElementById("join-url"),
@@ -145,8 +144,6 @@ function render(event) {
     drawFull();
   }
 
-  drawPoll(event);
-
   // Hiding the screen is the host asking for the room's attention. On the
   // wall that means the way in, not a blank rectangle.
   const screen = event.blanked ? "none" : screenAt(event);
@@ -162,12 +159,6 @@ function render(event) {
   if (screen === "scores") return showScores(event);
   if (screen === "ending") return showEnding(event);
   showJoin(event);
-}
-
-/** Which poll is on, when it has a name worth carrying. */
-function drawPoll(event) {
-  const deck = event.decks?.find((entry) => entry.id === event.currentDeck);
-  els.poll.textContent = deck?.title ?? "";
 }
 
 /**

@@ -22,7 +22,6 @@
   <div class="big">
     <header class="big-top">
       <img class="logo logo--big" src="img/votr-logo.svg" alt="VOTR">
-      <p class="big-poll" id="poll"></p>
 
       <!-- The way in, shrunk into the corner while something else is up, so
            somebody arriving late never has to be told where to go. -->
@@ -66,7 +65,9 @@
        a stale module is the thing it exists to catch. -->
   <script>
     (function () {
-      var NEEDS = ["screen", "scores", "pause", "timer", "bigscreen"];
+      var NEEDS = [
+        "screen", "scores", "pause", "timer", "speed", "bigscreen", "times",
+      ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
         "js/qr.js", "js/firebase-config.js", "js/icons.js", "js/hearts.js",

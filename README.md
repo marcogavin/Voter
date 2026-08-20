@@ -115,16 +115,35 @@ It is worked out from what is already stored — who answered what, which answer
 was right, and the name each device gave — so it is right for polls that were
 run before this existed, and it can't disagree with the votes it is counting.
 
-**Ranked on right answers alone.** People on the same score share a place, and
-the next place skips: two on 5 are both second, and the next is fourth. Ranking
-on speed as well would mean storing a timestamp beside every vote — one field
-and one line of rules, worth doing if you want it, but it changes what a vote
-writes and the rules would have to be published before anyone could vote again.
+**Right answers decide it; the clock separates people level on them.** Where a
+time limit is set, every vote records how long it took and the board shows the
+total beside the score:
+
+```
+🏆  1  Marco    2/2   12.9s
+    2  Ana      2/2   14.3s
+    3  Dee      2/2   45.5s
+    4  Bo       1/2   13.8s     ← fast, but a right answer short
+```
+
+Only questions with a right answer count towards either number: an opinion
+question isn't something anyone can be quick at. **A question you sat out costs
+the full time limit**, so skipping is never a way to post a faster time — and
+neither is a vote that arrived without a time, which costs the same.
+
+With no time limit set there is no clock at all: the board is right answers
+alone, people level on them share a place, and the next place skips — two on 5
+are both second, and the next is fourth.
 
 Somebody who never answered isn't listed. Being in the room isn't a score.
 
 **A poll with no right answers has no leaderboard** — it would be a table of
 zeroes — so an opinion poll goes from its last question straight to the heart.
+
+The time is measured against the server's clock rather than each phone's, so a
+device whose clock is wrong doesn't win. It is still a number a phone reports,
+which is the same trust the vote itself gets: right for a friendly quiz, not a
+stopwatch anyone should bet on.
 
 ### The end of a poll
 
@@ -137,6 +156,17 @@ so the applause is shared rather than private. Your own hearts always fly in
 the same colour; hearts from other people take one of eight at random, since
 the database sends a count and not a name. Anyone who has asked for reduced
 motion gets the count without the animation.
+
+### Joining late
+
+Anyone can join at any point, including halfway through. They give a name, land
+on whatever is on screen, and vote on it if voting is still open — which is why
+the projector keeps a join code in the corner while a question is up.
+
+They are scored like everybody else, over every question that had a right
+answer. The ones they weren't there for count as unanswered: no points, and the
+full time limit each. A latecomer can't win, and can't be beaten by somebody
+who joins at the last question and answers one thing quickly.
 
 ### The clock
 
@@ -251,12 +281,20 @@ They enforce:
 - only signed-in devices (including anonymous ones) can read an event
 - a device can write **its own** name and nobody else's
 - an attendee can add their own vote **once**, and can't change it afterwards
+- and the same for how long they took: written once, never edited
 - vote counters only move up by one at a time — nobody can set them to 900
 - no votes at all once the answer has been revealed
 - polls, questions and option labels are writable **only by the account that
   owns the event**
 
 Check them with the **Rules Playground** tab before a real event.
+
+**Republish them whenever this file changes.** The copy in the repository is
+documentation; the console is what actually enforces anything. A vote is one
+atomic write, so a rule the console hasn't seen yet can refuse the whole thing
+— which is why the app retries a timed vote without its time rather than
+letting the vote fail. Until the rules below are published, the poll runs
+exactly as it did, just with no clock on the leaderboard.
 
 ### 4. Turn on GitHub Pages
 
