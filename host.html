@@ -197,14 +197,24 @@
                data-i18n-placeholder="questionPlaceholder"
                placeholder="Enter your question here" autocomplete="off">
       </label>
-      <label class="field">
+      <label class="field field--pick">
+        <span class="field-label">
+          <span class="btn-icon" data-icon="star"></span>
+          <span data-i18n="questionType">Question type</span>
+        </span>
+        <select id="question-type">
+          <option value="choice" data-i18n="typeChoice">Multiple choice</option>
+          <option value="rating" data-i18n="typeRating">Rating (1–5 stars)</option>
+        </select>
+      </label>
+      <label class="field" id="options-field">
         <span class="field-label" data-i18n="optionsLabel">Answers — one per line</span>
         <textarea id="options-input" rows="3" required
                   data-i18n-placeholder="optionsPlaceholder"
                   placeholder="Answer option 1&#10;Answer option 2&#10;Answer option 3"></textarea>
         <div class="charlist" id="options-count"></div>
       </label>
-      <div class="field">
+      <div class="field" id="correct-field">
         <span class="field-label" data-i18n="correctLabel">Right answer — optional</span>
         <div id="correct-list" class="correct-list"></div>
       </div>
@@ -304,7 +314,7 @@
       var NEEDS = [
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
-        "tour", "tourmarks", "version", "versionsheet", "clearroom",
+        "tour", "tourmarks", "version", "versionsheet", "clearroom", "rating",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board",
       ];

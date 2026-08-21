@@ -55,6 +55,46 @@ export function isScorable(event) {
 }
 
 /**
+ * The five option labels a rating question is built from. Nobody types this
+ * by hand for a real answer, which is what makes it safe to read back: seeing
+ * it means the host picked "Rating" in the editor, not that a real poll
+ * happens to have five numbered choices.
+ *
+ * This is the whole feature. A rating is a poll like any other — same
+ * options, same votes, same rules — so nothing about how it is stored, voted
+ * on, or counted needed to change; only how it reads and what it's summed
+ * into does.
+ */
+export const RATING_STARS = ["★", "★★", "★★★", "★★★★", "★★★★★"];
+
+/**
+ * True when a question's options are exactly the rating scale, in order, and
+ * it has no right answer — a real one never does, but a hand-edited deck
+ * could, and a rating and a quiz question are two different things.
+ */
+export function isRatingQuestion(question) {
+  const options = question?.options ?? [];
+  return (
+    question?.correct === null &&
+    options.length === RATING_STARS.length &&
+    options.every((option, i) => option.label === RATING_STARS[i])
+  );
+}
+
+/**
+ * The mean rating — votes weighted by how many stars each was — or null with
+ * nothing to average yet. Not a score: `correct` stays null on these, so they
+ * never enter isScorable() or the leaderboard.
+ */
+export function ratingMean(question) {
+  const options = question?.options ?? [];
+  const total = options.reduce((sum, option) => sum + option.votes, 0);
+  if (!total) return null;
+  const weighted = options.reduce((sum, option, i) => sum + option.votes * (i + 1), 0);
+  return weighted / total;
+}
+
+/**
  * How long a question was open, in milliseconds, or null when it wasn't timed.
  *
  * This doubles as the cost of not answering one. A question you sat out has

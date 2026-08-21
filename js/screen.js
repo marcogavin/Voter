@@ -17,13 +17,13 @@ import { isConfigured } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons } from "./icons.js";
 import { flyHearts, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames, roomSize } from "./scores.js";
+import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingMean } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
-  "presence",
+  "presence", "rating",
 ];
 
 /**
@@ -222,6 +222,7 @@ function showQuestion(event) {
     shownQuestionId = question.id;
     els.stage.innerHTML =
       `<h1 class="big-question"></h1>` +
+      (isRatingQuestion(question) ? `<p class="big-message" id="big-rating-mean"></p>` : "") +
       `<ol class="big-choices" data-n="${Math.min(question.options.length, 6)}"></ol>`;
 
     const list = els.stage.querySelector(".big-choices");
@@ -245,6 +246,12 @@ function showQuestion(event) {
   els.stage.querySelector(".big-question").textContent = question.text;
 
   const total = question.options.reduce((sum, option) => sum + option.votes, 0);
+
+  const meanEl = els.stage.querySelector("#big-rating-mean");
+  if (meanEl) {
+    const mean = live ? ratingMean(question) : null;
+    meanEl.textContent = mean === null ? "" : t("ratingAverage", { n: mean.toFixed(1) });
+  }
 
   for (const option of question.options) {
     const row = els.stage.querySelector(`.big-choice[data-id="${option.id}"]`);
