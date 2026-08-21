@@ -45,11 +45,13 @@ Both are generated on every run and both are gitignored.
 | `scores` | the leaderboard, the clock on it, and who is in the room |
 | `stopwatch` | what a phone puts on the clock when it votes |
 | `signin` | what the page says while Google has the screen |
+| `account` | the account line is right the moment the gate opens, not after |
 | `tour` | the guided tour, start to finish |
 | `news` | the version, and what it opens |
 | `board` | the end of a poll, on the phone and on the host |
 | `wall-unit` | the projector, screen by screen |
 | `contrast` | every colour pair, in both palettes |
+| `clearroom` | Clear the room: who it's offered to, what it asks, what it clears |
 | `gate` | the host page ships closed |
 | `overflow` | nothing escapes the card, in five languages |
 | `taps` | nothing on a phone is smaller than a thumb |
@@ -57,7 +59,37 @@ Both are generated on every run and both are gitignored.
 | `wall-fit` | the projector fits four shapes of display |
 | `tourfit` | every tour step points at what it talks about |
 
-## Writing one
+## Rules
+
+Neither of the above touches `database.rules.json` — it's a Firebase concept,
+not a browser one, and nothing in jsdom or Chromium ever evaluates it. That
+file is documentation until it's republished by hand in the Firebase console
+(see the root `CLAUDE.md`), and its own logic — what an audience phone can
+read and when, what a device that isn't the owner can write — needs its own
+kind of proof: the real rules, in a real Realtime Database, refusing a real
+request.
+
+`test/rules/` is that suite. It runs `js/sync.js` — unmodified, unstubbed —
+against a real Firebase Auth + Realtime Database emulator loaded with the
+actual `database.rules.json`, so a change to either one gets checked against
+what Firebase itself will do with it, not what the code assumes it does.
+
+```sh
+cd test/rules
+npm install                # once — firebase, firebase-admin, firebase-tools
+npm test                   # needs a JDK on PATH; downloads the emulators once
+```
+
+Not part of `npm test` in `test/` — spinning up two emulators costs a few
+seconds and a JVM, which the fast suite deliberately never requires. Run it
+by hand whenever `database.rules.json` or `js/sync.js`'s `onEventChange`
+changes, and before republishing either one to the console: this is the
+suite that would have caught both real mistakes that made it to a live event
+before it existed — an aggregate read with no rule of its own being refused
+outright instead of filtered, and a stale rule rejecting a whole multi-path
+write over one new field riding along with it.
+
+
 
 Suites are plain node — no framework, no runner, no configuration. A suite
 prints a `✓` or `✗` per assertion and ends with `all passed` or `N FAILED`,
