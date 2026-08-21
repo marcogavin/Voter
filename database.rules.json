@@ -67,7 +67,7 @@
           }
         },
         "decks": {
-          ".read": "auth != null && data.parent().child('ownerUid').val() === auth.uid",
+          ".read": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$deckId": {
             "title": {
@@ -134,7 +134,7 @@
           }
         },
         "questions": {
-          ".read": "auth != null && data.parent().child('ownerUid').val() === auth.uid",
+          ".read": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$questionId": {
             "text": {
