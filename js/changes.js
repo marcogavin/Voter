@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "1.9",
+    on: "2026-08-21",
+    lines: [
+      "The guided tour now points out Clear the room, where the last update added it.",
+    ],
+  },
+  {
     version: "1.8",
     on: "2026-08-21",
     lines: [

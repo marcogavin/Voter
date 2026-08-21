@@ -1627,6 +1627,7 @@ function tourStops() {
     { at: () => document.querySelector(".pollbtns"), says: "tourPolls" },
     { at: () => els.addQuestion, says: "tourQuestions" },
     { at: () => document.querySelector(".settings"), says: "tourSettings" },
+    { at: () => els.clearRoom, says: "tourClearRoom" },
     // These two and not the row they sit in: the row also holds sign-out and
     // the button that reopens this tour, neither of which is being talked
     // about here.

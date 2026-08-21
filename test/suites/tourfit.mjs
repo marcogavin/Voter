@@ -25,6 +25,7 @@ const STEPS = [
   { lights: ["deck-new", "deck-open"], spares: ["add-question", "qr"] },
   { lights: ["add-question"], spares: ["deck-new", "language"] },
   { lights: ["language", "seconds"], spares: ["add-question"] },
+  { lights: ["clear-room"], spares: ["language", "seconds", "add-question"] },
   { lights: ["qr", "bigscreen"], spares: ["signout", "tour"] },
   { lights: ["next"], spares: ["blank", "clear"] },
   { lights: ["blank", "clear"], spares: ["next", "prev"] },

@@ -44,7 +44,7 @@ snap();
 await tick();
 ok("the tour shows itself, unasked", Boolean(tour()));
 ok("starting where anybody would start", says().startsWith("You write your questions"));
-ok("saying how far in it is", count() === "1 of 8");
+ok("saying how far in it is", count() === "1 of 9");
 ok("with something lit up", Boolean(lit()));
 ok("and no way back from the first step", document.querySelector(".tour-back").hidden);
 
@@ -53,15 +53,15 @@ press("tour-next");
 ok("the second step is the polls", says().startsWith("A poll is just a set"));
 ok("and now there is a way back", !document.querySelector(".tour-back").hidden);
 press("tour-back");
-ok("which goes back", count() === "1 of 8");
+ok("which goes back", count() === "1 of 9");
 
-for (let i = 0; i < 5; i++) press("tour-next");
-ok("the sixth step crosses into Run", !$("view-run").hidden && $("view-setup").hidden);
+for (let i = 0; i < 6; i++) press("tour-next");
+ok("the seventh step crosses into Run", !$("view-run").hidden && $("view-setup").hidden);
 ok("and describes it", says().startsWith("This puts the first question up"));
 
 press("tour-next");
 press("tour-next");
-ok("the eighth is the last", count() === "8 of 8");
+ok("the ninth is the last", count() === "9 of 9");
 ok("and it points at the way back to itself",
    says().startsWith("That's it") &&
      lit().getBoundingClientRect !== undefined);
@@ -82,12 +82,12 @@ ok("it does not show itself again", tour() === null);
 console.log("asking for it back");
 $("tour").click();
 ok("the button reopens it", Boolean(tour()));
-ok("from the beginning", count() === "1 of 8");
+ok("from the beginning", count() === "1 of 9");
 
 console.log("what it points at");
 press("tour-skip");
 $("tour").click();
-for (let i = 0; i < 4; i++) press("tour-next");
+for (let i = 0; i < 5; i++) press("tour-next");
 ok("the sharing step names two ways in", says().startsWith("Two ways in"));
 // Which two it actually lights up is a question about layout, and there
 // isn't any here — tourfit measures that in a real browser.
@@ -106,7 +106,7 @@ $("tour").click();
 press("tour-next");
 snap();
 await tick();
-ok("doesn't restart it", count() === "2 of 8");
+ok("doesn't restart it", count() === "2 of 9");
 ok("or close it", Boolean(tour()));
 press("tour-skip");
 
