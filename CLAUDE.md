@@ -67,7 +67,10 @@ pages read it, so none of them owns the rule and none of them can disagree.
 In the same commit as any change somebody can see:
 
 - a line in **`js/changes.js`**, written the way a person would say it, and a
-  version bump at the top
+  version bump at the top. A version that has shipped does not change — new
+  lines go in a new version. CI fails a pull request that touches the app and
+  not this file; `no-changelog` in a commit message stands it down, for
+  changes that genuinely are invisible.
 - a word in **`VOTR_BUILD`** and **`NEEDS`** if the markup changed
 - a **suite**, or an assertion in an existing one — and break it on purpose
   once to watch it catch the thing
