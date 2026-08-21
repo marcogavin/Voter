@@ -2,72 +2,56 @@
   "rules": {
     "events": {
       "$eventId": {
+        ".read": "auth != null",
         "ownerUid": {
-          ".read": "auth != null",
           ".write": "auth != null && auth.token.firebase.sign_in_provider != 'anonymous' && newData.val() === auth.uid && (!data.exists() || data.val() === auth.uid)",
           ".validate": "newData.isString()"
         },
         "currentDeck": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isString() && newData.val().length <= 12"
         },
         "currentIndex": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber()"
         },
-        "currentQuestionKey": {
-          ".read": "auth != null",
-          ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
-          ".validate": "newData.isString() || newData.val() === null"
-        },
         "revealed": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isBoolean()"
         },
         "askedAt": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber()"
         },
         "pausedAt": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber()"
         },
         "seconds": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600"
         },
         "blanked": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isBoolean()"
         },
         "lang": {
-          ".read": "auth != null",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".validate": "newData.isString() && newData.val().length <= 5"
         },
         "players": {
-          ".read": "auth != null",
           "$playerUid": {
             ".write": "auth != null && $playerUid === auth.uid",
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
           }
         },
         "seen": {
-          ".read": "auth != null",
           "$playerUid": {
             ".write": "auth != null && $playerUid === auth.uid",
             ".validate": "newData.isNumber()"
           }
         },
         "decks": {
-          ".read": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$deckId": {
             "title": {
@@ -75,27 +59,19 @@
             },
             "createdAt": { ".validate": "newData.isNumber()" },
             "lastRunAt": { ".validate": "newData.isNumber()" },
-            "questionCount": {
-              ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val()",
-              ".validate": "newData.isNumber() && newData.val() >= 0"
-            },
             "likes": {
-              ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val()",
               ".write": "auth != null && newData.isNumber() && (!data.exists() ? newData.val() === 1 : newData.val() === data.val() + 1)",
               ".validate": "newData.isNumber() && newData.val() >= 0"
             },
             "questions": {
               "$questionId": {
                 "text": {
-                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
                   ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
                 },
                 "correct": {
-                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && (root.child('events').child($eventId).child('currentIndex').val() >= root.child('events').child($eventId).child('decks').child($deckId).child('questionCount').val() || ($questionId === root.child('events').child($eventId).child('currentQuestionKey').val() && root.child('events').child($eventId).child('revealed').val() === true))",
                   ".validate": "newData.isString() && newData.val().length <= 4"
                 },
                 "options": {
-                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
                   "$optionId": {
                     "label": {
                       ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
@@ -110,14 +86,12 @@
                   }
                 },
                 "voters": {
-                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && ($questionId === root.child('events').child($eventId).child('currentQuestionKey').val() || root.child('events').child($eventId).child('currentIndex').val() >= root.child('events').child($eventId).child('decks').child($deckId).child('questionCount').val())",
                   "$voterUid": {
                     ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                     ".validate": "newData.isString() && newData.val().length <= 4"
                   }
                 },
                 "times": {
-                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && ($questionId === root.child('events').child($eventId).child('currentQuestionKey').val() || root.child('events').child($eventId).child('currentIndex').val() >= root.child('events').child($eventId).child('decks').child($deckId).child('questionCount').val())",
                   "$voterUid": {
                     ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                     ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
@@ -134,7 +108,6 @@
           }
         },
         "questions": {
-          ".read": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           ".write": "auth != null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$questionId": {
             "text": {

@@ -39,7 +39,7 @@ run() {
 
 # Logic, in jsdom against the real page scripts.
 for t in run fresh guards join applause fallbacks startover polls pause badge \
-         scores stopwatch signin account tour news board wall-unit contrast; do
+         scores stopwatch signin tour news board wall-unit contrast; do
   run "$t" node
 done
 

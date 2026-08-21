@@ -119,7 +119,9 @@ function render(event) {
 
   // Blanked hides the question but keeps the host's place, so this looks the
   // same to the audience as nothing being up at all.
-  const question = event.blanked ? null : event.currentQuestion;
+  const question = event.blanked
+    ? null
+    : (event.questions[event.currentIndex] ?? null);
 
   // A poll ends in two screens: how it went, then what the room thought of
   // it. Which of them an index lands on is decided in one place, so the host
@@ -157,7 +159,7 @@ function render(event) {
   }
 
   questionEl.hidden = false;
-  drawProgress(event.currentIndex + 1, event.questionCount);
+  drawProgress(event.currentIndex + 1, event.questions.length);
   questionEl.textContent = question.text;
 
   if (question.id !== shownQuestionId) {
@@ -276,7 +278,7 @@ function drawTime() {
 function startTicking() {
   if (ticker) return;
   ticker = setInterval(() => {
-    const question = latest?.currentQuestion ?? null;
+    const question = latest?.questions[latest.currentIndex] ?? null;
     if (!question) return stopTicking();
 
     drawTime();
@@ -603,7 +605,9 @@ function drawStatus() {
 
 /** True while a question is on screen and this phone could still answer it. */
 function canVote() {
-  const question = latest?.blanked ? null : (latest?.currentQuestion ?? null);
+  const question = latest?.blanked
+    ? null
+    : (latest?.questions[latest.currentIndex] ?? null);
 
   if (!question || latest.revealed) return false;
   if (secondsLeft() === 0) return false;
