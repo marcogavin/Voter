@@ -1,0 +1,14 @@
+{
+  "name": "votr-rules-test",
+  "private": true,
+  "type": "module",
+  "description": "Runs js/sync.js against a real database.rules.json in a real Realtime Database emulator. See run.sh. Not part of npm test in test/ — it needs a JVM, which the fast suite deliberately never requires.",
+  "scripts": {
+    "test": "sh run.sh"
+  },
+  "devDependencies": {
+    "firebase": "^12.0.0",
+    "firebase-admin": "^13.0.0",
+    "firebase-tools": "^15.0.0"
+  }
+}
