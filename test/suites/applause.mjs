@@ -78,5 +78,10 @@ const many = hearts();
 snap(23 + 200);
 ok("is a burst, not two hundred hearts", hearts() - many === 12);
 
+console.log("the way out, beside the heart");
+const feedback = document.querySelector(".feedback-link");
+ok("a quiet link, not another button", feedback.textContent === "Send feedback our way");
+ok("straight to an inbox, not a form nobody built", feedback.getAttribute("href").startsWith("mailto:"));
+
 console.log(failed ? `\n${failed} FAILED` : "\nall passed");
 process.exit(failed ? 1 : 0);

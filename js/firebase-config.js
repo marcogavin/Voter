@@ -35,6 +35,11 @@ export const SECONDS_CHOICES = [0, 10, 15, 20, 30, 45, 60, 90, 120];
 // Bump this if you ever need a newer release.
 export const FIREBASE_VERSION = "12.17.1";
 
+// Where the closing screen's feedback link goes. It's a mailto:, so it's
+// public the moment this ships — worth a dedicated address rather than a
+// personal one, since anyone can view-source it.
+export const FEEDBACK_EMAIL = "marcogavin+votr@gmail.com";
+
 // True once the placeholders above have actually been replaced.
 export function isConfigured() {
   return !Object.values(firebaseConfig).some(

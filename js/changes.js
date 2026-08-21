@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "2.1",
+    on: "2026-08-21",
+    lines: [
+      "A \"Send feedback our way\" link on the closing screen, beside the heart.",
+    ],
+  },
+  {
     version: "2.0",
     on: "2026-08-21",
     lines: [
