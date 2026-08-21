@@ -44,3 +44,4 @@ export function deleteDeck() { return Promise.resolve(); }
 export function setCurrentDeck() { return Promise.resolve(); }
 export function resetVotes() { return Promise.resolve(); }
 export function resetAllVotes() { return Promise.resolve(); }
+export function clearRoom() { return Promise.resolve(); }

@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "1.8",
+    on: "2026-08-21",
+    lines: [
+      "A Clear the room button in Settings — disconnects everyone in the room so old sessions and devices stop counting as present, without touching the poll or its votes.",
+    ],
+  },
+  {
     version: "1.7",
     on: "2026-08-21",
     lines: [

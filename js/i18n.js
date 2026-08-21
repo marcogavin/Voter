@@ -72,6 +72,8 @@ const strings = {
     timeLimit: "Time limit",
     noTimeLimit: "No time limit",
     secondsOption: "{n} seconds",
+    clearRoom: "Clear the room",
+    clearRoomWarn: "Clear the room? The {n} people here now will be disconnected and can rejoin anytime.",
     questionPlaceholder: "Enter your question here",
     optionsPlaceholder: "Answer option 1\nAnswer option 2\nAnswer option 3",
 
@@ -176,6 +178,7 @@ const strings = {
     reset: "Reset",
     hidden: "Hidden",
     shown: "Shown",
+    cleared: "Cleared",
   },
 
   pt: {
@@ -230,6 +233,8 @@ const strings = {
     timeLimit: "Tempo limite",
     noTimeLimit: "Sem tempo limite",
     secondsOption: "{n} segundos",
+    clearRoom: "Esvaziar a sala",
+    clearRoomWarn: "Esvaziar a sala? As {n} pessoas aqui agora serão desligadas e podem voltar a entrar quando quiserem.",
     questionPlaceholder: "Escreve aqui a tua pergunta",
     optionsPlaceholder: "Opção de resposta 1\nOpção de resposta 2\nOpção de resposta 3",
 
@@ -334,6 +339,7 @@ const strings = {
     reset: "Limpa",
     hidden: "Oculto",
     shown: "Visível",
+    cleared: "Esvaziada",
   },
 
   es: {
@@ -388,6 +394,8 @@ const strings = {
     timeLimit: "Tiempo límite",
     noTimeLimit: "Sin tiempo límite",
     secondsOption: "{n} segundos",
+    clearRoom: "Vaciar la sala",
+    clearRoomWarn: "¿Vaciar la sala? Las {n} personas que están aquí ahora se desconectarán y pueden volver a entrar cuando quieran.",
     questionPlaceholder: "Escribe aquí tu pregunta",
     optionsPlaceholder: "Opción de respuesta 1\nOpción de respuesta 2\nOpción de respuesta 3",
 
@@ -492,6 +500,7 @@ const strings = {
     reset: "Borrada",
     hidden: "Oculta",
     shown: "Visible",
+    cleared: "Vaciada",
   },
 
   fr: {
@@ -546,6 +555,8 @@ const strings = {
     timeLimit: "Temps limite",
     noTimeLimit: "Pas de limite",
     secondsOption: "{n} secondes",
+    clearRoom: "Vider la salle",
+    clearRoomWarn: "Vider la salle ? Les {n} personnes présentes seront déconnectées et pourront revenir quand elles veulent.",
     questionPlaceholder: "Écris ta question ici",
     optionsPlaceholder: "Option de réponse 1\nOption de réponse 2\nOption de réponse 3",
 
@@ -650,6 +661,7 @@ const strings = {
     reset: "Effacé",
     hidden: "Masqué",
     shown: "Affiché",
+    cleared: "Vidée",
   },
 
   de: {
@@ -704,6 +716,8 @@ const strings = {
     timeLimit: "Zeitlimit",
     noTimeLimit: "Kein Zeitlimit",
     secondsOption: "{n} Sekunden",
+    clearRoom: "Raum leeren",
+    clearRoomWarn: "Raum leeren? Die {n} aktuell anwesenden Personen werden getrennt und können jederzeit wieder beitreten.",
     questionPlaceholder: "Gib hier deine Frage ein",
     optionsPlaceholder: "Antwortoption 1\nAntwortoption 2\nAntwortoption 3",
 
@@ -808,6 +822,7 @@ const strings = {
     reset: "Zurückgesetzt",
     hidden: "Ausgeblendet",
     shown: "Sichtbar",
+    cleared: "Geleert",
   },
 };
 

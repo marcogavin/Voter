@@ -51,5 +51,6 @@ export function deleteDeck(d) { return note("deleteDeck", d); }
 export function setCurrentDeck(d) { return note("setCurrentDeck", d); }
 export function resetVotes(q) { return note("resetVotes", q.id); }
 export function resetAllVotes(qs) { return note("resetAllVotes", qs.map((q) => q.id)); }
+export function clearRoom() { return note("clearRoom"); }
 export function getUid() { return state.uid; }
 export function serverNow() { return Date.now(); }

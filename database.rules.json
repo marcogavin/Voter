@@ -54,6 +54,7 @@
         },
         "players": {
           ".read": "auth != null",
+          ".write": "auth != null && newData.val() === null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$playerUid": {
             ".write": "auth != null && $playerUid === auth.uid",
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 24"
@@ -61,6 +62,7 @@
         },
         "seen": {
           ".read": "auth != null",
+          ".write": "auth != null && newData.val() === null && (!data.parent().child('ownerUid').exists() || data.parent().child('ownerUid').val() === auth.uid)",
           "$playerUid": {
             ".write": "auth != null && $playerUid === auth.uid",
             ".validate": "newData.isNumber()"
