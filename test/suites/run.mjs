@@ -67,7 +67,8 @@ eq("votes go to the live survey", Object.keys(captured),
    ["decks/d001/questions/q000/options/b/votes", "decks/d001/questions/q000/voters/host-uid"]);
 
 await sync.saveQuestions([{ text: "x", correct: null, options: [{ label: "y", votes: 0 }], voters: {} }]);
-eq("no migration writes once migrated", Object.keys(captured), ["ownerUid", "decks/d001/questions"]);
+eq("no migration writes once migrated", Object.keys(captured),
+   ["ownerUid", "decks/d001/questions", "decks/d001/questionCount"]);
 
 await sync.resetVotes({ id: "q000", options: [{ id: "a" }, { id: "b" }] });
 eq("reset targets the live survey, times and all", Object.keys(captured), [
@@ -228,6 +229,49 @@ const withSeen = sync.__normalise({ ownerUid: "host-uid", players: { u1: "Ana" }
 eq("and it is read back for everyone", withSeen.seen, { u1: 1755689400000 });
 eq("an event with none reads as an empty room",
    sync.__normalise({ decks: { d000: {} } }).seen, {});
+
+/* 13 — what the rules need, so a device isn't trusted to read ahead */
+console.log("\nthe current question, by key rather than by place in line");
+db.update = (ref, payload) => { captured = payload; return Promise.resolve(); };
+
+await sync.setCurrentIndex(2);
+eq("the key rides with the index", captured.currentQuestionKey, "q002");
+await sync.setCurrentIndex(-1);
+eq("and clears with it", captured.currentQuestionKey, null);
+
+sync.__normalise({ ownerUid: "host-uid", currentDeck: "d000",
+  decks: { d000: { title: "Quiz", questions: {
+    q000: q("one"), q001: q("two"), q002: q("three") } } } });
+await sync.saveQuestions([
+  { text: "a", correct: null, options: [{ label: "x", votes: 0 }] },
+  { text: "b", correct: null, options: [{ label: "x", votes: 0 }] },
+  { text: "c", correct: null, options: [{ label: "x", votes: 0 }] },
+]);
+eq("and the deck's total is saved alongside it, for the same reason",
+   captured["decks/d000/questionCount"], 3);
+
+// This is what a device actually gets back once the rules only grant it the
+// question it's looking at: everything else in the deck is simply absent,
+// not merely empty. `readQuestions` on that partial map still has to find
+// the *right* one — indexing into it by array position, the way this worked
+// before, would reach for position 2 of a one-item array and find nothing.
+ev = sync.__normalise({
+  ownerUid: "host-uid", currentDeck: "d000", currentIndex: 2,
+  decks: { d000: {
+    title: "Quiz", questionCount: 5,
+    questions: { q002: q("the one being asked") },
+  } },
+});
+eq("the current question is still found, by its key",
+   ev.currentQuestion?.text, "the one being asked");
+eq("even though the array a device was handed holds only that one",
+   ev.questions.length, 1);
+eq("the total comes from the deck's own count, not from counting what arrived",
+   ev.questionCount, 5);
+
+ev = sync.__normalise({ ownerUid: "host-uid", currentDeck: "d000", currentIndex: -1,
+  decks: { d000: { title: "Quiz", questionCount: 0, questions: {} } } });
+eq("nothing on screen means no current question", ev.currentQuestion, null);
 
 console.log(failures ? `\n${failures} FAILED` : "\nall passed");
 process.exit(failures ? 1 : 0);

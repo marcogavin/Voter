@@ -205,7 +205,7 @@ function showJoin(event) {
  * and watching it move is most of the point, so that one counts live.
  */
 function showQuestion(event) {
-  const question = event.questions[event.currentIndex];
+  const question = event.currentQuestion;
   const scorable = question.correct !== null;
   const live = !scorable || event.revealed || secondsLeft() === 0;
 
@@ -273,7 +273,7 @@ function showQuestion(event) {
   foot({
     progress: t("questionProgress", {
       n: event.currentIndex + 1,
-      of: event.questions.length,
+      of: event.questionCount,
     }),
     clock: running,
   });
@@ -421,7 +421,7 @@ function drawTime() {
 function startTicking() {
   if (ticker) return;
   ticker = setInterval(() => {
-    if (!latest?.questions[latest.currentIndex]) return stopTicking();
+    if (!latest?.currentQuestion) return stopTicking();
     drawTime();
     // Time running out is what puts the shares up on a quiz question, and
     // nothing arrives from the database to say so.
