@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "1.7",
+    on: "2026-08-21",
+    lines: [
+      "A phone in the room can no longer read a question, or its right answer, ahead of the host putting it up — only the one on screen, and the answer only once it's revealed or the run is over.",
+    ],
+  },
+  {
     version: "1.6",
     on: "2026-08-21",
     lines: [

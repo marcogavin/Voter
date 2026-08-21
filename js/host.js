@@ -564,7 +564,7 @@ function drawRun() {
   // `seconds` rides along because the leaderboard reads it: it is what an
   // unanswered question costs, and without it the host's copy of the board
   // would quietly be the untimed one while the room saw the times.
-  const event = { questions, currentIndex, players, seconds };
+  const event = { questions, questionCount: questions.length, currentIndex, players, seconds };
   const screen = screenAt(event);
   const atEnd = screen === "scores" || screen === "ending";
 
@@ -1210,7 +1210,7 @@ async function reveal(show) {
 async function go(index) {
   // Past the last screen there is means nothing on screen, which is where a
   // run starts and where Start over puts it back.
-  const last = lastIndex({ questions, currentIndex, players });
+  const last = lastIndex({ questions, questionCount: questions.length, currentIndex, players });
   const target = index < 0 || index > last ? -1 : index;
   // Going from nothing on screen to something is a run beginning, which is
   // what the picker means by "last run".
