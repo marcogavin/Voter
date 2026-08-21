@@ -170,7 +170,7 @@ export function clockText(ms) {
  * then the heart.
  */
 export function screenAt(event) {
-  const count = event?.questions?.length ?? 0;
+  const count = event?.questionCount ?? 0;
   const index = event?.currentIndex ?? -1;
 
   if (!count || index < 0) return "none";
@@ -182,7 +182,7 @@ export function screenAt(event) {
 
 /** The furthest the host can move forward: the last screen there is. */
 export function lastIndex(event) {
-  const count = event?.questions?.length ?? 0;
+  const count = event?.questionCount ?? 0;
   if (!count) return -1;
   return isScorable(event) ? count + 1 : count;
 }
