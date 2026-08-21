@@ -6,7 +6,22 @@ export const state = { calls: [], push: null, anonymous: false, uid: "host-uid" 
 const note = (name, arg) => { state.calls.push({ name, arg }); return Promise.resolve(); };
 
 export function connect() { return Promise.resolve(); }
-export function onEventChange(cb) { state.push = cb; }
+// A suite pushes a plain fixture — a `questions` array and a `currentIndex` —
+// the way the app used to receive the whole deck. The real js/sync.js now
+// derives `currentQuestion`/`questionCount` instead of handing over the array
+// to be indexed; withDerived() mirrors that so existing fixtures don't all
+// need to grow the same two fields by hand. See the comment at the top of
+// js/sync.js for why those fields exist at all.
+export function onEventChange(cb) { state.push = (e) => cb(withDerived(e)); }
+function withDerived(event) {
+  if (!event) return event;
+  const questions = event.questions ?? [];
+  return {
+    questionCount: questions.length,
+    currentQuestion: questions[event.currentIndex] ?? null,
+    ...event,
+  };
+}
 export function saveQuestions(q) { return note("saveQuestions", q); }
 export function setCurrentIndex(i, options = {}) {
   state.calls.push({ name: "setCurrentIndex", arg: i, starting: options.starting === true });
@@ -36,5 +51,6 @@ export function deleteDeck(d) { return note("deleteDeck", d); }
 export function setCurrentDeck(d) { return note("setCurrentDeck", d); }
 export function resetVotes(q) { return note("resetVotes", q.id); }
 export function resetAllVotes(qs) { return note("resetAllVotes", qs.map((q) => q.id)); }
+export function clearRoom() { return note("clearRoom"); }
 export function getUid() { return state.uid; }
 export function serverNow() { return Date.now(); }

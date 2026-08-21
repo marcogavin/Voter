@@ -10,9 +10,14 @@ things that have already cost a round trip at least once.
 cd test && npm install && npx playwright install chromium && npm test
 ```
 
-Twenty-four suites, about 380 assertions. They run against the files that
+Twenty-five suites, about 390 assertions. They run against the files that
 ship, not against copies. If they are not green before you start, find out
 why before you write anything.
+
+`database.rules.json` has its own suite, `test/rules/`, against a real
+Firebase emulator — not part of the above, since it needs a JVM. See
+`test/README.md`. Run it whenever `database.rules.json` or `js/sync.js`'s
+`onEventChange` changes, and before republishing rules to the console.
 
 ## The shape
 

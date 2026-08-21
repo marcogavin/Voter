@@ -5,20 +5,23 @@
 //
 // Stored shape:
 //   /events/{EVENT_ID}
-//     ownerUid:     the device allowed to author questions and drive the event
-//     currentDeck:  which poll is live; Setup edits it and Run presents it
-//     currentIndex: which question of that poll is on screen, or -1 for none
-//     revealed:     true once the current question's answer is showing, which
-//                   also closes voting — enforced in the rules, not just here
-//     askedAt:      when the current question went up, on the server's clock,
-//                   so every device counts down from the same instant
-//     seconds:      how long a question stays open, or 0 for no limit
-//     players/      { uid: "Marco" } — who is in the room, by their own name
-//     seen/         { uid: 1755689400000 } — when that phone last showed signs
-//                   of life, so "the room" can mean the people in it rather
-//                   than everybody who has ever opened the page
+//     ownerUid:         the device allowed to author questions and drive the event
+//     currentDeck:      which poll is live; Setup edits it and Run presents it
+//     currentIndex:     which question of that poll is on screen, or -1 for none
+//     currentQuestionKey: that same question's key ("q001"), kept alongside the
+//                       index because the rules can't compute one from the
+//                       other — see below
+//     revealed:         true once the current question's answer is showing, which
+//                       also closes voting — enforced in the rules, not just here
+//     askedAt:          when the current question went up, on the server's clock,
+//                       so every device counts down from the same instant
+//     seconds:          how long a question stays open, or 0 for no limit
+//     players/          { uid: "Marco" } — who is in the room, by their own name
+//     seen/             { uid: 1755689400000 } — when that phone last showed signs
+//                       of life, so "the room" can mean the people in it rather
+//                       than everybody who has ever opened the page
 //     decks/
-//       d000: { title: "Team offsite", likes: 12, questions/
+//       d000: { title: "Team offsite", likes: 12, questionCount: 5, questions/
 //                 q000: { text, correct: "b", options: { a: {label, votes} },
 //                         voters: { uid: "a" }, times: { uid: 4200 } } }
 //
@@ -41,6 +44,18 @@
 // decks node at all. That layout is still read — see readDecks — and the first
 // write that touches poll structure moves it across. Nothing has to be
 // migrated by hand, and nothing breaks in the meantime.
+//
+// `currentQuestionKey` and `decks/{id}/questionCount` exist for the rules, not
+// for this file: the database.rules.json a browser could otherwise use to
+// read the whole event grants a question's `text`/`options` only to whoever
+// is looking at it, and its `correct` only once it's revealed or the run is
+// over — "which question is current" and "how many are there" have to be
+// facts the rules can check without counting or indexing, which they can't
+// do. That means the questions a client gets back from onEventChange are
+// whatever it's allowed to see, not necessarily every question in the deck —
+// readQuestions() below doesn't need to know that; it just reads what
+// arrived. See normalise() for how the current one is found by key instead of
+// by array position.
 
 import {
   firebaseConfig,
@@ -66,6 +81,7 @@ export const NAME_MAX = 24;
 let database = null; // the Firebase database module namespace
 let authApi = null; // the Firebase auth module namespace
 let auth = null;
+let db = null; // the database instance itself, for building refs beyond eventRef
 let eventRef = null;
 let uid = null;
 let clockOffset = 0;
@@ -150,7 +166,7 @@ export async function connect() {
 
   uid = user.uid;
 
-  const db = dbModule.getDatabase(app);
+  db = dbModule.getDatabase(app);
   eventRef = dbModule.ref(db, `events/${EVENT_ID}`);
 
   // Phone clocks are wrong by seconds or minutes. Firebase reports how far
@@ -245,6 +261,12 @@ export async function signOutHost() {
   location.reload();
 }
 
+/** Every field the rules grant to anyone signed in, unconditionally. */
+const PUBLIC_FIELDS = [
+  "ownerUid", "currentDeck", "currentIndex", "currentQuestionKey",
+  "revealed", "askedAt", "pausedAt", "seconds", "blanked", "lang",
+];
+
 /**
  * Calls `callback(event)` immediately with the current event, then again every
  * time anyone changes it. The event is normalised for the UI:
@@ -252,12 +274,142 @@ export async function signOutHost() {
  *   { ownerUid, currentIndex, questions: [{ id, text, options: [...], voters }] }
  *
  * `questions` is an array in running order. Returns an unsubscribe function.
+ *
+ * This used to be one onValue() at the event's own root. It can't be any
+ * more: the rules don't grant a blanket read there, on purpose — see the
+ * comment at the top of this file — and asking for a path with no read of
+ * its own doesn't hand back a filtered view of what's underneath. It's
+ * refused outright, for everyone, owner included. Confirmed against a real
+ * Realtime Database emulator, not assumed: that assumption is exactly what
+ * broke this the first time.
+ *
+ * So this listens at every path the rules actually grant something at,
+ * separately, and assembles the pieces into the same shape normalise() has
+ * always read. Two of those groups have to be torn down and rebuilt rather
+ * than left running, also confirmed against the emulator: a listener that's
+ * ever been refused stays refused even once the thing it depended on
+ * changes, so anywhere a grant depends on another field's value, the fix is
+ * to reconnect, not to wait.
  */
 export function onEventChange(callback) {
   requireConnection();
-  return database.onValue(eventRef, (snapshot) =>
-    callback(normalise(snapshot.val())),
-  );
+
+  const raw = { players: {}, seen: {} };
+  const staticStops = [];
+
+  let ownerGen = 0;
+  let ownerStops = [];
+  let ownerDecks = null; // the owner's full view of `decks`, or null if refused
+  let ownerLegacy = null; // same, for the pre-poll top-level `questions`
+  let deckMeta = {}; // { questionCount, likes } for the live deck, from the narrow reads
+
+  let questionGen = 0;
+  let questionStops = [];
+  let questionsView = {}; // { [id]: { text?, options?, correct?, voters?, times? } }
+
+  let lastOwnerKey = null; // `${ownerUid}|${currentDeck}`
+  let lastQuestionKey = null; // `${currentDeck}|${currentIndex}|${count}|${revealed}`
+
+  const path = `events/${EVENT_ID}`;
+  const at = (p) => database.ref(db, `${path}/${p}`);
+  const stopAll = (list) => { list.forEach((stop) => stop()); list.length = 0; };
+
+  const emit = () => {
+    const deckId = raw.currentDeck;
+    const decks = {};
+    if (ownerDecks) {
+      Object.assign(decks, ownerDecks);
+    } else if (deckId) {
+      decks[deckId] = { questionCount: deckMeta.questionCount, likes: deckMeta.likes, questions: questionsView };
+    }
+    // normalise() tells a never-migrated event apart from a migrated one by
+    // whether `decks` exists at all — an empty object here would read as
+    // "migrated, with nothing in it" instead of "not migrated yet".
+    const hasDecks = Object.keys(decks).length > 0;
+    callback(normalise({ ...raw, decks: hasDecks ? decks : undefined, questions: ownerLegacy }));
+  };
+
+  function effectiveCount() {
+    const deckId = raw.currentDeck;
+    if (ownerDecks && deckId && ownerDecks[deckId]) return ownerDecks[deckId].questionCount ?? 0;
+    return deckMeta.questionCount ?? 0;
+  }
+
+  /** Rebuilt whenever ownerUid or currentDeck changes — either can flip whether the owner reads are granted. */
+  function rebuildOwner() {
+    const key = `${raw.ownerUid}|${raw.currentDeck}`;
+    if (key === lastOwnerKey) return;
+    lastOwnerKey = key;
+    stopAll(ownerStops);
+    const gen = ++ownerGen;
+    ownerDecks = null;
+    ownerLegacy = null;
+    deckMeta = {};
+    const guarded = (assign) => (snap) => { if (gen === ownerGen) { assign(snap.val()); rebuildQuestions(); emit(); } };
+
+    ownerStops.push(database.onValue(at("decks"), guarded((v) => { ownerDecks = v; }), guarded(() => { ownerDecks = null; })));
+    ownerStops.push(database.onValue(at("questions"), guarded((v) => { ownerLegacy = v; }), guarded(() => { ownerLegacy = null; })));
+
+    const deckId = raw.currentDeck;
+    if (!deckId) { rebuildQuestions(); return emit(); }
+    ownerStops.push(database.onValue(at(`decks/${deckId}/questionCount`),
+      guarded((v) => { deckMeta.questionCount = v; }), guarded(() => { deckMeta.questionCount = undefined; })));
+    ownerStops.push(database.onValue(at(`decks/${deckId}/likes`),
+      guarded((v) => { deckMeta.likes = v; }), guarded(() => { deckMeta.likes = undefined; })));
+  }
+
+  /**
+   * Rebuilt whenever currentDeck, currentIndex, the deck's questionCount, or
+   * revealed changes — any of those can change which question's own paths
+   * are the right ones to be listening at, or whether `correct` is granted.
+   */
+  function rebuildQuestions() {
+    const count = effectiveCount();
+    const key = `${raw.currentDeck}|${raw.currentIndex}|${count}|${raw.revealed}`;
+    if (key === lastQuestionKey) return;
+    lastQuestionKey = key;
+    stopAll(questionStops);
+    const gen = ++questionGen;
+    questionsView = {};
+    const deckId = raw.currentDeck;
+    const index = typeof raw.currentIndex === "number" ? raw.currentIndex : -1;
+    if (!deckId || index < 0) return emit();
+
+    // Mid-run, only the one question on screen. Once the run has moved past
+    // every question, every one of them is fair game — that's what the
+    // standings need, and it's also what the rules grant at that point.
+    const finished = count > 0 && index >= count;
+    const keys = finished
+      ? Array.from({ length: count }, (_, i) => questionKey(i))
+      : [questionKey(index)];
+    const fields = finished
+      ? ["correct", "voters", "times"]
+      : ["text", "options", "correct", "voters", "times"];
+
+    for (const qid of keys) {
+      questionsView[qid] = {};
+      for (const field of fields) {
+        questionStops.push(database.onValue(at(`decks/${deckId}/questions/${qid}/${field}`),
+          (snap) => { if (gen === questionGen) { questionsView[qid][field] = snap.val(); emit(); } },
+          () => { if (gen === questionGen) { questionsView[qid][field] = undefined; emit(); } },
+        ));
+      }
+    }
+    emit();
+  }
+
+  for (const field of PUBLIC_FIELDS) {
+    staticStops.push(database.onValue(at(field), (snap) => {
+      raw[field] = snap.val();
+      if (field === "ownerUid" || field === "currentDeck") rebuildOwner();
+      if (field === "currentIndex" || field === "revealed") rebuildQuestions();
+      emit();
+    }));
+  }
+  staticStops.push(database.onValue(at("players"), (snap) => { raw.players = snap.val() || {}; emit(); }));
+  staticStops.push(database.onValue(at("seen"), (snap) => { raw.seen = snap.val() || {}; emit(); }));
+
+  return () => { stopAll(staticStops); stopAll(ownerStops); stopAll(questionStops); };
 }
 
 function normalise(raw) {
@@ -276,9 +428,19 @@ function normalise(raw) {
   // Votes have to go where the counters actually are.
   questionsPath = unmigrated ? "questions" : `decks/${deckId}/questions`;
 
+  const currentIndex =
+    typeof raw?.currentIndex === "number" ? raw.currentIndex : -1;
+  // The rules gate a question's own content on this key, not on currentIndex —
+  // see the comment at the top of this file — so the current question has to
+  // be found by asking for it directly rather than by indexing into whatever
+  // of the deck came back. A device that's only allowed to see this one
+  // question still gets it; one only allowed to see none, correctly, doesn't.
+  const currentKey = currentIndex >= 0 ? questionKey(currentIndex) : null;
+  const currentRaw = currentKey ? deck?.questions?.[currentKey] : null;
+
   return {
     ownerUid: raw?.ownerUid ?? null,
-    currentIndex: typeof raw?.currentIndex === "number" ? raw.currentIndex : -1,
+    currentIndex,
     revealed: raw?.revealed === true,
     askedAt: typeof raw?.askedAt === "number" ? raw.askedAt : null,
     // Set while the screen is hidden, and what the clock counts up to instead
@@ -303,15 +465,42 @@ function normalise(raw) {
     decks: entries.map(([id, entry]) => ({
       id,
       title: typeof entry?.title === "string" ? entry.title : "",
-      count: Object.keys(entry?.questions || {}).length,
+      count: deckCount(entry),
       // Both are null on a poll written before they existed, which the
       // picker says nothing about rather than inventing a date for.
       createdAt: typeof entry?.createdAt === "number" ? entry.createdAt : null,
       lastRunAt: typeof entry?.lastRunAt === "number" ? entry.lastRunAt : null,
     })),
     likes: typeof deck?.likes === "number" ? deck.likes : 0,
+    // How many questions the live poll has, which "Question 3 of 8" needs and
+    // an audience device otherwise has no way to know — the rules let it see
+    // one question at a time, never the whole deck it could count instead.
+    questionCount: deckCount(deck),
+    // Whichever questions this device is currently allowed to see: for the
+    // owner that's the whole deck; for everyone else, per the rules, it's the
+    // current question alone, and every one already stepped past once the run
+    // has ended and the standings are being worked out. Read the shared
+    // comment at the top of this file before changing what depends on this
+    // being a *subset* rather than the full, position-indexed list it used
+    // to be.
     questions: readQuestions(deck?.questions),
+    // The one question on screen right now, found by key rather than by
+    // indexing into `questions` above — which, for anyone but the owner, is
+    // usually not the full deck. null while nothing is up.
+    currentQuestion: currentRaw ? readQuestion(currentKey, currentRaw) : null,
   };
+}
+
+/**
+ * How many questions a deck has. The stored count, once it exists — it's the
+ * only thing a device that can't read every question still has to go on —
+ * falling back to actually counting for a deck saved before this existed, or
+ * for the owner, who can always count for real.
+ */
+function deckCount(entry) {
+  return typeof entry?.questionCount === "number"
+    ? entry.questionCount
+    : Object.keys(entry?.questions || {}).length;
 }
 
 /**
@@ -332,20 +521,30 @@ function readDecks(raw) {
 function readQuestions(stored) {
   return Object.entries(stored || {})
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([id, question]) => ({
-      id,
-      text: question.text || "",
-      correct: question.correct ?? null,
-      voters: question.voters || {},
-      times: question.times || {},
-      options: Object.entries(question.options || {})
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([optionId, option]) => ({
-          id: optionId,
-          label: option.label || "",
-          votes: option.votes || 0,
-        })),
-    }));
+    .map(([id, question]) => readQuestion(id, question));
+}
+
+/**
+ * One question, shaped for the UI. Split out from readQuestions() so the
+ * current one can be read straight off its key — see normalise() — without
+ * going through the whole deck, which for an audience device is usually the
+ * only one the rules have let through anyway.
+ */
+function readQuestion(id, raw) {
+  return {
+    id,
+    text: raw.text || "",
+    correct: raw.correct ?? null,
+    voters: raw.voters || {},
+    times: raw.times || {},
+    options: Object.entries(raw.options || {})
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([optionId, option]) => ({
+        id: optionId,
+        label: option.label || "",
+        votes: option.votes || 0,
+      })),
+  };
 }
 
 /**
@@ -410,6 +609,9 @@ export function saveQuestions(questions) {
     // questions being saved now are the ones that should survive.
     ...migration(),
     [`decks/${liveDeck}/questions`]: Object.keys(stored).length ? stored : null,
+    // What the rules let a non-owner device know instead of the deck it can't
+    // read — see the comment at the top of this file.
+    [`decks/${liveDeck}/questionCount`]: questions.length,
   });
 }
 
@@ -482,6 +684,7 @@ function liveState(deckId) {
   return {
     currentDeck: deckId,
     currentIndex: -1,
+    currentQuestionKey: null,
     revealed: false,
     blanked: false,
     askedAt: database.serverTimestamp(),
@@ -508,6 +711,10 @@ export function setCurrentIndex(index, { starting = false } = {}) {
   return database.update(eventRef, {
     ownerUid: uid,
     currentIndex: index,
+    // What the rules key a question's visibility on — see the comment at the
+    // top of this file. Deterministic from the index, so there's nothing to
+    // pass in and nothing that can drift from it.
+    currentQuestionKey: index >= 0 ? questionKey(index) : null,
     revealed: false,
     // stamped by the server, so the countdown starts from one shared instant
     askedAt: database.serverTimestamp(),
@@ -615,6 +822,22 @@ export function touch() {
     .catch((error) => {
       console.error("Couldn't report being here:", error);
     });
+}
+
+/**
+ * Removes everyone from the room — every name, every "still here" stamp —
+ * without touching a question, a vote, or a poll. Owner-only, and a wipe or
+ * nothing: the rules only allow this write when it's setting the whole node
+ * to null, which is what stops it turning into a way to rewrite someone
+ * else's name.
+ */
+export function clearRoom() {
+  requireConnection();
+  return database.update(eventRef, {
+    ownerUid: uid,
+    players: null,
+    seen: null,
+  });
 }
 
 /**

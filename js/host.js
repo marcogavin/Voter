@@ -30,6 +30,7 @@ import {
   setCurrentDeck,
   resetVotes,
   resetAllVotes,
+  clearRoom,
   getUid,
   serverNow,
   DECK_MAX,
@@ -64,7 +65,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version",
+  "version", "clearroom",
 ];
 
 const els = {
@@ -99,6 +100,7 @@ const els = {
   setupEmpty: document.getElementById("setup-empty"),
   language: document.getElementById("language"),
   seconds: document.getElementById("seconds"),
+  clearRoom: document.getElementById("clear-room"),
 
   runDeck: document.getElementById("run-deck"),
   runQuestion: document.getElementById("run-question"),
@@ -201,6 +203,11 @@ async function start() {
     // snapshot lands.
     signedIn = !isAnonymous();
     applyViews();
+    // applyViews() is what un-hides the account line; without this it opens
+    // empty and only gets its text from render() once the first snapshot
+    // lands, which is a second or so of a blank line where a name is about
+    // to appear. quiet() is the same text render() would write.
+    quiet();
 
     // The sign-in tab may never manage to tell this one that it worked —
     // iPadOS opens it as a separate tab and the message home doesn't always
@@ -295,6 +302,8 @@ function wireUp() {
 
   fillSeconds();
   els.seconds.addEventListener("change", onSecondsChange);
+
+  els.clearRoom.addEventListener("click", onClearRoom);
 
   els.qr.addEventListener("click", showQr);
   els.tour.addEventListener("click", () => showAround());
@@ -465,6 +474,10 @@ function render(event) {
   els.seconds.value = String(seconds);
   els.seconds.disabled = !isOwner;
 
+  // Nothing to clear if nobody's joined yet.
+  els.clearRoom.disabled = !isOwner || !Object.keys(players).length;
+  nameButton(els.clearRoom, t("clearRoom"));
+
   drawPolls();
   els.deckNew.disabled = !isOwner || decks.length >= DECK_MAX;
   nameButton(els.signout, t("signOut"));
@@ -559,7 +572,7 @@ function drawRun() {
   // `seconds` rides along because the leaderboard reads it: it is what an
   // unanswered question costs, and without it the host's copy of the board
   // would quietly be the untimed one while the room saw the times.
-  const event = { questions, currentIndex, players, seconds };
+  const event = localEvent();
   const screen = screenAt(event);
   const atEnd = screen === "scores" || screen === "ending";
 
@@ -890,6 +903,17 @@ function liveDeck() {
   return decks.find((deck) => deck.id === currentDeck) ?? null;
 }
 
+/**
+ * scores.js's screenAt()/lastIndex() take an event shaped like the real one,
+ * but the host never has a full one lying around between snapshots — it has
+ * these fields as their own module-level variables. Built in one place: two
+ * different callers reconstructing this by hand is how the same field got
+ * left out of one of them and not the other the last time this needed fixing.
+ */
+function localEvent() {
+  return { questions, questionCount: questions.length, currentIndex, players, seconds };
+}
+
 async function openDeck(id) {
   if (id === currentDeck) return closePollSheet();
 
@@ -1205,7 +1229,7 @@ async function reveal(show) {
 async function go(index) {
   // Past the last screen there is means nothing on screen, which is where a
   // run starts and where Start over puts it back.
-  const last = lastIndex({ questions, currentIndex, players });
+  const last = lastIndex(localEvent());
   const target = index < 0 || index > last ? -1 : index;
   // Going from nothing on screen to something is a run beginning, which is
   // what the picker means by "last run".
@@ -1463,6 +1487,25 @@ async function onStartOver() {
   }
 
   await go(-1);
+}
+
+/**
+ * Removes everyone from the room's leaderboard and vote count, for a fresh
+ * audience or after testing — never asked without something to lose, and
+ * never touching a question, a vote, or which poll is live.
+ */
+async function onClearRoom() {
+  const n = Object.keys(players).length;
+  if (!n) return;
+  if (!(await ask({ title: t("clearRoomWarn", { n }) }))) return;
+
+  try {
+    await clearRoom();
+    flash("cleared");
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+  }
 }
 
 /** Every answer given in this poll, across all its questions. */

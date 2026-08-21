@@ -51,7 +51,7 @@ sed -e "s|from \"./firebase-config.js\"|from \"../lib/stubs/sync-config.js\"|" \
     "$R/js/sync.js" > "$OUT/sync.js"
 cat >> "$OUT/sync.js" <<'JS'
 
-export function __inject(db, ref, id) { database = db; eventRef = ref; uid = id; }
+export function __inject(fakeDatabase, ref, id, instance) { database = fakeDatabase; eventRef = ref; uid = id; db = instance; }
 export function __normalise(raw) { return normalise(raw); }
 export function __state() { return { liveDeck, questionsPath, unmigrated }; }
 JS

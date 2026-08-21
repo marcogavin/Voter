@@ -20,6 +20,27 @@
 
 export const CHANGES = [
   {
+    version: "1.8",
+    on: "2026-08-21",
+    lines: [
+      "A Clear the room button in Settings — disconnects everyone in the room so old sessions and devices stop counting as present, without touching the poll or its votes.",
+    ],
+  },
+  {
+    version: "1.7",
+    on: "2026-08-21",
+    lines: [
+      "A phone in the room can no longer read a question, or its right answer, ahead of the host putting it up — only the one on screen, and the answer only once it's revealed or the run is over.",
+    ],
+  },
+  {
+    version: "1.6",
+    on: "2026-08-21",
+    lines: [
+      "A host who was already signed in no longer reads a blank line under Sign out while the page catches up with the database.",
+    ],
+  },
+  {
     version: "1.5",
     on: "2026-08-20",
     lines: [

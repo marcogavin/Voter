@@ -120,6 +120,13 @@
             <select id="seconds"></select>
           </label>
         </div>
+
+        <!-- Names and presence, not questions or votes — nobody in the room
+             loses their place in the poll over this. -->
+        <button type="button" class="btn btn--outline" id="clear-room">
+          <span class="btn-icon" data-icon="remove"></span>
+          <span class="btn-label" data-i18n="clearRoom">Clear the room</span>
+        </button>
       </section>
 
       <!-- ── Run: drive the event ────────────────────────────────────────── -->
@@ -297,7 +304,7 @@
       var NEEDS = [
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
-        "tour", "tourmarks", "version", "versionsheet",
+        "tour", "tourmarks", "version", "versionsheet", "clearroom",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board",
       ];
