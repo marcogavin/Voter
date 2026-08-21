@@ -2,24 +2,10 @@
 export const DECK_MAX = 20, TITLE_MAX = 60, NAME_MAX = 24;
 let push = null;
 export function connect() { return Promise.resolve(); }
-// A preview pushes a plain `questions` array and a `currentIndex`, the way
-// the app used to receive the whole deck; withDerived() adds the
-// `currentQuestion`/`questionCount` the real js/sync.js now computes instead
-// of handing the array over to be indexed. See the comment at the top of
-// js/sync.js for why those fields exist at all.
-function withDerived(event) {
-  if (!event) return event;
-  const questions = event.questions ?? [];
-  return {
-    questionCount: questions.length,
-    currentQuestion: questions[event.currentIndex] ?? null,
-    ...event,
-  };
-}
 export function onEventChange(cb) {
   push = cb;
-  window.PREVIEW_PUSH = (e) => cb(withDerived(e));
-  if (window.PREVIEW) cb(withDerived(window.PREVIEW));
+  window.PREVIEW_PUSH = (e) => cb(e);
+  if (window.PREVIEW) cb(window.PREVIEW);
 }
 export function castVote() { return Promise.resolve(); }
 export function likePoll() { return Promise.resolve(); }
