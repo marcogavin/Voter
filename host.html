@@ -127,6 +127,10 @@
           <span class="btn-icon" data-icon="remove"></span>
           <span class="btn-label" data-i18n="clearRoom">Clear the room</span>
         </button>
+
+        <!-- For whoever is running this deployment, not the room — a way
+             to reach the app's own maintainer, not the poll's audience. -->
+        <a class="feedback-link" id="feedback" href="#" data-i18n="sendFeedback">Send feedback our way</a>
       </section>
 
       <!-- ── Run: drive the event ────────────────────────────────────────── -->
@@ -204,9 +208,23 @@
         </span>
         <select id="question-type">
           <option value="choice" data-i18n="typeChoice">Multiple choice</option>
-          <option value="rating" data-i18n="typeRating">Rating (1–5 stars)</option>
+          <option value="rating" data-i18n="typeRating">Rating</option>
         </select>
       </label>
+      <div id="rating-fields" hidden>
+        <label class="field field--pick">
+          <span class="field-label" data-i18n="starCount">Number of stars</span>
+          <select id="rating-stars">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="10">10</option>
+          </select>
+        </label>
+        <div class="field">
+          <span class="field-label" data-i18n="starColor">Star colour</span>
+          <div id="rating-colors" class="swatches"></div>
+        </div>
+      </div>
       <label class="field" id="options-field">
         <span class="field-label" data-i18n="optionsLabel">Answers — one per line</span>
         <textarea id="options-input" rows="3" required
@@ -315,6 +333,7 @@
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
         "tour", "tourmarks", "version", "versionsheet", "clearroom", "rating",
+        "starpicker", "feedback",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board",
       ];

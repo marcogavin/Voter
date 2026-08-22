@@ -36,7 +36,7 @@ import {
   DECK_MAX,
   TITLE_MAX,
 } from "./sync.js";
-import { isConfigured, SECONDS_CHOICES } from "./firebase-config.js";
+import { isConfigured, SECONDS_CHOICES, FEEDBACK_EMAIL } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons, waitingArt } from "./icons.js";
 import { startTour, isFirstTime } from "./tour.js";
@@ -50,9 +50,12 @@ import {
   isScorable,
   isTimed,
   roomSize,
-  RATING_STARS,
+  RATING_COLORS,
+  DEFAULT_RATING_COLOR,
   isRatingQuestion,
-  ratingMean,
+  ratingOptions,
+  ratingStarsMarkup,
+  ratingCaptionText,
 } from "./scores.js";
 import {
   t,
@@ -68,7 +71,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating",
+  "version", "clearroom", "rating", "starpicker", "feedback",
 ];
 
 const els = {
@@ -105,8 +108,12 @@ const els = {
   seconds: document.getElementById("seconds"),
   clearRoom: document.getElementById("clear-room"),
   questionType: document.getElementById("question-type"),
+  ratingFields: document.getElementById("rating-fields"),
+  ratingStars: document.getElementById("rating-stars"),
+  ratingColors: document.getElementById("rating-colors"),
   optionsField: document.getElementById("options-field"),
   correctField: document.getElementById("correct-field"),
+  feedback: document.getElementById("feedback"),
 
   runDeck: document.getElementById("run-deck"),
   runQuestion: document.getElementById("run-question"),
@@ -294,6 +301,10 @@ function wireUp() {
   els.optionsInput.addEventListener("input", drawCorrectChoices);
   els.correctList.addEventListener("change", onCorrectChange);
   els.questionType.addEventListener("change", onQuestionTypeChange);
+  els.ratingStars.addEventListener("change", onRatingStarsChange);
+  els.ratingColors.addEventListener("change", onRatingColorChange);
+  drawRatingColors(DEFAULT_RATING_COLOR);
+  els.feedback.href = `mailto:${FEEDBACK_EMAIL}`;
 
   els.prev.addEventListener("click", () => go(currentIndex - 1));
   els.next.addEventListener("click", onNext);
@@ -424,12 +435,13 @@ function onCorrectChange(changeEvent) {
 }
 
 function onQuestionTypeChange() {
-  // Switching in: the five answers are fixed and there's no right one to
-  // pick, so whatever the host had typed or marked is replaced rather than
-  // left behind half-used. Switching back out leaves the textarea as it is —
-  // the stars are ordinary text at that point, free to edit or replace.
+  // Switching in: the answers are fixed and there's no right one to pick, so
+  // whatever the host had typed or marked is replaced rather than left
+  // behind half-used. Switching back out leaves the textarea as it is —
+  // the numbers are ordinary text at that point, free to edit or replace.
   if (els.questionType.value === "rating") {
-    els.optionsInput.value = RATING_STARS.join("\n");
+    setRatingOptions(Number(els.ratingStars.value));
+    if (!ratingColorValue()) drawRatingColors(DEFAULT_RATING_COLOR);
     correctIndex = null;
     drawCounts();
     drawCorrectChoices();
@@ -437,12 +449,52 @@ function onQuestionTypeChange() {
   applyQuestionType();
 }
 
+function onRatingStarsChange() {
+  setRatingOptions(Number(els.ratingStars.value));
+  drawCounts();
+}
+
+function setRatingOptions(count) {
+  els.optionsInput.value = ratingOptions(count).join("\n");
+}
+
 /** Shows only the fields the chosen question type actually uses. */
 function applyQuestionType() {
   const rating = els.questionType.value === "rating";
+  els.ratingFields.hidden = !rating;
   els.optionsField.hidden = rating;
   els.optionsInput.required = !rating;
   els.correctField.hidden = rating;
+}
+
+/**
+ * The colour swatches. Redrawn wherever the editor opens rather than kept
+ * live — the language they're named in doesn't change while a host is
+ * midway through writing a question.
+ */
+function drawRatingColors(picked) {
+  els.ratingColors.innerHTML = RATING_COLORS.map(
+    ({ key, var: cssVar }) => `
+      <label class="swatch${key === picked ? " is-picked" : ""}" style="background: var(${cssVar})">
+        <input type="radio" name="rating-color" value="${key}" aria-label="${t(colorLabelKey(key))}"${key === picked ? " checked" : ""}>
+        <span class="swatch-ring"></span>
+      </label>
+    `,
+  ).join("");
+}
+
+function colorLabelKey(key) {
+  return "color" + key[0].toUpperCase() + key.slice(1);
+}
+
+function onRatingColorChange() {
+  for (const swatch of els.ratingColors.querySelectorAll(".swatch")) {
+    swatch.classList.toggle("is-picked", swatch.querySelector("input").checked);
+  }
+}
+
+function ratingColorValue() {
+  return els.ratingColors.querySelector("input:checked")?.value ?? null;
 }
 
 /* ── Rendering ─────────────────────────────────────────────────────────── */
@@ -735,11 +787,17 @@ function drawRun() {
   // point is that the audience doesn't, not that the presenter flies blind.
   els.runQuestion.textContent = question.text;
 
-  if (question.id !== shownQuestionId) {
+  const rating = isRatingQuestion(question);
+
+  if (rating) {
+    // Always current: the stars fill to the mean, which moves with every
+    // vote, so this is rebuilt every render rather than once per question.
     delete els.options.dataset.screen;
-    els.options.innerHTML = isRatingQuestion(question)
-      ? `<p class="panel-message" id="run-rating-mean"></p>`
-      : "";
+    els.options.innerHTML = ratingStarsMarkup(question) + `<p class="panel-message">${ratingCaptionText(question)}</p>`;
+    shownQuestionId = question.id;
+  } else if (question.id !== shownQuestionId) {
+    delete els.options.dataset.screen;
+    els.options.innerHTML = "";
     for (const option of question.options) {
       const row = document.createElement("div");
       row.className = "choice choice--static";
@@ -759,28 +817,24 @@ function drawRun() {
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
   const scored = revealed && question.correct !== null;
 
-  const meanEl = els.options.querySelector("#run-rating-mean");
-  if (meanEl) {
-    const mean = ratingMean(question);
-    meanEl.textContent = mean === null ? t("noRatingsYet") : t("ratingAverage", { n: mean.toFixed(1) });
-  }
+  if (!rating) {
+    for (const option of question.options) {
+      const row = els.options.querySelector(`.choice[data-id="${option.id}"]`);
+      if (!row) continue;
 
-  for (const option of question.options) {
-    const row = els.options.querySelector(`.choice[data-id="${option.id}"]`);
-    if (!row) continue;
+      const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
+      row.querySelector(".choice-label").textContent = option.label;
+      row.querySelector(".choice-fill").style.width = pct + "%";
+      row.querySelector(".choice-pct").textContent = `${pct}%`;
 
-    const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
-    row.querySelector(".choice-label").textContent = option.label;
-    row.querySelector(".choice-fill").style.width = pct + "%";
-    row.querySelector(".choice-pct").textContent = `${pct}%`;
-
-    row.classList.add("is-counted");
-    row.classList.toggle("is-right", scored && option.id === question.correct);
-    // Before revealing, the presenter still needs to know which one it is.
-    row.classList.toggle(
-      "is-key",
-      !revealed && option.id === question.correct,
-    );
+      row.classList.add("is-counted");
+      row.classList.toggle("is-right", scored && option.id === question.correct);
+      // Before revealing, the presenter still needs to know which one it is.
+      row.classList.toggle(
+        "is-key",
+        !revealed && option.id === question.correct,
+      );
+    }
   }
 
   watchClock();
@@ -1115,9 +1169,17 @@ async function onSubmit(submitEvent) {
 
   const next = [...questions];
   const correct = correctIndex === null ? null : optionId(correctIndex);
+  const rating = els.questionType.value === "rating";
+  // Explicit null rather than just omitting these when it isn't a rating:
+  // the sameOptions branch below spreads `existing`, and a question that
+  // used to be a rating has to actually lose the fields, not keep them
+  // riding along under a type that no longer means anything by them.
+  const ratingFields = rating
+    ? { ratingStars: Number(els.ratingStars.value), ratingColor: ratingColorValue() }
+    : { ratingStars: null, ratingColor: null };
 
   if (editingIndex === null) {
-    next.push({ text, correct, options: labels.map(toOption), voters: {} });
+    next.push({ text, correct, options: labels.map(toOption), voters: {}, ...ratingFields });
   } else {
     const existing = next[editingIndex];
     const sameOptions =
@@ -1127,8 +1189,8 @@ async function onSubmit(submitEvent) {
     // Votes belong to specific options, so they only survive an edit that
     // leaves the options themselves untouched.
     next[editingIndex] = sameOptions
-      ? { ...existing, text, correct }
-      : { text, correct, options: labels.map(toOption), voters: {} };
+      ? { ...existing, text, correct, ...ratingFields }
+      : { text, correct, options: labels.map(toOption), voters: {}, ...ratingFields };
   }
 
   // Only clear the form once the save has actually landed — otherwise a
@@ -1188,7 +1250,10 @@ function startEditing(index) {
   editingIndex = index;
   els.questionInput.value = question.text;
   els.optionsInput.value = question.options.map((o) => o.label).join("\n");
-  els.questionType.value = isRatingQuestion(question) ? "rating" : "choice";
+  const rating = isRatingQuestion(question);
+  els.questionType.value = rating ? "rating" : "choice";
+  if (rating) els.ratingStars.value = String(question.ratingStars);
+  drawRatingColors(rating ? question.ratingColor : DEFAULT_RATING_COLOR);
   applyQuestionType();
 
   const marked = question.options.findIndex((o) => o.id === question.correct);
@@ -1220,6 +1285,7 @@ function stopEditing() {
   correctIndex = null;
   els.editorSheet.hidden = true;
   els.editor.reset();
+  drawRatingColors(DEFAULT_RATING_COLOR);
   applyQuestionType();
   showFormError(null);
   drawCorrectChoices();

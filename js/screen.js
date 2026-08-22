@@ -17,13 +17,13 @@ import { isConfigured } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons } from "./icons.js";
 import { flyHearts, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingMean } from "./scores.js";
+import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingStarsMarkup, ratingCaptionText } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
-  "presence", "rating",
+  "presence", "rating", "starsummary",
 ];
 
 /**
@@ -208,37 +208,48 @@ function showQuestion(event) {
   const question = event.currentQuestion;
   const scorable = question.correct !== null;
   const live = !scorable || event.revealed || secondsLeft() === 0;
+  const rating = isRatingQuestion(question);
 
-  // Rebuilt when the question changes, and also when the answers under it do:
-  // the host can edit a question while it is up, and a row that kept its old
-  // label would be the room reading something nobody wrote.
-  const stale =
-    question.id !== shownQuestionId ||
-    els.stage.dataset.screen !== "question" ||
-    els.stage.querySelectorAll(".big-choice").length !== question.options.length;
-
-  if (stale) {
+  if (rating) {
+    // Always current: the stars fill to the mean, which moves with every
+    // vote, so this is rebuilt every render rather than once per question.
     els.stage.dataset.screen = "question";
     shownQuestionId = question.id;
     els.stage.innerHTML =
       `<h1 class="big-question"></h1>` +
-      (isRatingQuestion(question) ? `<p class="big-message" id="big-rating-mean"></p>` : "") +
-      `<ol class="big-choices" data-n="${Math.min(question.options.length, 6)}"></ol>`;
+      ratingStarsMarkup(question) +
+      `<p class="big-message">${ratingCaptionText(question)}</p>`;
+  } else {
+    // Rebuilt when the question changes, and also when the answers under it
+    // do: the host can edit a question while it is up, and a row that kept
+    // its old label would be the room reading something nobody wrote.
+    const stale =
+      question.id !== shownQuestionId ||
+      els.stage.dataset.screen !== "question" ||
+      els.stage.querySelectorAll(".big-choice").length !== question.options.length;
 
-    const list = els.stage.querySelector(".big-choices");
-    question.options.forEach((option, index) => {
-      const row = document.createElement("li");
-      row.className = "big-choice";
-      row.dataset.id = option.id;
-      row.innerHTML =
-        `<span class="big-fill"></span>` +
-        `<span class="big-body">` +
-        `<span class="big-key">${String.fromCharCode(65 + index)}</span>` +
-        `<span class="big-label"></span>` +
-        `<span class="big-pct"></span>` +
-        `</span>`;
-      list.appendChild(row);
-    });
+    if (stale) {
+      els.stage.dataset.screen = "question";
+      shownQuestionId = question.id;
+      els.stage.innerHTML =
+        `<h1 class="big-question"></h1>` +
+        `<ol class="big-choices" data-n="${Math.min(question.options.length, 6)}"></ol>`;
+
+      const list = els.stage.querySelector(".big-choices");
+      question.options.forEach((option, index) => {
+        const row = document.createElement("li");
+        row.className = "big-choice";
+        row.dataset.id = option.id;
+        row.innerHTML =
+          `<span class="big-fill"></span>` +
+          `<span class="big-body">` +
+          `<span class="big-key">${String.fromCharCode(65 + index)}</span>` +
+          `<span class="big-label"></span>` +
+          `<span class="big-pct"></span>` +
+          `</span>`;
+        list.appendChild(row);
+      });
+    }
   }
 
   // Written every time for the same reason the labels are: an edit lands as a
@@ -247,25 +258,21 @@ function showQuestion(event) {
 
   const total = question.options.reduce((sum, option) => sum + option.votes, 0);
 
-  const meanEl = els.stage.querySelector("#big-rating-mean");
-  if (meanEl) {
-    const mean = live ? ratingMean(question) : null;
-    meanEl.textContent = mean === null ? "" : t("ratingAverage", { n: mean.toFixed(1) });
-  }
+  if (!rating) {
+    for (const option of question.options) {
+      const row = els.stage.querySelector(`.big-choice[data-id="${option.id}"]`);
+      if (!row) continue;
 
-  for (const option of question.options) {
-    const row = els.stage.querySelector(`.big-choice[data-id="${option.id}"]`);
-    if (!row) continue;
-
-    const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
-    row.querySelector(".big-label").textContent = option.label;
-    row.querySelector(".big-fill").style.width = live ? `${pct}%` : "0%";
-    row.querySelector(".big-pct").textContent = live ? `${pct}%` : "";
-    row.classList.toggle("is-counted", live);
-    row.classList.toggle(
-      "is-right",
-      event.revealed && option.id === question.correct,
-    );
+      const pct = total === 0 ? 0 : Math.round((option.votes / total) * 100);
+      row.querySelector(".big-label").textContent = option.label;
+      row.querySelector(".big-fill").style.width = live ? `${pct}%` : "0%";
+      row.querySelector(".big-pct").textContent = live ? `${pct}%` : "";
+      row.classList.toggle("is-counted", live);
+      row.classList.toggle(
+        "is-right",
+        event.revealed && option.id === question.correct,
+      );
+    }
   }
 
   const left = secondsLeft();

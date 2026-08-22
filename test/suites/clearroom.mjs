@@ -73,5 +73,12 @@ await tick(); await tick();
 ok("clears the room", called("clearRoom").length === 1);
 ok("says it happened", $("status").textContent === "Cleared");
 
+// Not the room's feedback — the app's own. Settings is where a host who
+// bought this deployment reaches its maintainer, not where the audience
+// says anything.
+console.log("the way to reach the app's maintainer, in the same section");
+ok("a quiet link, not a button", $("feedback").textContent === "Send feedback our way");
+ok("straight to an inbox", $("feedback").getAttribute("href").startsWith("mailto:"));
+
 console.log(failed ? `\n${failed} FAILED` : "\nall passed");
 process.exit(failed ? 1 : 0);

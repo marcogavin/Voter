@@ -37,7 +37,7 @@ async function run({ build, styled = "groups sections hint hearts choices clock 
 }
 
 console.log("current script, everything present");
-let s = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating"] });
+let s = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating", "starpicker", "feedback"] });
 ok("no refetch", s.fetched.length === 0);
 ok("no reload", !s.reloaded);
 ok("no banner", s.appended.length === 0);
@@ -66,7 +66,7 @@ ok("says so instead", s.appended.length === 1 && s.appended[0].className === "st
 
 /* the stylesheet can be the stale half on its own */
 console.log("fresh script, stale stylesheet");
-let t = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating"], styled: "" });
+let t = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating", "starpicker", "feedback"], styled: "" });
 ok("caught by the same check", t.reloaded);
 ok("refetches the css too", t.fetched.some((f) => f.startsWith("css/style.css")));
 

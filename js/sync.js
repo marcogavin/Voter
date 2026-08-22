@@ -384,7 +384,7 @@ export function onEventChange(callback) {
       : [questionKey(index)];
     const fields = finished
       ? ["correct", "voters", "times"]
-      : ["text", "options", "correct", "voters", "times"];
+      : ["text", "options", "correct", "voters", "times", "ratingStars", "ratingColor"];
 
     for (const qid of keys) {
       questionsView[qid] = {};
@@ -537,6 +537,8 @@ function readQuestion(id, raw) {
     correct: raw.correct ?? null,
     voters: raw.voters || {},
     times: raw.times || {},
+    ratingStars: raw.ratingStars ?? null,
+    ratingColor: raw.ratingColor ?? null,
     options: Object.entries(raw.options || {})
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([optionId, option]) => ({
@@ -599,6 +601,12 @@ export function saveQuestions(questions) {
       // they took as well, or the leaderboard changes under the room.
       ...(question.times && Object.keys(question.times).length
         ? { times: question.times }
+        : {}),
+      // A rating's whole shape — the star count, the colour — rides with it
+      // rather than living anywhere else, so editing one poll never touches
+      // another's.
+      ...(question.ratingStars
+        ? { ratingStars: question.ratingStars, ratingColor: question.ratingColor }
         : {}),
     };
   });

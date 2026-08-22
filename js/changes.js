@@ -20,6 +20,14 @@
 
 export const CHANGES = [
   {
+    version: "2.2",
+    on: "2026-08-22",
+    lines: [
+      "Rating questions now let you pick 3, 5 or 10 stars and a colour for them, and the room taps real stars to answer instead of a list of numbers.",
+      "The feedback link moved from the room's closing screen to Settings — it was always meant to reach the person running this deployment, not the audience.",
+    ],
+  },
+  {
     version: "2.1",
     on: "2026-08-21",
     lines: [

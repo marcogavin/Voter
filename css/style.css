@@ -354,6 +354,67 @@ h1 {
   overflow-wrap: anywhere;
 }
 
+/* ─── A rating's own result: stars filled to the mean, not a bar ────────── */
+
+.star-summary {
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin: 0 auto;
+  font-size: var(--text-title);
+  line-height: 1;
+  letter-spacing: 0.15em;
+}
+
+.star-row {
+  display: block;
+  white-space: nowrap;
+}
+
+.star-row--bg {
+  color: var(--border);
+}
+
+.star-row--fg {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--pct);
+  overflow: hidden;
+}
+
+/* ─── A rating's own answer: stars to tap, not a list to read ────────────── */
+
+.star-picker {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  margin: var(--space-2) 0;
+}
+
+.star-btn {
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: var(--space-1);
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.star-btn svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.star-btn.is-filled {
+  color: var(--star-color, var(--gold));
+}
+
+.star-btn:disabled {
+  cursor: default;
+}
+
 /* ─── Buttons ──────────────────────────────────────────────────────────
    One height for everything a finger touches. The old buttons set padding
    and no height at all, so a button's height was whatever its text made it —
@@ -1759,6 +1820,47 @@ a.iconbtn {
   flex: none;
 }
 
+/* ─── A rating's colour, picked rather than typed ──────────────────────── */
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch {
+  position: relative;
+  display: inline-flex;
+  width: var(--control-h);
+  height: var(--control-h);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swatch.is-picked {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.swatch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.swatch input:focus-visible ~ .swatch-ring {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.swatch-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
 /* ─── Question list ────────────────────────────────────────────────────
    Grouped by tone and space; the rows are cards, so they need no rule
    above them.                                                             */
@@ -2491,6 +2593,12 @@ body.screen {
   padding: 0;
   display: grid;
   gap: var(--big-gap);
+}
+
+/* A rating's stars are the whole answer, not one row among several — the
+   size the question itself gets, not the size a choice row would. */
+.big-stage .star-summary {
+  font-size: var(--big-title);
 }
 
 @media (min-width: 900px) {

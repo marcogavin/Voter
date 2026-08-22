@@ -125,6 +125,14 @@
                     ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
                   }
                 },
+                "ratingStars": {
+                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
+                  ".validate": "newData.isNumber() && (newData.val() === 3 || newData.val() === 5 || newData.val() === 10)"
+                },
+                "ratingColor": {
+                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
+                  ".validate": "newData.isString() && (newData.val() === 'gold' || newData.val() === 'red' || newData.val() === 'green' || newData.val() === 'blue' || newData.val() === 'purple')"
+                },
                 "$otherField": {
                   ".validate": false
                 }
@@ -170,6 +178,12 @@
                 ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                 ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
               }
+            },
+            "ratingStars": {
+              ".validate": "newData.isNumber() && (newData.val() === 3 || newData.val() === 5 || newData.val() === 10)"
+            },
+            "ratingColor": {
+              ".validate": "newData.isString() && (newData.val() === 'gold' || newData.val() === 'red' || newData.val() === 'green' || newData.val() === 'blue' || newData.val() === 'purple')"
             },
             "$otherField": {
               ".validate": false
