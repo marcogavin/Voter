@@ -15,8 +15,8 @@ import {
 } from "./sync.js";
 import { icons, drawIcons, waitingArt } from "./icons.js";
 import { flyHearts, heartColour, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingMean } from "./scores.js";
-import { isConfigured, FEEDBACK_EMAIL } from "./firebase-config.js";
+import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingColorVar, ratingCaptionText } from "./scores.js";
+import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
@@ -24,7 +24,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-  "speed", "presence", "rating", "feedback",
+  "speed", "presence", "rating", "starpicker",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -295,10 +295,13 @@ function stopTicking() {
 
 function buildRows(question) {
   optionsEl.dataset.screen = "question";
-  optionsEl.innerHTML = isRatingQuestion(question)
-    ? `<p class="panel-message" id="rating-mean"></p>`
-    : "";
 
+  if (isRatingQuestion(question)) {
+    buildStars(question);
+    return;
+  }
+
+  optionsEl.innerHTML = "";
   for (const option of question.options) {
     const row = document.createElement("button");
     row.type = "button";
@@ -320,20 +323,45 @@ function buildRows(question) {
   }
 }
 
+/**
+ * A row of tappable stars — the Nth star votes for the option at position N,
+ * the same castVote() any other question uses. Once you've picked one, or
+ * once the room's seen the answer, the average takes the row's place as the
+ * thing worth reading.
+ */
+function buildStars(question) {
+  optionsEl.innerHTML =
+    `<div class="star-picker" style="--star-color: var(${ratingColorVar(question.ratingColor)})">` +
+    question.options
+      .map(
+        (option, i) => `
+          <button type="button" class="star-btn" data-id="${option.id}" data-value="${i + 1}"
+                  aria-label="${i + 1 === 1 ? t("rateStarsOne") : t("rateStars", { n: i + 1 })}">${icons.star}</button>
+        `,
+      )
+      .join("") +
+    `</div>` +
+    `<p class="panel-message" id="rating-mean"></p>`;
+
+  for (const button of optionsEl.querySelectorAll(".star-btn")) {
+    button.addEventListener("click", () => submitVote(question.id, button.dataset.id));
+  }
+}
+
 function updateRows(question, revealed) {
   const myVote = question.voters[getUid()] ?? null;
 
   // Results appear once you've voted, and to everyone once the answer is out —
   // so someone who didn't vote in time still sees how it landed.
   const showResults = myVote !== null || revealed;
+
+  if (isRatingQuestion(question)) {
+    updateStars(question, myVote, showResults, revealed);
+    return;
+  }
+
   const scored = revealed && question.correct !== null;
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
-
-  const meanEl = optionsEl.querySelector("#rating-mean");
-  if (meanEl) {
-    const mean = showResults ? ratingMean(question) : null;
-    meanEl.textContent = mean === null ? "" : t("ratingAverage", { n: mean.toFixed(1) });
-  }
 
   for (const option of question.options) {
     const row = optionsEl.querySelector(`.choice[data-id="${option.id}"]`);
@@ -357,6 +385,19 @@ function updateRows(question, revealed) {
     );
     row.disabled = revealed || myVote !== null;
   }
+}
+
+function updateStars(question, myVote, showResults, revealed) {
+  const myValue = myVote ? question.options.findIndex((o) => o.id === myVote) + 1 : 0;
+
+  for (const button of optionsEl.querySelectorAll(".star-btn")) {
+    const filled = myValue > 0 && Number(button.dataset.value) <= myValue;
+    button.innerHTML = filled ? icons.starFilled : icons.star;
+    button.classList.toggle("is-filled", filled);
+    button.disabled = revealed || myVote !== null;
+  }
+
+  optionsEl.querySelector("#rating-mean").textContent = showResults ? ratingCaptionText(question) : "";
 }
 
 async function submitVote(questionId, optionId) {
@@ -508,7 +549,6 @@ function showEnding(count) {
         </div>
         <p class="ending-count" id="like-count">0</p>
         <p class="panel-message" id="like-hint">${t("likeHint")}</p>
-        <a class="feedback-link" href="mailto:${FEEDBACK_EMAIL}">${t("sendFeedback")}</a>
       </div>
     `;
     optionsEl.querySelector("#like").addEventListener("click", onLike);

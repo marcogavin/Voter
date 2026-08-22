@@ -97,6 +97,8 @@ export const icons = {
   star: ICON(
     `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/>`,
   ),
+  starFilled: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">` +
+    `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>`,
 };
 
 /** Puts an icon into every element that names one in data-icon. */

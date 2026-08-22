@@ -204,5 +204,41 @@ await tick(500);
 ok("the owner's own Clear the room wipes it", (await readOnce(owner, `${EVENT_PATH}/players/${audienceUid}`)) === null);
 ok("without touching the poll underway", (await readOnce(owner, `${EVENT_PATH}/currentIndex`)) === 2);
 
+console.log("\n-- Ratings: ratingStars/ratingColor, read and write, live --");
+await sync.saveQuestions([
+  { text: "Q1", correct: "a", options: [{ label: "A", votes: 0 }, { label: "B", votes: 0 }], voters: {} },
+  { text: "How was it?", correct: null, ratingStars: 5, ratingColor: "purple", voters: {},
+    options: ["1", "2", "3", "4", "5"].map((label) => ({ label, votes: 0 })) },
+]);
+ownerLast = null;
+await sync.setCurrentIndex(1);
+await tick(1000);
+ok("the owner's own view carries the star count", ownerLast?.currentQuestion?.ratingStars === 5);
+ok("and the colour", ownerLast?.currentQuestion?.ratingColor === "purple");
+
+ok("the audience can read the current rating's star count",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/ratingStars`)) === 5);
+ok("and its colour",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/ratingColor`)) === "purple");
+
+console.log("\n-- moving on: the same gate text and options already have --");
+await sync.setCurrentIndex(0);
+await tick(800);
+ok("the audience no longer reads a rating's shape once it's not current",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/ratingStars`)) === undefined);
+
+console.log("\n-- what the rules refuse to store at all, whoever asks --");
+let badCountDenied = false;
+try {
+  await database.update(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001`), { ratingStars: 7 });
+} catch { badCountDenied = true; }
+ok("a star count off the list is refused, even from the owner", badCountDenied);
+
+let badColorDenied = false;
+try {
+  await database.update(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001`), { ratingColor: "orange" });
+} catch { badColorDenied = true; }
+ok("a colour outside the curated list is refused, even from the owner", badColorDenied);
+
 console.log(failures ? `\n${failures} FAILED` : "\nall passed");
 process.exit(failures ? 1 : 0);

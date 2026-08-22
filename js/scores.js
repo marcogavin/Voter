@@ -55,30 +55,45 @@ export function isScorable(event) {
 }
 
 /**
- * The five option labels a rating question is built from. Nobody types this
- * by hand for a real answer, which is what makes it safe to read back: seeing
- * it means the host picked "Rating" in the editor, not that a real poll
- * happens to have five numbered choices.
- *
- * This is the whole feature. A rating is a poll like any other — same
- * options, same votes, same rules — so nothing about how it is stored, voted
- * on, or counted needed to change; only how it reads and what it's summed
- * into does.
+ * A rating is a poll like any other — same options, same votes, same rules —
+ * with two extra fields riding along: how many stars it offers, and which
+ * colour they're drawn in. `ratingStars` is what actually marks a question as
+ * a rating; everything else about it (the option count, the option labels)
+ * follows from that one field rather than being guessed at.
  */
-export const RATING_STARS = ["★", "★★", "★★★", "★★★★", "★★★★★"];
+export const RATING_STAR_COUNTS = [3, 5, 10];
 
 /**
- * True when a question's options are exactly the rating scale, in order, and
- * it has no right answer — a real one never does, but a hand-edited deck
- * could, and a rating and a quiz question are two different things.
+ * The colours a host can give a rating's stars — a short, curated list
+ * rather than an open picker, so nothing a host chooses can end up
+ * unreadable against the page behind it. Values are the app's own tokens,
+ * not new colours invented for this.
  */
+export const RATING_COLORS = [
+  { key: "gold", var: "--gold" },
+  { key: "red", var: "--heart-1" },
+  { key: "green", var: "--heart-4" },
+  { key: "blue", var: "--heart-6" },
+  { key: "purple", var: "--heart-7" },
+];
+export const DEFAULT_RATING_COLOR = "gold";
+
+/** The CSS custom property for a rating colour key, falling back to gold. */
+export function ratingColorVar(key) {
+  return (RATING_COLORS.find((c) => c.key === key) ?? RATING_COLORS[0]).var;
+}
+
+/** True when a question is a rating — has a star count, and no right answer. */
 export function isRatingQuestion(question) {
-  const options = question?.options ?? [];
   return (
     question?.correct === null &&
-    options.length === RATING_STARS.length &&
-    options.every((option, i) => option.label === RATING_STARS[i])
+    RATING_STAR_COUNTS.includes(question?.ratingStars)
   );
+}
+
+/** The plain numbered options a rating of `n` stars is built from. */
+export function ratingOptions(n) {
+  return Array.from({ length: n }, (_, i) => String(i + 1));
 }
 
 /**
@@ -92,6 +107,31 @@ export function ratingMean(question) {
   if (!total) return null;
   const weighted = options.reduce((sum, option, i) => sum + option.votes * (i + 1), 0);
   return weighted / total;
+}
+
+/**
+ * The static "how did this land" display: `n` stars, filled — a fraction of
+ * a star included — up to the mean, in the question's own colour. Sizing is
+ * left to whichever screen drops it in — the host's Run tab and the big
+ * screen want two very different sizes for the same markup.
+ */
+export function ratingStarsMarkup(question) {
+  const n = question.ratingStars;
+  const mean = ratingMean(question);
+  const pct = mean === null ? 0 : Math.min(100, (mean / n) * 100);
+  const stars = "★".repeat(n);
+  return (
+    `<div class="star-summary" style="--pct: ${pct}%">` +
+    `<span class="star-row star-row--bg">${stars}</span>` +
+    `<span class="star-row star-row--fg" style="color: var(${ratingColorVar(question.ratingColor)})">${stars}</span>` +
+    `</div>`
+  );
+}
+
+/** The number under the stars, in words — "Average 4.2 ★" or nothing rated yet. */
+export function ratingCaptionText(question) {
+  const mean = ratingMean(question);
+  return mean === null ? t("noRatingsYet") : t("ratingAverage", { n: mean.toFixed(1) });
 }
 
 /**
