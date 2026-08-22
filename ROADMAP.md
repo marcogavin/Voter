@@ -32,18 +32,36 @@ the README already says out loud).
 
 ## 2. Real hosting, and one account per event
 
-Bigger than "move off GitHub Pages".
+Bigger than "move off GitHub Pages" — scoped 22 August 2026 into four
+sessions, in order:
 
-Today the whole app is one event at a fixed `EVENT_ID`, and ownership is a
-single `ownerUid` field. Multi-tenant means events keyed per account, rules
-that scope every read and write to their owner, somewhere to name and find
-your own events, and a join link that carries the event id. `js/sync.js` is
-the only file that knows the shape, which is the seam this needs.
+**a. Firebase Hosting + Cloud Functions, no behavior change.** Off GitHub
+entirely: Firebase Hosting serves the static app with a domain and a cache
+policy actually under control, and Cloud Functions — in the same project,
+deployed alongside it, reached through a Hosting rewrite — is where the
+things a static page can't safely do get to live: minting an event, admin
+actions, and later the endpoint item 3 already calls for. One project, one
+deploy, nothing new to operate. Lands first and alone, so nothing about the
+event model has to be right yet for this to be worth having.
 
-Firebase Hosting gives a domain and a cache policy you control — which would
-have prevented two of this week's round trips on its own.
+**b. Multiple named events per account, in the data and the rules.** Today
+the whole app is one event at a fixed `EVENT_ID`, and ownership is a single
+`ownerUid` field on it. The rules already key everything off `$eventId` as a
+wildcard, so the shape is closer than it looks — the real gaps are
+`EVENT_ID` being one hardcoded constant in `js/firebase-config.js`, no way
+to list "my events" (Realtime Database has no query-by-owner without a
+secondary index of its own), and no minting flow. `js/sync.js` is the one
+file that knows the shape, which is the seam this needs.
 
-Treat "your data is yours" as part of this item, not a follow-up to it.
+**c. The UI for it.** Somewhere to name, find and switch between your own
+events — one level above the poll picker that already exists inside a
+single event — and a join link that carries the event id.
+
+**d. Migrating the live event.** Whatever is running today at the fixed
+`EVENT_ID` moves into the new model without losing a poll or a vote.
+
+Treat "your data is yours" as part of this item, not a follow-up to it —
+export and delete, not just creation.
 
 ## 3. Questions generated from a document
 
@@ -60,7 +78,9 @@ drafted. What you never store, you can never leak. T&Cs to match.
 
 ## 4. More kinds of question
 
-Star ratings are cheap: a scale is a poll with numbered options and a mean.
+Star ratings shipped 22 August 2026 — a scale is a poll with numbered
+options and a mean, with the star count and colour a real per-question
+choice.
 
 Word clouds are a different animal, because free text means moderation. The
 thing that protects you is not the filter, it is the **hold**: words reach the
@@ -73,8 +93,9 @@ per-word HTTP call in the hot path of a wall everybody is watching — no.
 Two halves, and they are not the same size.
 
 **The fun half, early**: places moving on the leaderboard, applause during a
-poll and not only at the end, somewhere to say what you think of the app. The
-machinery for all of it already exists.
+poll and not only at the end. The machinery for both already exists.
+(Somewhere to say what you think of the app shipped 22 August 2026 — Settings,
+for whoever is running the deployment, not the room.)
 
 **The money and the measuring, later**: donations mean a payment processor and
 the obligations that come with it. Usage statistics need a written line about
