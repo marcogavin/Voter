@@ -50,6 +50,9 @@ import {
   isScorable,
   isTimed,
   roomSize,
+  RATING_STARS,
+  isRatingQuestion,
+  ratingMean,
 } from "./scores.js";
 import {
   t,
@@ -65,7 +68,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom",
+  "version", "clearroom", "rating",
 ];
 
 const els = {
@@ -101,6 +104,9 @@ const els = {
   language: document.getElementById("language"),
   seconds: document.getElementById("seconds"),
   clearRoom: document.getElementById("clear-room"),
+  questionType: document.getElementById("question-type"),
+  optionsField: document.getElementById("options-field"),
+  correctField: document.getElementById("correct-field"),
 
   runDeck: document.getElementById("run-deck"),
   runQuestion: document.getElementById("run-question"),
@@ -287,6 +293,7 @@ function wireUp() {
   els.optionsInput.addEventListener("input", drawCounts);
   els.optionsInput.addEventListener("input", drawCorrectChoices);
   els.correctList.addEventListener("change", onCorrectChange);
+  els.questionType.addEventListener("change", onQuestionTypeChange);
 
   els.prev.addEventListener("click", () => go(currentIndex - 1));
   els.next.addEventListener("click", onNext);
@@ -414,6 +421,28 @@ function onCorrectChange(changeEvent) {
   const { value } = changeEvent.target;
   correctIndex = value === "" ? null : Number(value);
   drawCorrectChoices();
+}
+
+function onQuestionTypeChange() {
+  // Switching in: the five answers are fixed and there's no right one to
+  // pick, so whatever the host had typed or marked is replaced rather than
+  // left behind half-used. Switching back out leaves the textarea as it is —
+  // the stars are ordinary text at that point, free to edit or replace.
+  if (els.questionType.value === "rating") {
+    els.optionsInput.value = RATING_STARS.join("\n");
+    correctIndex = null;
+    drawCounts();
+    drawCorrectChoices();
+  }
+  applyQuestionType();
+}
+
+/** Shows only the fields the chosen question type actually uses. */
+function applyQuestionType() {
+  const rating = els.questionType.value === "rating";
+  els.optionsField.hidden = rating;
+  els.optionsInput.required = !rating;
+  els.correctField.hidden = rating;
 }
 
 /* ── Rendering ─────────────────────────────────────────────────────────── */
@@ -708,7 +737,9 @@ function drawRun() {
 
   if (question.id !== shownQuestionId) {
     delete els.options.dataset.screen;
-    els.options.innerHTML = "";
+    els.options.innerHTML = isRatingQuestion(question)
+      ? `<p class="panel-message" id="run-rating-mean"></p>`
+      : "";
     for (const option of question.options) {
       const row = document.createElement("div");
       row.className = "choice choice--static";
@@ -727,6 +758,12 @@ function drawRun() {
 
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
   const scored = revealed && question.correct !== null;
+
+  const meanEl = els.options.querySelector("#run-rating-mean");
+  if (meanEl) {
+    const mean = ratingMean(question);
+    meanEl.textContent = mean === null ? t("noRatingsYet") : t("ratingAverage", { n: mean.toFixed(1) });
+  }
 
   for (const option of question.options) {
     const row = els.options.querySelector(`.choice[data-id="${option.id}"]`);
@@ -1151,6 +1188,8 @@ function startEditing(index) {
   editingIndex = index;
   els.questionInput.value = question.text;
   els.optionsInput.value = question.options.map((o) => o.label).join("\n");
+  els.questionType.value = isRatingQuestion(question) ? "rating" : "choice";
+  applyQuestionType();
 
   const marked = question.options.findIndex((o) => o.id === question.correct);
   correctIndex = marked === -1 ? null : marked;
@@ -1181,6 +1220,7 @@ function stopEditing() {
   correctIndex = null;
   els.editorSheet.hidden = true;
   els.editor.reset();
+  applyQuestionType();
   showFormError(null);
   drawCorrectChoices();
   drawCounts();

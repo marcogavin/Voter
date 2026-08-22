@@ -1209,6 +1209,17 @@ a.iconbtn {
   color: var(--ink);
 }
 
+/* A quiet way out, not another button competing with the heart. */
+.feedback-link {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-size: var(--text-body);
+  text-align: center;
+}
+
 /* What the host sees: the same count, with no way to add to it. */
 .tally {
   position: relative;

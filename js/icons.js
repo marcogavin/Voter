@@ -94,6 +94,9 @@ export const icons = {
   ),
   heart: `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">` +
     `<path d="M12 21s-8-4.9-8-10.4A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 3.6C20 16.1 12 21 12 21z"/></svg>`,
+  star: ICON(
+    `<path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/>`,
+  ),
 };
 
 /** Puts an icon into every element that names one in data-icon. */

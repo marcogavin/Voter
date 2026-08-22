@@ -20,6 +20,20 @@
 
 export const CHANGES = [
   {
+    version: "2.1",
+    on: "2026-08-21",
+    lines: [
+      "A \"Send feedback our way\" link on the closing screen, beside the heart.",
+    ],
+  },
+  {
+    version: "2.0",
+    on: "2026-08-21",
+    lines: [
+      "A Rating question type — pick it in the editor for 1–5 stars instead of writing your own answers, with no right one to mark. The room picks a star count instead of typed answers, and the average shows wherever the results do.",
+    ],
+  },
+  {
     version: "1.9",
     on: "2026-08-21",
     lines: [

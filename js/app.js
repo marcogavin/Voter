@@ -15,8 +15,8 @@ import {
 } from "./sync.js";
 import { icons, drawIcons, waitingArt } from "./icons.js";
 import { flyHearts, heartColour, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames } from "./scores.js";
-import { isConfigured } from "./firebase-config.js";
+import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingMean } from "./scores.js";
+import { isConfigured, FEEDBACK_EMAIL } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
@@ -24,7 +24,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-  "speed", "presence",
+  "speed", "presence", "rating", "feedback",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -295,7 +295,9 @@ function stopTicking() {
 
 function buildRows(question) {
   optionsEl.dataset.screen = "question";
-  optionsEl.innerHTML = "";
+  optionsEl.innerHTML = isRatingQuestion(question)
+    ? `<p class="panel-message" id="rating-mean"></p>`
+    : "";
 
   for (const option of question.options) {
     const row = document.createElement("button");
@@ -326,6 +328,12 @@ function updateRows(question, revealed) {
   const showResults = myVote !== null || revealed;
   const scored = revealed && question.correct !== null;
   const total = question.options.reduce((sum, o) => sum + o.votes, 0);
+
+  const meanEl = optionsEl.querySelector("#rating-mean");
+  if (meanEl) {
+    const mean = showResults ? ratingMean(question) : null;
+    meanEl.textContent = mean === null ? "" : t("ratingAverage", { n: mean.toFixed(1) });
+  }
 
   for (const option of question.options) {
     const row = optionsEl.querySelector(`.choice[data-id="${option.id}"]`);
@@ -500,6 +508,7 @@ function showEnding(count) {
         </div>
         <p class="ending-count" id="like-count">0</p>
         <p class="panel-message" id="like-hint">${t("likeHint")}</p>
+        <a class="feedback-link" href="mailto:${FEEDBACK_EMAIL}">${t("sendFeedback")}</a>
       </div>
     `;
     optionsEl.querySelector("#like").addEventListener("click", onLike);
