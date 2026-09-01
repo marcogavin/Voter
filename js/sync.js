@@ -93,6 +93,9 @@ let liveDeck = FIRST_DECK;
 let questionsPath = "questions";
 let unmigrated = true;
 let legacyQuestions = null;
+// How many questions the live poll has, as counted by a device that can see
+// all of them — null on one that can't. See setCurrentIndex().
+let liveCount = null;
 
 /**
  * Loads the SDK, connects, and signs this device in anonymously.
@@ -268,6 +271,18 @@ const PUBLIC_FIELDS = [
 ];
 
 /**
+ * What a question's own paths hold while it is on screen — everything a
+ * phone needs to draw it and take a vote on it. Its `correct` is listened
+ * for separately, because whether that is granted changes with `revealed`,
+ * and re-asking for the text and answers on every reveal would take the
+ * question off every phone for a round trip each time.
+ */
+const CONTENT_FIELDS = ["text", "options", "voters", "times", "ratingStars", "ratingColor"];
+
+/** Once the run has moved past every question, what the standings need of each. */
+const STANDINGS_FIELDS = ["voters", "times"];
+
+/**
  * Calls `callback(event)` immediately with the current event, then again every
  * time anyone changes it. The event is normalised for the UI:
  *
@@ -285,11 +300,21 @@ const PUBLIC_FIELDS = [
  *
  * So this listens at every path the rules actually grant something at,
  * separately, and assembles the pieces into the same shape normalise() has
- * always read. Two of those groups have to be torn down and rebuilt rather
- * than left running, also confirmed against the emulator: a listener that's
- * ever been refused stays refused even once the thing it depended on
+ * always read. Groups of those listeners have to be torn down and rebuilt
+ * rather than left running, also confirmed against the emulator: a listener
+ * that's ever been refused stays refused even once the thing it depended on
  * changes, so anywhere a grant depends on another field's value, the fix is
  * to reconnect, not to wait.
+ *
+ * Every listener in a group answers on its own — the text a moment before
+ * the answers, the answers before the star count — and for a while nothing
+ * was handed to the page between those answers either. That is what put an
+ * empty question with a running clock on every phone in the room: the page
+ * drew the question the moment the index arrived, with no answers to draw,
+ * and never rebuilt the rows once they turned up. Now a group that is still
+ * waiting on any of its listeners holds everything back until the last one
+ * has answered. Firebase answers every listen — with a value, with null for
+ * nothing there, or with a refusal — so this never waits forever.
  */
 export function onEventChange(callback) {
   requireConnection();
@@ -297,105 +322,177 @@ export function onEventChange(callback) {
   const raw = { players: {}, seen: {} };
   const staticStops = [];
 
-  let ownerGen = 0;
-  let ownerStops = [];
+  // Three groups of dependent listeners, each torn down and rebuilt as one:
+  // what the owner alone may read (plus the live deck's count and applause),
+  // the current question's own fields, and its right answer.
+  let ownerGroup = null;
+  let contentGroup = null;
+  let correctGroup = null;
   let ownerDecks = null; // the owner's full view of `decks`, or null if refused
   let ownerLegacy = null; // same, for the pre-poll top-level `questions`
   let deckMeta = {}; // { questionCount, likes } for the live deck, from the narrow reads
-
-  let questionGen = 0;
-  let questionStops = [];
   let questionsView = {}; // { [id]: { text?, options?, correct?, voters?, times? } }
 
   let lastOwnerKey = null; // `${ownerUid}|${currentDeck}`
-  let lastQuestionKey = null; // `${currentDeck}|${currentIndex}|${count}|${revealed}`
+  let lastContentKey = null; // `${currentDeck}|${the question keys being listened at}`
+  let lastCorrectKey = null; // the same, plus `revealed`
+  let building = 0; // above zero while a group is being registered
 
   const path = `events/${EVENT_ID}`;
   const at = (p) => database.ref(db, `${path}/${p}`);
-  const stopAll = (list) => { list.forEach((stop) => stop()); list.length = 0; };
 
-  const emit = () => {
+  const settled = (group) => !group || group.pending === 0;
+
+  function emit() {
+    // Not while a group is half-registered, and not while any of its
+    // listeners is still on its way — see above.
+    if (building || !settled(ownerGroup) || !settled(contentGroup) || !settled(correctGroup)) return;
+
     const deckId = raw.currentDeck;
     const decks = {};
     if (ownerDecks) {
       Object.assign(decks, ownerDecks);
     } else if (deckId) {
-      decks[deckId] = { questionCount: deckMeta.questionCount, likes: deckMeta.likes, questions: questionsView };
+      // Marked partial: this is the slice of the deck the rules let this
+      // device see, and nothing about it can be counted — see deckCount().
+      decks[deckId] = {
+        questionCount: deckMeta.questionCount,
+        likes: deckMeta.likes,
+        questions: questionsView,
+        partial: true,
+      };
     }
     // normalise() tells a never-migrated event apart from a migrated one by
     // whether `decks` exists at all — an empty object here would read as
     // "migrated, with nothing in it" instead of "not migrated yet".
     const hasDecks = Object.keys(decks).length > 0;
     callback(normalise({ ...raw, decks: hasDecks ? decks : undefined, questions: ownerLegacy }));
-  };
+  }
+
+  /** A group nothing has been registered in yet. */
+  const fresh = () => ({ stops: [], pending: 0, live: true });
+
+  /** Stops every listener in a group; none of them can call back after this. */
+  function teardown(group) {
+    if (!group) return;
+    group.live = false;
+    group.stops.forEach((stop) => stop());
+    group.stops.length = 0;
+  }
+
+  /**
+   * One listener, in a group. The first thing it hears — a value, or a
+   * refusal — settles it, and the group's pending count is what emit()
+   * waits on. The refusal handler is handed nothing: what Firebase passes a
+   * cancelled listener is an error, not a snapshot, and reading `.val()`
+   * off it is what used to throw inside every phone's console.
+   */
+  function listen(group, p, onData, onRefused) {
+    let answered = false;
+    group.pending += 1;
+    const settle = () => {
+      if (answered) return;
+      answered = true;
+      group.pending -= 1;
+    };
+    group.stops.push(database.onValue(at(p),
+      (snap) => { if (!group.live) return; settle(); onData(snap.val()); emit(); },
+      () => { if (!group.live) return; settle(); onRefused(); emit(); },
+    ));
+  }
 
   function effectiveCount() {
     const deckId = raw.currentDeck;
     if (ownerDecks && deckId && ownerDecks[deckId]) return ownerDecks[deckId].questionCount ?? 0;
-    return deckMeta.questionCount ?? 0;
+    return typeof deckMeta.questionCount === "number" ? deckMeta.questionCount : 0;
   }
 
   /** Rebuilt whenever ownerUid or currentDeck changes — either can flip whether the owner reads are granted. */
   function rebuildOwner() {
-    const key = `${raw.ownerUid}|${raw.currentDeck}`;
+    const deckId = raw.currentDeck;
+    const key = `${raw.ownerUid}|${deckId}`;
     if (key === lastOwnerKey) return;
     lastOwnerKey = key;
-    stopAll(ownerStops);
-    const gen = ++ownerGen;
+    teardown(ownerGroup);
+    const group = (ownerGroup = fresh());
     ownerDecks = null;
     ownerLegacy = null;
     deckMeta = {};
-    const guarded = (assign) => (snap) => { if (gen === ownerGen) { assign(snap.val()); rebuildQuestions(); emit(); } };
 
-    ownerStops.push(database.onValue(at("decks"), guarded((v) => { ownerDecks = v; }), guarded(() => { ownerDecks = null; })));
-    ownerStops.push(database.onValue(at("questions"), guarded((v) => { ownerLegacy = v; }), guarded(() => { ownerLegacy = null; })));
-
-    const deckId = raw.currentDeck;
-    if (!deckId) { rebuildQuestions(); return emit(); }
-    ownerStops.push(database.onValue(at(`decks/${deckId}/questionCount`),
-      guarded((v) => { deckMeta.questionCount = v; }), guarded(() => { deckMeta.questionCount = undefined; })));
-    ownerStops.push(database.onValue(at(`decks/${deckId}/likes`),
-      guarded((v) => { deckMeta.likes = v; }), guarded(() => { deckMeta.likes = undefined; })));
+    building += 1;
+    listen(group, "decks",
+      (v) => { ownerDecks = v; rebuildQuestions(); },
+      () => { ownerDecks = null; rebuildQuestions(); });
+    listen(group, "questions",
+      (v) => { ownerLegacy = v; },
+      () => { ownerLegacy = null; });
+    if (deckId) {
+      listen(group, `decks/${deckId}/questionCount`,
+        (v) => { deckMeta.questionCount = v; rebuildQuestions(); },
+        () => { deckMeta.questionCount = undefined; rebuildQuestions(); });
+      listen(group, `decks/${deckId}/likes`,
+        (v) => { deckMeta.likes = v; },
+        () => { deckMeta.likes = undefined; });
+    }
+    building -= 1;
+    rebuildQuestions();
   }
 
   /**
-   * Rebuilt whenever currentDeck, currentIndex, the deck's questionCount, or
-   * revealed changes — any of those can change which question's own paths
-   * are the right ones to be listening at, or whether `correct` is granted.
+   * Rebuilt whenever which questions' own paths are the right ones to listen
+   * at changes: the deck, the index, or — once the run is over — how many
+   * there are. `revealed` rebuilds only the `correct` listeners, which are
+   * the only ones whose grant it changes.
    */
   function rebuildQuestions() {
-    const count = effectiveCount();
-    const key = `${raw.currentDeck}|${raw.currentIndex}|${count}|${raw.revealed}`;
-    if (key === lastQuestionKey) return;
-    lastQuestionKey = key;
-    stopAll(questionStops);
-    const gen = ++questionGen;
-    questionsView = {};
     const deckId = raw.currentDeck;
     const index = typeof raw.currentIndex === "number" ? raw.currentIndex : -1;
-    if (!deckId || index < 0) return emit();
+    const count = effectiveCount();
 
     // Mid-run, only the one question on screen. Once the run has moved past
     // every question, every one of them is fair game — that's what the
     // standings need, and it's also what the rules grant at that point.
     const finished = count > 0 && index >= count;
-    const keys = finished
-      ? Array.from({ length: count }, (_, i) => questionKey(i))
-      : [questionKey(index)];
-    const fields = finished
-      ? ["correct", "voters", "times"]
-      : ["text", "options", "correct", "voters", "times", "ratingStars", "ratingColor"];
+    const keys = !deckId || index < 0
+      ? []
+      : finished
+        ? Array.from({ length: count }, (_, i) => questionKey(i))
+        : [questionKey(index)];
 
-    for (const qid of keys) {
-      questionsView[qid] = {};
-      for (const field of fields) {
-        questionStops.push(database.onValue(at(`decks/${deckId}/questions/${qid}/${field}`),
-          (snap) => { if (gen === questionGen) { questionsView[qid][field] = snap.val(); emit(); } },
-          () => { if (gen === questionGen) { questionsView[qid][field] = undefined; emit(); } },
-        ));
+    const contentKey = `${deckId}|${keys.join(",")}`;
+    if (contentKey !== lastContentKey) {
+      lastContentKey = contentKey;
+      lastCorrectKey = null;
+      teardown(contentGroup);
+      const group = (contentGroup = fresh());
+      questionsView = {};
+      const fields = finished ? STANDINGS_FIELDS : CONTENT_FIELDS;
+      building += 1;
+      for (const qid of keys) {
+        const view = (questionsView[qid] = {});
+        for (const field of fields) {
+          listen(group, `decks/${deckId}/questions/${qid}/${field}`,
+            (v) => { view[field] = v; },
+            () => { view[field] = undefined; });
+        }
       }
+      building -= 1;
     }
-    emit();
+
+    const correctKey = `${contentKey}|${raw.revealed === true}`;
+    if (correctKey !== lastCorrectKey) {
+      lastCorrectKey = correctKey;
+      teardown(correctGroup);
+      const group = (correctGroup = fresh());
+      building += 1;
+      for (const qid of keys) {
+        const view = questionsView[qid];
+        listen(group, `decks/${deckId}/questions/${qid}/correct`,
+          (v) => { view.correct = v; },
+          () => { view.correct = undefined; });
+      }
+      building -= 1;
+    }
   }
 
   for (const field of PUBLIC_FIELDS) {
@@ -409,7 +506,12 @@ export function onEventChange(callback) {
   staticStops.push(database.onValue(at("players"), (snap) => { raw.players = snap.val() || {}; emit(); }));
   staticStops.push(database.onValue(at("seen"), (snap) => { raw.seen = snap.val() || {}; emit(); }));
 
-  return () => { stopAll(staticStops); stopAll(ownerStops); stopAll(questionStops); };
+  return () => {
+    staticStops.forEach((stop) => stop());
+    teardown(ownerGroup);
+    teardown(contentGroup);
+    teardown(correctGroup);
+  };
 }
 
 function normalise(raw) {
@@ -423,6 +525,7 @@ function normalise(raw) {
   liveDeck = deckId;
   unmigrated = !raw?.decks;
   legacyQuestions = raw?.questions ?? null;
+  liveCount = deck?.partial ? null : deckCount(deck);
   // Where the live poll's questions are *right now*, which during the window
   // between deploying this and the host's first save is still the old place.
   // Votes have to go where the counters actually are.
@@ -437,6 +540,11 @@ function normalise(raw) {
   // question still gets it; one only allowed to see none, correctly, doesn't.
   const currentKey = currentIndex >= 0 ? questionKey(currentIndex) : null;
   const currentRaw = currentKey ? deck?.questions?.[currentKey] : null;
+  // A question is on screen once its text is here, and not before: on a
+  // device that reads it field by field, the index gets there first, and a
+  // question with no words and no answers yet is a question that hasn't
+  // arrived — not one to draw.
+  const arrived = typeof currentRaw?.text === "string";
 
   return {
     ownerUid: raw?.ownerUid ?? null,
@@ -487,7 +595,7 @@ function normalise(raw) {
     // The one question on screen right now, found by key rather than by
     // indexing into `questions` above — which, for anyone but the owner, is
     // usually not the full deck. null while nothing is up.
-    currentQuestion: currentRaw ? readQuestion(currentKey, currentRaw) : null,
+    currentQuestion: arrived ? readQuestion(currentKey, currentRaw) : null,
   };
 }
 
@@ -496,11 +604,15 @@ function normalise(raw) {
  * only thing a device that can't read every question still has to go on —
  * falling back to actually counting for a deck saved before this existed, or
  * for the owner, who can always count for real.
+ *
+ * Never counted on a device that only sees part of the deck: what it sees is
+ * the one question on screen, and counting that made every poll a poll of
+ * one — the second question landed on the closing screen.
  */
 function deckCount(entry) {
-  return typeof entry?.questionCount === "number"
-    ? entry.questionCount
-    : Object.keys(entry?.questions || {}).length;
+  if (typeof entry?.questionCount === "number") return entry.questionCount;
+  if (entry?.partial) return 0;
+  return Object.keys(entry?.questions || {}).length;
 }
 
 /**
@@ -732,6 +844,13 @@ export function setCurrentIndex(index, { starting = false } = {}) {
     // stamped when a run begins rather than on every question in it.
     ...(starting
       ? { [`decks/${liveDeck}/lastRunAt`]: database.serverTimestamp() }
+      : {}),
+    // How many questions there are is the one thing a phone is told rather
+    // than shown, and a poll saved before the count existed has never been
+    // told. Stamped on every step as well as on every save, so running an
+    // old poll is what fills it in — by the device that can count for real.
+    ...(liveCount !== null && !unmigrated
+      ? { [`decks/${liveDeck}/questionCount`]: liveCount }
       : {}),
   });
 }

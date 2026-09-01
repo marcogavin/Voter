@@ -10,7 +10,7 @@ things that have already cost a round trip at least once.
 cd test && npm install && npx playwright install chromium && npm test
 ```
 
-Twenty-five suites, about 390 assertions. They run against the files that
+Twenty-eight suites, about 430 assertions. They run against the files that
 ship, not against copies. If they are not green before you start, find out
 why before you write anything.
 

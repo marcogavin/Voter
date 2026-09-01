@@ -154,6 +154,12 @@ function render(event) {
   // wall that means the way in, not a blank rectangle.
   const screen = event.blanked ? "none" : screenAt(event);
 
+  // The wall reads a question the way a phone does — the index a round trip
+  // before the words, see onEventChange() in sync.js. Whatever is up stays
+  // up for that moment: the join code flashing between two questions would
+  // read as the poll having ended.
+  if (screen === "question" && !event.currentQuestion) return stopTicking();
+
   // The corner code is for latecomers while something else is up. On the join
   // screen the code *is* the screen, and at the end it would be an invitation
   // to something that has finished. The count of votes keeps it company: it
