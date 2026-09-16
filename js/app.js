@@ -24,7 +24,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-  "speed", "presence", "rating", "starpicker",
+  "speed", "presence", "rating", "starpicker", "arrival",
 ];
 
 const optionsEl = document.getElementById("options");
