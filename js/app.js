@@ -149,15 +149,12 @@ function render(event) {
   questionEl.classList.remove("is-centred");
   stageEl.classList.remove("is-ending");
 
+  // No question to draw with the index pointing at one is a question this
+  // phone can't read — its text refused, or a count stamped past the end.
+  // That is the waiting screen with nothing to tap, never the last question
+  // left up with its rows live: sync.js hands over a question only once it
+  // is whole, so there is no in-between state worth holding for.
   if (!question) {
-    // The host has put a question up, but its words and answers follow the
-    // index by a round trip — see onEventChange() in sync.js. For that
-    // moment the last question stays as it is, rather than the waiting
-    // screen flashing between every two of them.
-    if (screen === "question" && optionsEl.dataset.screen === "question") {
-      stopTicking();
-      return;
-    }
     resting();
     questionEl.hidden = true;
     showWaiting();

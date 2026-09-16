@@ -90,6 +90,22 @@ before it existed — an aggregate read with no rule of its own being refused
 outright instead of filtered, and a stale rule rejecting a whole multi-path
 write over one new field riding along with it.
 
+`test/rules/e2e.sh` goes one further: the whole app, in a real Chromium,
+against the same emulator. The host's page in one browser profile, an
+attendee's phone in a second, separate one — an incognito window, as far as
+Firebase can tell — and the projector in a third. It seeds a poll saved
+before questions were counted, has the host step through it with Next, and
+asserts what the attendee can see and tap at every screen, right up to the
+heart. The pages are the shipped ones with three seams cut: where the SDK
+loads from, where it connects to, and how the host signs in. Run it whenever
+a change touches how a phone reads or draws a question:
+
+```sh
+sh test/rules/e2e.sh          # after npm install in test/ and test/rules/
+```
+
+It leaves a screenshot of the phone at every step in `test/shots/`.
+
 
 
 Suites are plain node — no framework, no runner, no configuration. A suite

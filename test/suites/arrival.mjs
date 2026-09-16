@@ -200,11 +200,11 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   ] }) });
   ok("a star count turning up makes it a row of stars", stars().length === 3 && choices().length === 0);
 
-  console.log("the host moves on");
+  console.log("a question this phone can't read");
   push({ currentIndex: 1, currentQuestion: null });
-  ok("the last question stays up while the next is on its way",
-     $("question").textContent === "First?" && stars().length === 3);
-  ok("nothing is tappable on it", stars().every((s) => s.disabled) || $("status").hidden);
+  ok("is the waiting screen", $("options").dataset.screen === "waiting");
+  ok("with nothing left to tap", stars().length === 0 && choices().length === 0);
+  ok("and no clock", $("clock").hidden);
 
   push({ currentIndex: 1, currentQuestion: q({ id: "q001", text: "Second?", options: [
     { id: "a", label: "Yes", votes: 0 }, { id: "b", label: "No", votes: 0 },
@@ -243,15 +243,14 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   ok("shows the way in", stage().dataset.screen === "join");
   let crashed = false;
   try { push({ currentIndex: 0, currentQuestion: null }); } catch { crashed = true; }
-  ok("survives the index arriving before the question", !crashed);
-  ok("and keeps the way in up meanwhile", stage().dataset.screen === "join");
+  ok("survives an index pointing at a question it can't read", !crashed);
+  ok("and shows the way in meanwhile", stage().dataset.screen === "join");
   push({ currentIndex: 0, currentQuestion: question });
   ok("then shows the question", stage().dataset.screen === "question"
      && stage().querySelector(".big-question").textContent === "First?");
 
   push({ currentIndex: 1, currentQuestion: null });
-  ok("and holds it while the next is on its way", stage().querySelector(".big-question").textContent === "First?");
-  ok("rather than flashing the join code", stage().dataset.screen === "question");
+  ok("and a question it can't read is the way in again", stage().dataset.screen === "join");
 }
 
 console.log(failed ? `\n${failed} FAILED` : "\nall passed");

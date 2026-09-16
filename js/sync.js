@@ -401,10 +401,10 @@ export function onEventChange(callback) {
     ));
   }
 
+  /** The live deck's length, by the same rule normalise() counts it. */
   function effectiveCount() {
     const deckId = raw.currentDeck;
-    if (ownerDecks && deckId && ownerDecks[deckId]) return ownerDecks[deckId].questionCount ?? 0;
-    return typeof deckMeta.questionCount === "number" ? deckMeta.questionCount : 0;
+    return deckCount(ownerDecks?.[deckId] ?? { ...deckMeta, partial: true });
   }
 
   /** Rebuilt whenever ownerUid or currentDeck changes — either can flip whether the owner reads are granted. */
@@ -452,8 +452,9 @@ export function onEventChange(callback) {
     // Mid-run, only the one question on screen. Once the run has moved past
     // every question, every one of them is fair game — that's what the
     // standings need, and it's also what the rules grant at that point.
+    // The owner has the whole deck already and needs none of this.
     const finished = count > 0 && index >= count;
-    const keys = !deckId || index < 0
+    const keys = ownerDecks || !deckId || index < 0
       ? []
       : finished
         ? Array.from({ length: count }, (_, i) => questionKey(i))
