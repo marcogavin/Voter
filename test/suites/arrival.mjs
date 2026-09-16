@@ -141,6 +141,14 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   ok("in the same write as the step, so no phone sees one without the other",
      written.currentIndex === 0 && written.currentQuestionKey === "q000");
 
+  sync.__normalise({ ownerUid: "host", currentDeck: "d000",
+    decks: { d000: { title: "Drifted", questionCount: 5, questions: {
+      q000: { text: "a", options: { a: { label: "A", votes: 0 } } },
+      q001: { text: "b", options: { a: { label: "A", votes: 0 } } },
+    } } } });
+  await sync.setCurrentIndex(2);
+  ok("a stored count that has drifted is corrected, not copied", written["decks/d000/questionCount"] === 2);
+
   sync.__normalise({ ownerUid: "host", questions: { q000: { text: "a", options: {} } } });
   await sync.setCurrentIndex(0);
   ok("but never on a poll that hasn't moved into decks yet",
