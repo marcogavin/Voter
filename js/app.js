@@ -38,7 +38,7 @@ const whoamiEl = document.getElementById("whoami");
 const statusEl = document.getElementById("status");
 const noteEl = document.getElementById("note");
 
-let shownQuestionId = null; // so we only rebuild rows when the question changes
+let shownShape = null; // which question the rows on screen were built for, and how — see rowsShape()
 let busy = false; // guards against double-taps while a write is in flight
 let latest = null; // the last event seen, so the ticker can redraw from it
 let ticker = null;
@@ -103,7 +103,7 @@ function render(event) {
   // it happened to be built in.
   if (setLanguage(event.lang)) {
     applyStaticText();
-    shownQuestionId = null;
+    shownShape = null;
     delete optionsEl.dataset.screen;
   }
   drawStatus();
@@ -149,6 +149,11 @@ function render(event) {
   questionEl.classList.remove("is-centred");
   stageEl.classList.remove("is-ending");
 
+  // No question to draw with the index pointing at one is a question this
+  // phone can't read — its text refused, or a count stamped past the end.
+  // That is the waiting screen with nothing to tap, never the last question
+  // left up with its rows live: sync.js hands over a question only once it
+  // is whole, so there is no in-between state worth holding for.
   if (!question) {
     resting();
     questionEl.hidden = true;
@@ -160,9 +165,15 @@ function render(event) {
   drawProgress(event.currentIndex + 1, event.questionCount);
   questionEl.textContent = question.text;
 
-  if (question.id !== shownQuestionId) {
+  // Rebuilt when the question changes, and when its shape does. Keying this
+  // on the question's id alone is what left a room with no way to vote: a
+  // phone that isn't the host's gets the index first and the answers a
+  // moment later, and rows built for a question with no answers yet were
+  // never built again once they arrived.
+  const shape = rowsShape(question);
+  if (shape !== shownShape) {
     buildRows(question);
-    shownQuestionId = question.id;
+    shownShape = shape;
   }
 
   drawTime();
@@ -207,7 +218,7 @@ function keepPresent() {
  * been taken down.
  */
 function resting() {
-  shownQuestionId = null;
+  shownShape = null;
   drawProgress(null);
   clockEl.hidden = true;
   clockEl.classList.remove("is-urgent");
@@ -291,6 +302,19 @@ function startTicking() {
 function stopTicking() {
   if (ticker) clearInterval(ticker);
   ticker = null;
+}
+
+/**
+ * Everything buildRows() bakes into the rows: which question, whether it's a
+ * list of answers or a row of stars, and which answers there are. The rest —
+ * labels, counts, whose vote is where — is painted over by updateRows() on
+ * every snapshot, so it needs no place here.
+ */
+function rowsShape(question) {
+  const kind = isRatingQuestion(question)
+    ? `stars:${question.ratingStars}:${question.ratingColor}`
+    : "list";
+  return [question.id, kind, ...question.options.map((option) => option.id)].join("|");
 }
 
 function buildRows(question) {

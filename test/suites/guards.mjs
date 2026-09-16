@@ -24,7 +24,7 @@ for (const file of ["app.js", "screen.js"]) {
   // Guards are the things compared before deciding not to rebuild.
   const dataGuards = [...src.matchAll(/(\w+(?:\.\w+)?)\.dataset\.(\w+)\s*!==/g)]
     .map((m) => `${m[1]}.dataset.${m[2]}`);
-  const varGuards = [...src.matchAll(/!==\s*(shownQuestionId|\w*Menu)\b/g)].map((m) => m[1]);
+  const varGuards = [...src.matchAll(/!==\s*(shown\w+|\w*Menu)\b/g)].map((m) => m[1]);
   const guards = [...new Set([...dataGuards, ...varGuards])];
 
   console.log("    cache guards found:", guards.join(", ") || "none");

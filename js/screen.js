@@ -154,6 +154,15 @@ function render(event) {
   // wall that means the way in, not a blank rectangle.
   const screen = event.blanked ? "none" : screenAt(event);
 
+  // A question the wall can't read — its text refused, or a count stamped
+  // past the end — is the way in, not a crash in showQuestion(). sync.js
+  // hands over a question only once it is whole, so this is never the gap
+  // between two questions.
+  if (screen === "question" && !event.currentQuestion) {
+    stopTicking();
+    return showJoin(event);
+  }
+
   // The corner code is for latecomers while something else is up. On the join
   // screen the code *is* the screen, and at the end it would be an invitation
   // to something that has finished. The count of votes keeps it company: it

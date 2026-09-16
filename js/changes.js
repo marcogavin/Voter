@@ -20,6 +20,15 @@
 
 export const CHANGES = [
   {
+    version: "2.3",
+    on: "2026-09-01",
+    lines: [
+      "Everyone in the room can vote again. A phone that wasn't the host's was getting each question a moment before its answers, drawing it with none, and never drawing them once they arrived — so the room saw the question and a clock and nothing to tap. It now waits for the whole question before showing it.",
+      "A poll saved before VOTR started counting its questions no longer ends after the first one: the room's phones and the wall were counting the one question they could see and calling that the whole poll. The count is filled in the moment the poll is run.",
+      "Revealing an answer no longer blanks the question on every phone for a moment while it is fetched again.",
+    ],
+  },
+  {
     version: "2.2",
     on: "2026-08-22",
     lines: [

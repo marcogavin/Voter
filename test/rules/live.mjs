@@ -124,7 +124,7 @@ await sync.setCurrentDeck("d000");
 await sync.setCurrentIndex(0);
 
 let ownerLast = null;
-sync.onEventChange((event) => { ownerLast = event; });
+const stopOwner = sync.onEventChange((event) => { ownerLast = event; });
 await tick(1200);
 
 console.log("\n-- the owner's own view, through the real onEventChange() --");
@@ -132,6 +132,18 @@ ok("onEventChange() actually delivered something (a listener refused outright ne
 ok("both questions present", ownerLast?.questions.length === 2);
 ok("current question is Q1", ownerLast?.currentQuestion?.text === "Q1");
 ok("questionCount is 2", ownerLast?.questionCount === 2);
+
+console.log("\n-- a poll saved before its questions were counted, run again --");
+// The count is what a phone is told instead of the deck it can't read. A
+// deck from before it existed has none, and the phone was counting the one
+// question it could see instead — so the host's next step fills it in.
+await adminDb.ref(`${EVENT_PATH}/decks/d000/questionCount`).remove();
+await tick(800);
+ok("the owner still counts the deck for real", ownerLast?.questionCount === 2);
+await sync.setCurrentIndex(0);
+await tick(800);
+ok("stepping through it writes the count back",
+   (await adminDb.ref(`${EVENT_PATH}/decks/d000/questionCount`).get()).val() === 2);
 
 // ── The audience and a second signed-in account: their own connections ──────
 const audience = makeClient("audience");
@@ -239,6 +251,67 @@ try {
   await database.update(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001`), { ratingColor: "orange" });
 } catch { badColorDenied = true; }
 ok("a colour outside the curated list is refused, even from the owner", badColorDenied);
+
+// ── The audience, through the real onEventChange() ─────────────────────────
+// Everything above reads the phone's paths one at a time from a fresh client.
+// This is the phone itself: sync.js's own listeners, as a device that is not
+// the owner, against the real rules — the refused deck read, the per-field
+// reads that have to be started after it, and nothing handed to the page
+// until a question is whole. The owner's listener is stopped first, since
+// sync.js holds one connection at a time; the host drives from here on with
+// direct writes on the owner's connection, which is the same thing the real
+// host.js writes, minus sync.js.
+console.log("\n-- the audience's own view, through the real onEventChange() --");
+stopOwner();
+sync.__inject(database, ref(audience.db, EVENT_PATH), audienceUid, audience.db);
+
+const host = (fields) => database.update(ref(owner.db, EVENT_PATH), fields);
+const step = (index, key) => host({
+  currentIndex: index, currentQuestionKey: key, revealed: false,
+  askedAt: database.serverTimestamp(), pausedAt: null,
+});
+await host({ [`decks/d000/questionCount`]: 2 });
+await step(0, "q000");
+await tick(600);
+
+const phone = [];
+sync.onEventChange((event) => { phone.push(event); });
+await tick(1500);
+const seen = () => phone.at(-1);
+
+ok("the phone's view arrived at all", phone.length > 0);
+ok("with Q1 on it", seen()?.currentQuestion?.text === "Q1");
+ok("and both of its answers", seen()?.currentQuestion?.options.length === 2);
+ok("without its right answer, unrevealed", seen()?.currentQuestion?.correct === null);
+ok("knowing how long the poll is", seen()?.questionCount === 2);
+ok("never handed over a question with no answers on it",
+   phone.every((e) => !e.currentQuestion || e.currentQuestion.options.length === 2));
+
+console.log("\n-- the host reveals --");
+phone.length = 0;
+await host({ revealed: true });
+await tick(1200);
+ok("the phone sees it revealed", seen()?.revealed === true);
+ok("with the right answer this time", seen()?.currentQuestion?.correct === "a");
+ok("the question never left the phone meanwhile", phone.every((e) => e.currentQuestion?.text === "Q1"));
+
+console.log("\n-- the host moves on to the rating --");
+phone.length = 0;
+await step(1, "q001");
+await tick(1500);
+ok("the phone is on the second question", seen()?.currentQuestion?.text === "How was it?");
+ok("with its star count", seen()?.currentQuestion?.ratingStars === 5);
+ok("and all five of its answers", seen()?.currentQuestion?.options.length === 5);
+ok("never as a question with nothing on it",
+   phone.every((e) => !e.currentQuestion || e.currentQuestion.options.length > 0));
+
+console.log("\n-- the host finishes the run --");
+phone.length = 0;
+await step(2, null);
+await tick(1500);
+ok("the phone has every question for the standings", seen()?.questions.length === 2);
+ok("with each one's right answer", seen()?.questions[0]?.correct === "a");
+ok("and nothing on screen to answer", seen()?.currentQuestion === null);
 
 console.log(failures ? `\n${failures} FAILED` : "\nall passed");
 process.exit(failures ? 1 : 0);

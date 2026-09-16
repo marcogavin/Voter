@@ -52,6 +52,7 @@ Both are generated on every run and both are gitignored.
 | `wall-unit` | the projector, screen by screen |
 | `contrast` | every colour pair, in both palettes |
 | `clearroom` | Clear the room: who it's offered to, what it asks, what it clears |
+| `arrival` | a question reaching a phone field by field, and being drawn once whole |
 | `gate` | the host page ships closed |
 | `overflow` | nothing escapes the card, in five languages |
 | `taps` | nothing on a phone is smaller than a thumb |
@@ -88,6 +89,22 @@ suite that would have caught both real mistakes that made it to a live event
 before it existed — an aggregate read with no rule of its own being refused
 outright instead of filtered, and a stale rule rejecting a whole multi-path
 write over one new field riding along with it.
+
+`test/rules/e2e.sh` goes one further: the whole app, in a real Chromium,
+against the same emulator. The host's page in one browser profile, an
+attendee's phone in a second, separate one — an incognito window, as far as
+Firebase can tell — and the projector in a third. It seeds a poll saved
+before questions were counted, has the host step through it with Next, and
+asserts what the attendee can see and tap at every screen, right up to the
+heart. The pages are the shipped ones with three seams cut: where the SDK
+loads from, where it connects to, and how the host signs in. Run it whenever
+a change touches how a phone reads or draws a question:
+
+```sh
+sh test/rules/e2e.sh          # after npm install in test/ and test/rules/
+```
+
+It leaves a screenshot of the phone at every step in `test/shots/`.
 
 
 

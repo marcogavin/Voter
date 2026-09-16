@@ -10,7 +10,7 @@ things that have already cost a round trip at least once.
 cd test && npm install && npx playwright install chromium && npm test
 ```
 
-Twenty-five suites, about 390 assertions. They run against the files that
+Twenty-eight suites, about 430 assertions. They run against the files that
 ship, not against copies. If they are not green before you start, find out
 why before you write anything.
 
@@ -18,6 +18,12 @@ why before you write anything.
 Firebase emulator — not part of the above, since it needs a JVM. See
 `test/README.md`. Run it whenever `database.rules.json` or `js/sync.js`'s
 `onEventChange` changes, and before republishing rules to the console.
+
+`sh test/rules/e2e.sh` is the room itself: the real pages in a real browser
+against that emulator, the host in one profile and an attendee in a second,
+separate one. A phone that isn't the host's reads a question field by field
+and has broken twice without any node suite noticing. Run this before
+touching how a question reaches a phone, and after.
 
 ## The shape
 
