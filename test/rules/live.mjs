@@ -190,6 +190,22 @@ ok("audience can now read both questions' correct answers (standings need this)"
    (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q000/correct`)) === "a" &&
    (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/correct`)) === "b");
 
+console.log("\n-- the end of a run on a poll with no stored count --");
+// The finished-run grants compare currentIndex with questionCount. A poll
+// from before the count existed has none, and a number compared with
+// nothing is an error in the rules language — which reads as a refusal.
+// The host's first step stamps the count, so this only bites a phone whose
+// host is still running a script from before the stamp existed.
+await adminDb.ref(`${EVENT_PATH}/decks/d000/questionCount`).remove();
+await tick(400);
+ok("without a count, the audience is refused the right answers at the end",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q000/correct`)) === undefined);
+ok("and everyone's votes", (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q000/voters`)) === undefined);
+await adminDb.ref(`${EVENT_PATH}/decks/d000/questionCount`).set(2);
+await tick(400);
+ok("with it back, both are readable again",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q000/correct`)) === "a");
+
 console.log("\n-- Clear the room: the players/seen write rules, live --");
 const audienceUid = audience.auth.currentUser.uid;
 await database.set(database.ref(audience.db, `${EVENT_PATH}/players/${audienceUid}`), "Ana");

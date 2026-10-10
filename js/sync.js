@@ -93,8 +93,9 @@ let liveDeck = FIRST_DECK;
 let questionsPath = "questions";
 let unmigrated = true;
 let legacyQuestions = null;
-// How many questions the live poll has, as counted by a device that can see
-// all of them — null on one that can't. See setCurrentIndex().
+// How many questions the live poll has, counted for real by a device that
+// can see all of them — null on one that can't. Not the stored count: that
+// is what this exists to correct. See setCurrentIndex().
 let liveCount = null;
 
 /**
@@ -526,7 +527,7 @@ function normalise(raw) {
   liveDeck = deckId;
   unmigrated = !raw?.decks;
   legacyQuestions = raw?.questions ?? null;
-  liveCount = deck?.partial ? null : deckCount(deck);
+  liveCount = deck?.partial ? null : Object.keys(deck?.questions || {}).length;
   // Where the live poll's questions are *right now*, which during the window
   // between deploying this and the host's first save is still the old place.
   // Votes have to go where the counters actually are.
@@ -850,6 +851,10 @@ export function setCurrentIndex(index, { starting = false } = {}) {
     // than shown, and a poll saved before the count existed has never been
     // told. Stamped on every step as well as on every save, so running an
     // old poll is what fills it in — by the device that can count for real.
+    // Counted, not copied: a stored count that has drifted past the real
+    // one leaves every phone waiting for a question that doesn't exist
+    // exactly where the standings should be, and refused the answers it
+    // would need for them.
     ...(liveCount !== null && !unmigrated
       ? { [`decks/${liveDeck}/questionCount`]: liveCount }
       : {}),

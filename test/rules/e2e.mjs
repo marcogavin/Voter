@@ -222,6 +222,62 @@ try {
     () => [...document.querySelectorAll(".star-btn")].filter((b) => b.offsetParent && !b.disabled).length === 5);
   await late.screenshot({ path: join(SHOTS, "e2e-9-late-arrival.png") });
   await lateCtx.close();
+
+  // The host switches to a poll that is one rating and nothing else: no
+  // standings to show, so the step after it is the heart. And a quiz whose
+  // last question is revealed before the standings, which is the way a
+  // host actually reaches them.
+  const switchTo = async (deckId, deck) => {
+    await adminDb.ref(`${EVENT_PATH}/decks/${deckId}`).set(deck);
+    await adminDb.ref(EVENT_PATH).update({ currentDeck: deckId, currentIndex: -1, currentQuestionKey: null, revealed: false });
+  };
+
+  console.log("\n-- a poll that is one rating, start to finish --");
+  await switchTo("d001", { title: "Just a rating", questionCount: 1, questions: {
+    q000: { text: "How do you like this app?", ratingStars: 5, ratingColor: "gold",
+      options: { a: { label: "1", votes: 0 }, b: { label: "2", votes: 0 }, c: { label: "3", votes: 0 }, d: { label: "4", votes: 0 }, e: { label: "5", votes: 0 } } },
+  } });
+  await eventually("the phone is waiting again", phone,
+    () => document.getElementById("options").dataset.screen === "waiting");
+  await tap(host, "#next");
+  await eventually("the rating is up, 1 of 1", phone,
+    () => document.getElementById("progress").textContent === "Question 1 of 1"
+      && [...document.querySelectorAll(".star-btn")].filter((b) => b.offsetParent && !b.disabled).length === 5);
+  await tap(phone, '.star-btn[data-value="5"]');
+  await eventually("the vote lands", phone, () => document.querySelectorAll(".star-btn.is-filled").length === 5);
+  await tap(host, "#next");
+  await eventually("Next goes straight to the heart on the phone", phone,
+    () => !!document.getElementById("like")?.offsetParent);
+  await eventually("and on the wall", wall, () => document.getElementById("stage").dataset.screen === "ending");
+  await shot("10-rating-poll-ending");
+
+  console.log("\n-- a quiz whose last question is revealed before the standings --");
+  await switchTo("d002", { title: "Quiz", questionCount: 2, questions: {
+    q000: { text: "2 + 2?", correct: "b", options: { a: { label: "3", votes: 0 }, b: { label: "4", votes: 0 } } },
+    q001: { text: "3 + 3?", correct: "a", options: { a: { label: "6", votes: 0 }, b: { label: "7", votes: 0 } } },
+  } });
+  await eventually("waiting", phone, () => document.getElementById("options").dataset.screen === "waiting");
+  await tap(host, "#next");
+  await eventually("question 1 of 2", phone, () => document.getElementById("progress").textContent === "Question 1 of 2");
+  await tap(phone, '.choice[data-id="b"]');
+  await eventually("voted", phone, () => document.querySelector('.choice[data-id="b"]')?.classList.contains("is-mine"));
+  await tap(host, "#next"); // reveal
+  await eventually("revealed", phone, () => document.querySelector('.choice[data-id="b"]')?.classList.contains("is-right"));
+  await tap(host, "#next"); // question 2
+  await eventually("question 2 of 2", phone, () => document.getElementById("progress").textContent === "Question 2 of 2");
+  await tap(phone, '.choice[data-id="a"]');
+  await eventually("voted again", phone, () => document.querySelector('.choice[data-id="a"]')?.classList.contains("is-mine"));
+  await tap(host, "#next"); // reveal the last one
+  await eventually("the last answer is revealed", phone,
+    () => document.querySelector('.choice[data-id="a"]')?.classList.contains("is-right"));
+  await tap(host, "#next"); // standings
+  await eventually("then the standings", phone, () => document.getElementById("question").textContent === "Scores");
+  await eventually("with 2 of 2 right", phone,
+    () => document.querySelector(".board-row.is-me .board-score")?.textContent === "2/2");
+  await shot("11-quiz-scores");
+  await tap(host, "#next"); // heart
+  await eventually("then the heart", phone, () => !!document.getElementById("like")?.offsetParent);
+  await shot("12-quiz-ending");
 } catch (error) {
   failures++;
   console.log(`  ✗ the run itself broke: ${error.message}`);

@@ -23,7 +23,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
-  "presence", "rating", "starsummary",
+  "presence", "rating", "starsummary", "arrival",
 ];
 
 /**
