@@ -20,6 +20,14 @@
 
 export const CHANGES = [
   {
+    version: "2.4",
+    on: "2026-10-10",
+    lines: [
+      "The room's phones show the ranking and the closing heart again. Both depend on VOTR knowing how many questions a poll has, and a poll whose stored count had drifted from the real one left every phone but the host's waiting at the end. The host's Next now counts the questions for real each time, so one press fixes it.",
+      "A phone holding yesterday's copy of the app now notices and fetches the new one, instead of running the old version until its cache ran out.",
+    ],
+  },
+  {
     version: "2.3",
     on: "2026-09-01",
     lines: [
