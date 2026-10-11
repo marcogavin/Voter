@@ -318,6 +318,7 @@ await tick(1500);
 ok("the phone is on the second question", seen()?.currentQuestion?.text === "How was it?");
 ok("with its star count", seen()?.currentQuestion?.ratingStars === 5);
 ok("and all five of its answers", seen()?.currentQuestion?.options.length === 5);
+for (const e of phone) if (e.currentQuestion && e.currentQuestion.options.length === 0) console.log("      EMPTY:", JSON.stringify({ i: e.currentIndex, q: e.currentQuestion }));
 ok("never as a question with nothing on it",
    phone.every((e) => !e.currentQuestion || e.currentQuestion.options.length > 0));
 
@@ -328,6 +329,54 @@ await tick(1500);
 ok("the phone has every question for the standings", seen()?.questions.length === 2);
 ok("with each one's right answer", seen()?.questions[0]?.correct === "a");
 ok("and nothing on screen to answer", seen()?.currentQuestion === null);
+
+// ── Slides: saved through the real sync.js, read under the real rules ──────
+console.log("\n-- slides: what is stored, and who can read it when --");
+sync.__inject(database, ref(owner.db, EVENT_PATH), "owner-uid-1", owner.db);
+sync.__normalise({ ownerUid: "owner-uid-1", currentDeck: "d000", decks: { d000: { title: "T" } } });
+await sync.saveQuestions([
+  { text: "Q1", correct: "a", options: [{ label: "A", votes: 0 }, { label: "B", votes: 0 }], voters: {} },
+  { kind: "slide", text: "Coffee break", body: "Back at 11:00", options: [] },
+  { text: "Q2", correct: null, options: [{ label: "A", votes: 0 }, { label: "B", votes: 0 }], voters: {} },
+  { kind: "slide", text: "", body: "The secret next slide", options: [] },
+]);
+await tick(600);
+ok("the owner's save with slides in it is accepted",
+   (await adminDb.ref(`${EVENT_PATH}/decks/d000/questions/q001/kind`).get()).val() === "slide");
+ok("with its questions numbered apart from the slides",
+   (await adminDb.ref(`${EVENT_PATH}/decks/d000/numbered`).get()).val() === 2 &&
+   (await adminDb.ref(`${EVENT_PATH}/decks/d000/questions/q002/number`).get()).val() === 2);
+
+await host({ currentIndex: 1, currentQuestionKey: "q001", revealed: false });
+await tick(500);
+ok("the audience reads the slide on screen — its kind",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/kind`)) === "slide");
+ok("its heading", (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/text`)) === "Coffee break");
+ok("and its text", (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q001/body`)) === "Back at 11:00");
+ok("and how many questions the poll has",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/numbered`)) === 2);
+ok("but not a slide further on",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q003/body`)) === undefined);
+ok("nor a question's number before it is up",
+   (await readOnce(audience, `${EVENT_PATH}/decks/d000/questions/q002/number`)) === undefined);
+
+let viewerSlideDenied = false;
+try {
+  await database.set(database.ref(viewer.db, `${EVENT_PATH}/decks/d000/questions/q001/body`), "hijacked");
+} catch { viewerSlideDenied = true; }
+ok("a non-owner cannot rewrite a slide", viewerSlideDenied);
+
+let badKindDenied = false;
+try {
+  await database.set(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001/kind`), "video");
+} catch { badKindDenied = true; }
+ok("a kind that isn't slide is refused, even from the owner", badKindDenied);
+
+let longBodyDenied = false;
+try {
+  await database.set(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001/body`), "x".repeat(281));
+} catch { longBodyDenied = true; }
+ok("so is text past 280 characters", longBodyDenied);
 
 console.log(failures ? `\n${failures} FAILED` : "\nall passed");
 process.exit(failures ? 1 : 0);

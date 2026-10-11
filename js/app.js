@@ -15,7 +15,7 @@ import {
 } from "./sync.js";
 import { icons, drawIcons, waitingArt } from "./icons.js";
 import { flyHearts, heartColour, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingColorVar, ratingCaptionText } from "./scores.js";
+import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingColorVar, ratingCaptionText, isSlide, questionNumber } from "./scores.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
@@ -24,7 +24,7 @@ import { t, setLanguage, applyStaticText } from "./i18n.js";
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-  "speed", "presence", "rating", "starpicker", "arrival",
+  "speed", "presence", "rating", "starpicker", "arrival", "slides",
 ];
 
 const optionsEl = document.getElementById("options");
@@ -147,7 +147,14 @@ function render(event) {
   }
 
   questionEl.classList.remove("is-centred");
-  stageEl.classList.remove("is-ending");
+  stageEl.classList.remove("is-ending", "is-slide");
+
+  // A slide: the presenter's words, and nothing to answer, time or count.
+  if (question && isSlide(question)) {
+    resting();
+    showSlide(question);
+    return;
+  }
 
   // No question to draw with the index pointing at one is a question this
   // phone can't read — its text refused, or a count stamped past the end.
@@ -162,7 +169,11 @@ function render(event) {
   }
 
   questionEl.hidden = false;
-  drawProgress(event.currentIndex + 1, event.questionCount);
+  // Counting questions only — the slides between them are steps, not
+  // questions, and "Question 3 of 5" with two slides in it would be wrong
+  // twice over.
+  const place = questionNumber(event);
+  drawProgress(place?.n ?? event.currentIndex + 1, place?.of ?? event.questionCount);
   questionEl.textContent = question.text;
 
   // Rebuilt when the question changes, and when its shape does. Keying this
@@ -183,6 +194,26 @@ function render(event) {
   // between the question going up and its time running out.
   if (!event.revealed && secondsLeft() > 0) startTicking();
   else stopTicking();
+}
+
+/**
+ * A slide, centred on the phone the way it is on the wall: its heading over
+ * its text, either of which may be missing. Rebuilt on every render — there
+ * is nothing on it that moves, and nothing to lose by drawing it again.
+ */
+function showSlide(question) {
+  stageEl.classList.add("is-slide");
+  questionEl.hidden = true;
+  optionsEl.dataset.screen = "slide";
+  optionsEl.innerHTML =
+    `<div class="slide">` +
+    (question.text ? `<p class="slide-title"></p>` : "") +
+    (question.body ? `<p class="slide-body"></p>` : "") +
+    `</div>`;
+  const title = optionsEl.querySelector(".slide-title");
+  const body = optionsEl.querySelector(".slide-body");
+  if (title) title.textContent = question.text;
+  if (body) body.textContent = question.body;
 }
 
 /* ── Being here ────────────────────────────────────────────────────────── */
@@ -678,7 +709,7 @@ function drawStatus() {
 function canVote() {
   const question = latest?.blanked ? null : (latest?.currentQuestion ?? null);
 
-  if (!question || latest.revealed) return false;
+  if (!question || latest.revealed || isSlide(question)) return false;
   if (secondsLeft() === 0) return false;
   return question.voters[getUid()] === undefined;
 }

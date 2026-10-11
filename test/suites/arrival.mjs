@@ -81,11 +81,13 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   ok("a refused owner read doesn't throw", threw === 0);
   ok("and nothing is handed over while the question's own fields are still out", emitted === 0);
   ok("which are being listened for, one path each",
-     ["text", "options", "correct", "voters", "times", "ratingStars", "ratingColor"]
+     ["text", "options", "correct", "voters", "times", "ratingStars", "ratingColor", "kind", "body", "number"]
        .every((f) => open().includes(`decks/d000/questions/q000/${f}`)));
 
   answer("decks/d000/questionCount", 4);
   answer("decks/d000/likes", 0);
+  answer("decks/d000/numbered", null);
+  for (const f of ["kind", "body", "number"]) answer(`decks/d000/questions/q000/${f}`, null);
   answer("decks/d000/questions/q000/text", "First?");
   answer("decks/d000/questions/q000/voters", null);
   answer("decks/d000/questions/q000/times", null);
@@ -111,6 +113,17 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   answer("decks/d000/questions/q000/correct", "b");
   ok("then it arrives, revealed, with the right answer", emitted === 1 && last.revealed && last.currentQuestion.correct === "b");
 
+  console.log("the host presses Next, and the old question's grants go first");
+  // The database takes back the old question's paths in the same instant it
+  // moves the index on, and nothing promises which of the two a phone hears
+  // first. Heard in the wrong order, the old question used to be redrawn
+  // with its answers suddenly unreadable: a question with nothing on it.
+  emitted = 0;
+  refuse("decks/d000/questions/q000/options");
+  refuse("decks/d000/questions/q000/text");
+  ok("a grant taken back mid-question hands nothing over", emitted === 0);
+  ok("and the question is still whole", last.currentQuestion?.options.length === 2);
+
   console.log("the host moves to the second question");
   emitted = 0;
   answer("currentIndex", 1);
@@ -120,7 +133,7 @@ const tick = () => new Promise((r) => setTimeout(r, 0));
   ok("q000 is no longer listened for", !open().some((p) => p.includes("/q000/")));
   answer("decks/d000/questions/q001/text", "Second?");
   answer("decks/d000/questions/q001/options", { a: { label: "Yes", votes: 0 } });
-  for (const f of ["voters", "times", "ratingStars", "ratingColor"]) answer(`decks/d000/questions/q001/${f}`, null);
+  for (const f of ["voters", "times", "ratingStars", "ratingColor", "kind", "body", "number"]) answer(`decks/d000/questions/q001/${f}`, null);
   refuse("decks/d000/questions/q001/correct");
   ok("then the second question is up", emitted === 1 && last.currentQuestion?.text === "Second?");
   ok("as question 2 of 4, not the closing screen", screenAt(last) === "question" && last.questionCount === 4);

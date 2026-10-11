@@ -83,6 +83,30 @@ export function ratingColorVar(key) {
   return (RATING_COLORS.find((c) => c.key === key) ?? RATING_COLORS[0]).var;
 }
 
+/**
+ * True when a step in the poll is a slide: words for the screen, with nothing
+ * to answer, no clock and no right answer. It is still a step — Next walks
+ * through it like any question — which is why it lives in the same list.
+ */
+export function isSlide(question) {
+  return question?.kind === "slide";
+}
+
+/**
+ * "Question 2 of 3", counting questions only. A slide is a step in the poll
+ * but not a question in it, so it has no number, and the questions around it
+ * aren't pushed along by it. A poll with no slides stores no numbers at all,
+ * and its place in the poll is the same thing.
+ */
+export function questionNumber(event) {
+  const question = event?.currentQuestion;
+  if (!question || isSlide(question)) return null;
+  return {
+    n: question.number ?? event.currentIndex + 1,
+    of: event.numbered ?? event.questionCount,
+  };
+}
+
 /** True when a question is a rating — has a star count, and no right answer. */
 export function isRatingQuestion(question) {
   return (
