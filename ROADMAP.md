@@ -84,6 +84,42 @@ counting people is where it stops being fine.
 Monetising is last on purpose. Charging for something changes what "it broke
 at an event" costs you, and item 2 has to have been quiet for a while first.
 
+## 6. Each attendee in their own language
+
+Added 11 October. Every phone picks its own language, and the questions,
+answers and text slides arrive translated for that phone alone.
+
+Two halves, and the first is nearly free. The app's own words are already in
+five languages; letting a phone choose one instead of following the event is
+a small change — though it reverses a deliberate rule (`CLAUDE.md`, point 5),
+so the wall and the host keep the event's language.
+
+The second half is translating what the host wrote, and that is a
+machine-translation call — so the same backend item 3 needs, for the same
+reasons: a key that can't live in a page, and a cost per use. Translate once
+per question per language when it is saved, store the result, and let the
+host see and correct it before it reaches a room. Votes stay on the option
+ids, so a right answer is right in every language.
+
+## 7. Basic formatting on text slides
+
+Added 11 October. Bold, italics, and a bulleted list — and stop there, or the
+text slide turns into the editor it was designed not to be. A tiny markup
+(`**bold**`, `*italic*`, a line starting with `- `) rendered by the page, never
+as raw HTML, so nothing typed can run as code on the wall. The auto-fit keeps
+working: it measures whatever is drawn.
+
+## 8. Pictures and video on text slides
+
+Added 11 October. An image, or a video that plays by itself, on a slide.
+
+Needs somewhere to keep the files — storage with its own rules and size
+limits, which belongs with item 2's one-account-per-event. Browsers only let a
+video play by itself when it is muted, so the wall starts it silent and the
+host turns the sound on. Phones should not download a large video over
+mobile data to show the same thing the wall is showing: on a phone, a still
+and the caption. A YouTube or Vimeo link would avoid storing video at all.
+
 ---
 
 ## Not doing
