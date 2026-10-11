@@ -11,20 +11,36 @@ import { launch, SITE } from "../lib/browser.js";
 let failed = 0;
 const ok = (l, c) => { console.log(`  ${c ? "✓" : "✗"} ${l}`); if (!c) failed++; };
 
+const words = "Thanks for coming today we will split into groups and each group takes one theme from this morning and comes back with one thing it would change ".repeat(10);
+const cut = (n) => words.slice(0, n).trim();
+
+// The editor's limits: an 80-character title, a 280-character text in at
+// most six lines. Every case here is at or past one of them, because that is
+// where a slide comes out smallest.
 const SLIDES = {
-  "a heading alone": { text: "Coffee break", body: "" },
-  "a heading and a paragraph": {
-    text: "What happens next",
-    body: "We will split into four groups.\nEach group takes one of the themes from this morning and comes back in twenty minutes with one thing it would change.",
+  "a short title alone": { text: "Coffee break", body: "" },
+  "a title at its limit": { text: cut(80), body: "" },
+  "a text at its limit": { text: "", body: cut(280) },
+  "both at their limits": { text: cut(80), body: cut(280) },
+  "a title and six short lines": {
+    text: cut(80), body: Array.from({ length: 6 }, (_, i) => `Line ${i + 1}`).join("\n"),
   },
-  "text alone, at the length limit": {
-    text: "",
-    body: ("Thank you all for coming today. ".repeat(16)).trim().slice(0, 500),
+  "a title and six full lines": {
+    text: cut(80),
+    body: Array.from({ length: 6 }, (_, i) => `Point ${i + 1} ` + cut(38)).join("\n").slice(0, 280),
   },
   "a word longer than most lines": {
     text: "Internationalisation",
     body: "Supercalifragilisticexpialidocious, and other words that must never be broken in half.",
   },
+};
+
+// Nobody writes these on purpose; somebody pastes one by accident. They may
+// be broken mid-word — it's the lesser harm — but they still may not spill
+// or come out unreadably small.
+const HOSTILE = {
+  "one 280-character word": { text: "", body: "x".repeat(280) },
+  "a title and a text that are each one word": { text: "y".repeat(80), body: "x".repeat(280) },
 };
 
 // The shapes projectors, TVs and laptop windows come in — including a
@@ -46,7 +62,10 @@ const event = (slide) => ({
 
 const b = await launch();
 
-for (const [name, slide] of Object.entries(SLIDES)) {
+for (const [name, slide, hostile] of [
+  ...Object.entries(SLIDES).map(([n, sl]) => [n, sl, false]),
+  ...Object.entries(HOSTILE).map(([n, sl]) => [n, sl, true]),
+]) {
   console.log(name);
   for (const [w, h] of SHAPES) {
     const p = await b.newPage({ viewport: { width: w, height: h } });
@@ -79,6 +98,8 @@ for (const [name, slide] of Object.entries(SLIDES)) {
         inner,
         ink: { top: ink.top, bottom: ink.bottom, left: ink.left, right: ink.right },
         size: parseFloat(getComputedStyle(slide).fontSize),
+        smallest: Math.min(...parts.map((part) => parseFloat(getComputedStyle(part).fontSize))),
+        measure: slide.clientWidth,
         broken: parts.some((part) => part.scrollWidth > part.clientWidth + 1),
         centredText: parts.every((part) => getComputedStyle(part).textAlign === "center"),
         chrome: ["votes", "join", "foot", "progress", "clock"].filter(visible),
@@ -104,7 +125,11 @@ for (const [name, slide] of Object.entries(SLIDES)) {
     const sides = m.ink.left - m.inner.left >= stageW * 0.04 && m.inner.right - m.ink.right >= stageW * 0.04;
 
     ok(`${tag}: nothing spills off the stage`, inside);
-    ok(`${tag}: no word is broken in half`, !m.broken);
+    if (!hostile) ok(`${tag}: no word is broken in half`, !m.broken);
+    // Readable from the back: the same floor the wall fits to, against the
+    // stage's shorter side (its height on a projector, its width on end).
+    const floor = Math.min(stageH, m.measure) * 0.045;
+    ok(`${tag}: readable — smallest text ${m.smallest.toFixed(0)}px, floor ${floor.toFixed(0)}px`, m.smallest >= floor - 0.5);
     ok(`${tag}: centred across (off by ${middleX.toFixed(1)}px)`, middleX <= 3 && m.centredText);
     ok(`${tag}: centred top to bottom (off by ${middleY.toFixed(1)}px)`, middleY <= stageH * 0.03 + 2);
     ok(`${tag}: room left on both sides (${(m.ink.left - m.inner.left).toFixed(0)}px / ${(m.inner.right - m.ink.right).toFixed(0)}px of ${stageW.toFixed(0)})`, sides);
@@ -117,7 +142,7 @@ for (const [name, slide] of Object.entries(SLIDES)) {
 console.log("the next question, after the slide");
 {
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
-  const e = event(SLIDES["a heading alone"]);
+  const e = event(SLIDES["a short title alone"]);
   await p.addInitScript((ev) => { window.PREVIEW = { ...ev, currentIndex: 1 }; }, e);
   await p.goto(`${SITE}/screen.html`, { waitUntil: "networkidle" });
   await p.waitForSelector(".big-question", { timeout: 5000 });
@@ -130,7 +155,7 @@ console.log("the next question, after the slide");
 console.log("resizing the window");
 {
   const p = await b.newPage({ viewport: { width: 1280, height: 720 } });
-  await p.addInitScript((e) => { window.PREVIEW = e; }, event(SLIDES["a heading and a paragraph"]));
+  await p.addInitScript((e) => { window.PREVIEW = e; }, event(SLIDES["both at their limits"]));
   await p.goto(`${SITE}/screen.html`, { waitUntil: "networkidle" });
   await p.waitForSelector(".big-slide");
   const before = await p.evaluate(() => parseFloat(getComputedStyle(document.querySelector(".big-slide")).fontSize));

@@ -63,6 +63,7 @@ ok("in words that say what it can't do",
    $("view-only").textContent.includes("only that account can add questions"));
 ok("and how to change that", $("view-only").textContent.includes("sign out and sign in"));
 ok("cannot press Add question", $("add-question").disabled);
+ok("or Add text slide", $("add-slide").disabled);
 $("add-question").click();
 await tick();
 ok("and pressing it anyway opens nothing", !shown($("editor-sheet")));

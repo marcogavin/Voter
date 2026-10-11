@@ -2798,6 +2798,13 @@ body.screen {
   min-width: 0;
 }
 
+/* Set by fitSlide() only when keeping every word whole would take the text
+   below a readable size — one enormous word, say. Breaking it is the lesser
+   harm. */
+.big-slide.may-break > * {
+  overflow-wrap: anywhere;
+}
+
 .big-slide-title {
   margin: 0;
   font-size: var(--big-slide-heading);

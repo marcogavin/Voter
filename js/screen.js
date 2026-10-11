@@ -356,18 +356,29 @@ function showSlide(event) {
 }
 
 /**
+ * The smallest a slide's text may come out, as a share of the stage's shorter
+ * side — its height on a projector, its width on a screen turned on end:
+ * about the 24-point floor projected slides are held to. The editor's limits
+ * keep real slides well above it; this is for whatever they don't foresee.
+ */
+const SLIDE_FLOOR = 0.045;
+
+/**
  * The largest size the slide fits at, found by halving the gap: a size that
  * fits is a floor, one that doesn't is a ceiling, and fourteen rounds leave
  * them less than a pixel apart.
  *
  * "Fits" means nothing taller than the stage and no word wider than the
- * slide — a word is never broken to make it fit; the whole slide gets smaller
- * instead. And there is a ceiling of its own, so "Break" on a 4K wall is a
- * heading rather than five letters the height of the room.
+ * slide. A word is not broken to make it fit — the whole slide gets smaller
+ * instead — unless that would take the text below a readable size, as one
+ * enormous word would. Then breaking it is the lesser harm, and the slide is
+ * fitted again with breaking allowed. There is a ceiling too, so "Break" on a
+ * 4K wall is a heading rather than five letters the height of the room.
  */
 function fitSlide() {
   const slide = els.stage.querySelector(".big-slide");
   if (!slide) return;
+  slide.classList.remove("may-break");
 
   const style = window.getComputedStyle(els.stage);
   const height =
@@ -380,25 +391,39 @@ function fitSlide() {
   if (!height || !width) return;
 
   const parts = [...slide.children];
+  // A few pixels in hand: a slide that fills the stage exactly still has the
+  // tops of its tallest letters a pixel past its own box.
+  const room = height - 4;
   const fits = (px) => {
     slide.style.fontSize = `${px}px`;
     return (
-      slide.scrollHeight <= height + 1 &&
+      slide.scrollHeight <= room &&
       parts.every(
         (part) => part.scrollWidth <= Math.min(part.clientWidth, width) + 1,
       )
     );
   };
+  const largest = () => {
+    let low = 12;
+    let high = Math.max(low, Math.min(height * 0.16, width * 0.09));
+    if (fits(high)) return high;
+    for (let round = 0; round < 14; round += 1) {
+      const middle = (low + high) / 2;
+      if (fits(middle)) low = middle;
+      else high = middle;
+    }
+    return Math.floor(low);
+  };
 
-  let low = 12;
-  let high = Math.max(low, Math.min(height * 0.16, width * 0.09));
-  if (fits(high)) return;
-  for (let round = 0; round < 14; round += 1) {
-    const middle = (low + high) / 2;
-    if (fits(middle)) low = middle;
-    else high = middle;
+  let size = largest();
+  // The smallest text on the slide is the body, which is the base size; a
+  // title alone is half again bigger, and judged by that.
+  const smallest = slide.querySelector(".big-slide-body") ? size : size * 1.5;
+  if (smallest < Math.min(height, width) * SLIDE_FLOOR) {
+    slide.classList.add("may-break");
+    size = largest();
   }
-  slide.style.fontSize = `${Math.floor(low)}px`;
+  slide.style.fontSize = `${size}px`;
 }
 
 /**

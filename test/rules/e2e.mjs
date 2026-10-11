@@ -287,17 +287,16 @@ try {
   await tap(host, "#tab-setup");
   await eventually("the host's list has the two questions", host,
     () => document.querySelectorAll(".qitem").length === 2);
-  await tap(host, "#add-question");
-  await host.selectOption("#question-type", "slide");
+  await tap(host, "#add-slide");
   await host.fill("#question-input", "Coffee break");
   await host.fill("#body-input", "Back in fifteen minutes.\nGrab a drink and say hello to someone new.");
   await tap(host, "#save");
   await eventually("the slide is saved at the end", host,
     () => document.querySelectorAll(".qitem").length === 3
-      && document.querySelector(".qitem:last-child .qmeta")?.textContent === "Slide");
+      && document.querySelector(".qitem:last-child .qmeta")?.textContent === "Text slide");
   await tap(host, '.qitem:last-child [data-act="up"]');
   await eventually("and moved between the two questions", host,
-    () => document.querySelector('.qitem[data-index="1"] .qmeta')?.textContent === "Slide");
+    () => document.querySelector('.qitem[data-index="1"] .qmeta')?.textContent === "Text slide");
   ok("the rules took the slide, numbered apart from the questions",
      (await adminDb.ref(`${EVENT_PATH}/decks/d003/questions/q001/kind`).get()).val() === "slide" &&
      (await adminDb.ref(`${EVENT_PATH}/decks/d003/numbered`).get()).val() === 2);

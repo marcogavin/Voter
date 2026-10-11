@@ -72,7 +72,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides",
+  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide",
 ];
 
 const els = {
@@ -81,6 +81,9 @@ const els = {
   signedOut: document.getElementById("signed-out"),
   bodyField: document.getElementById("body-field"),
   bodyInput: document.getElementById("body-input"),
+  addSlide: document.getElementById("add-slide"),
+  typeField: document.getElementById("type-field"),
+  bodyCount: document.getElementById("body-count"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
   deckOpen: document.getElementById("deck-open"),
@@ -161,6 +164,17 @@ const els = {
 const QUESTION_MAX = 200;
 const OPTION_MAX = 100;
 
+/**
+ * How much a text slide may say. Measured, not guessed: on a 1280×720
+ * projector a full title and a full text still come out at about six per
+ * cent of the screen's height — comfortably above the 24-point floor that
+ * projected slides are held to — and the line cap stops a column of short
+ * lines doing what a long text can't. See test/suites/slidefit.mjs.
+ */
+const SLIDE_TITLE_MAX = 80;
+const SLIDE_TEXT_MAX = 280;
+const SLIDE_LINES_MAX = 6;
+
 let askedAt = null;
 let pausedAt = null; // when the screen was hidden, and the clock with it
 let connection = { key: "connecting", state: "pending" }; // what the badge says
@@ -188,6 +202,9 @@ let isOwner = true;
 let signedIn = false; // a Google account, not just an anonymous device
 let mode = "setup"; // which tab is chosen, independent of whether it's shown
 let shownQuestionId = null;
+// True while the editor is writing a text slide rather than a question —
+// a mode of the form, not a question type, so it is never in the type menu.
+let slideMode = false;
 
 start();
 
@@ -294,6 +311,14 @@ function wireUp() {
     stopEditing();
     openEditor();
   });
+  els.addSlide.addEventListener("click", () => {
+    stopEditing();
+    slideMode = true;
+    applyQuestionType();
+    drawCounts();
+    openEditor();
+  });
+  els.bodyInput.addEventListener("input", drawCounts);
   els.cancel.addEventListener("click", stopEditing);
   els.editorSheet.addEventListener("click", (event) => {
     if (event.target === els.editorSheet) stopEditing();
@@ -360,9 +385,15 @@ const NEAR_LIMIT = 40;
  * of numbers nobody needs is what makes a tool feel like a form.
  */
 function drawCounts() {
-  const left = QUESTION_MAX - els.questionInput.value.length;
+  const left =
+    (slideMode ? SLIDE_TITLE_MAX : QUESTION_MAX) - els.questionInput.value.length;
   els.questionCount.textContent = left <= NEAR_LIMIT ? format(left) : "";
   els.questionCount.classList.toggle("is-over", left < 0);
+
+  // A text slide's text counts down the same way, against its own limit.
+  const textLeft = SLIDE_TEXT_MAX - els.bodyInput.value.length;
+  els.bodyCount.textContent = slideMode && textLeft <= NEAR_LIMIT ? format(textLeft) : "";
+  els.bodyCount.classList.toggle("is-over", textLeft < 0);
 
   // One count per answer rather than a single worst-case number: a summary
   // says something is too long without saying which one to shorten.
@@ -438,10 +469,7 @@ function onCorrectChange(changeEvent) {
   drawCorrectChoices();
 }
 
-function onQuestionTypeChange() {
-  // A slide has no answers to mark.
-  if (els.questionType.value === "slide") correctIndex = null;
-  // Switching in: the answers are fixed and there's no right one to pick, so
+function onQuestionTypeChange() {  // Switching in: the answers are fixed and there's no right one to pick, so
   // whatever the host had typed or marked is replaced rather than left
   // behind half-used. Switching back out leaves the textarea as it is —
   // the numbers are ordinary text at that point, free to edit or replace.
@@ -466,14 +494,17 @@ function setRatingOptions(count) {
 
 /** Shows only the fields the chosen question type actually uses. */
 function applyQuestionType() {
-  const rating = els.questionType.value === "rating";
-  const slide = els.questionType.value === "slide";
+  const slide = slideMode;
+  const rating = !slide && els.questionType.value === "rating";
   els.ratingFields.hidden = !rating;
   els.optionsField.hidden = rating || slide;
   els.optionsInput.required = !rating && !slide;
   els.correctField.hidden = rating || slide;
   els.bodyField.hidden = !slide;
-  // A slide may be a heading alone or text alone; a question needs its words.
+  // A text slide is a title and a text, and nothing to choose between.
+  els.typeField.hidden = slide;
+  els.questionInput.maxLength = slide ? SLIDE_TITLE_MAX : QUESTION_MAX;
+  // A slide may be a title alone or text alone; a question needs its words.
   els.questionInput.required = !slide;
   els.questionInput.placeholder = slide
     ? t("slideHeadingPlaceholder")
@@ -597,6 +628,7 @@ function render(event) {
   // half-locked form whose pickers worked and whose text boxes didn't.
   els.viewOnly.hidden = !(signedIn && !isOwner);
   els.addQuestion.disabled = !isOwner;
+  els.addSlide.disabled = !isOwner;
   els.editor.classList.toggle("is-locked", !isOwner);
   for (const control of els.editor.elements) {
     if (control !== els.cancel) control.disabled = !isOwner;
@@ -1193,7 +1225,7 @@ async function onSubmit(submitEvent) {
 
   const text = els.questionInput.value.trim();
 
-  if (els.questionType.value === "slide") return submitSlide(text);
+  if (slideMode) return submitSlide(text);
   const labels = els.optionsInput.value
     .split("\n")
     .map((line) => line.trim())
@@ -1269,6 +1301,13 @@ async function submitSlide(text) {
     showFormError(t("needSlideText"));
     return;
   }
+  // The box's own maxlength holds the characters; nothing holds the lines,
+  // and a column of short ones shrinks on the wall like a long text does.
+  if (body.split("\n").length > SLIDE_LINES_MAX) {
+    setStatus("needTwoOptions", "warn");
+    showFormError(t("slideTooManyLines", { n: SLIDE_LINES_MAX }));
+    return;
+  }
   showFormError(null);
 
   const slide = { kind: "slide", text, body, correct: null, options: [], voters: {} };
@@ -1334,8 +1373,9 @@ function startEditing(index) {
   els.questionInput.value = question.text;
   els.optionsInput.value = question.options.map((o) => o.label).join("\n");
   els.bodyInput.value = question.body ?? "";
+  slideMode = isSlide(question);
   const rating = isRatingQuestion(question);
-  els.questionType.value = isSlide(question) ? "slide" : rating ? "rating" : "choice";
+  els.questionType.value = rating ? "rating" : "choice";
   if (rating) els.ratingStars.value = String(question.ratingStars);
   drawRatingColors(rating ? question.ratingColor : DEFAULT_RATING_COLOR);
   applyQuestionType();
@@ -1357,20 +1397,21 @@ function startEditing(index) {
  */
 function drawEditorLabels() {
   const adding = editingIndex === null;
-  const slide = els.questionType.value === "slide";
+  const slide = slideMode;
 
-  // On a slide the first box is its heading, not a question.
+  // On a slide the first box is its title, not a question.
   els.editorLabel.textContent = slide
     ? t("slideHeading")
     : adding
       ? t("questionN", { n: questions.length + 1 })
       : t("editingQuestionN", { n: editingIndex + 1 });
-  setLabel(els.save, adding ? (slide ? t("addSlide") : t("addQuestion")) : t("saveChanges"));
+  setLabel(els.save, adding ? (slide ? t("addTextSlide") : t("addQuestion")) : t("saveChanges"));
 }
 
 function stopEditing() {
   editingIndex = null;
   correctIndex = null;
+  slideMode = false;
   els.editorSheet.hidden = true;
   els.editor.reset();
   drawRatingColors(DEFAULT_RATING_COLOR);

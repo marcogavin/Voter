@@ -135,7 +135,7 @@
                 },
                 "body": {
                   ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
-                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500"
+                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 280"
                 },
                 "number": {
                   ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",

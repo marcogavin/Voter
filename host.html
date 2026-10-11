@@ -104,6 +104,12 @@
             <span class="btn-icon" data-icon="plus"></span>
             <span class="btn-label" data-i18n="addQuestion">Add question</span>
           </button>
+          <!-- Words on the screen between questions. A button of its own
+               rather than a question type: it isn't a question. -->
+          <button type="button" class="btn btn--outline" id="add-slide">
+            <span class="btn-icon" data-icon="text"></span>
+            <span class="btn-label" data-i18n="addTextSlide">Add text slide</span>
+          </button>
           <span class="actions-note" data-i18n="editHint">Below you can edit, delete and move your questions</span>
         </div>
 
@@ -209,7 +215,7 @@
                data-i18n-placeholder="questionPlaceholder"
                placeholder="Enter your question here" autocomplete="off">
       </label>
-      <label class="field field--pick">
+      <label class="field field--pick" id="type-field">
         <span class="field-label">
           <span class="btn-icon" data-icon="star"></span>
           <span data-i18n="questionType">Question type</span>
@@ -217,7 +223,6 @@
         <select id="question-type">
           <option value="choice" data-i18n="typeChoice">Multiple choice</option>
           <option value="rating" data-i18n="typeRating">Rating</option>
-          <option value="slide" data-i18n="typeSlide">Slide</option>
         </select>
       </label>
       <div id="rating-fields" hidden>
@@ -238,8 +243,11 @@
            this underneath. No font, no size, no alignment — the big screen
            fits whatever is written here to the wall by itself. -->
       <label class="field" id="body-field" hidden>
-        <span class="field-label" data-i18n="slideBody">Text</span>
-        <textarea id="body-input" rows="4" maxlength="500"
+        <span class="counted">
+          <span class="field-label" data-i18n="slideBody">Text</span>
+          <span class="charcount" id="body-count"></span>
+        </span>
+        <textarea id="body-input" rows="4" maxlength="280"
                   data-i18n-placeholder="slideBodyPlaceholder"
                   placeholder="What the screen says"></textarea>
       </label>
@@ -351,7 +359,7 @@
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
         "tour", "tourmarks", "version", "versionsheet", "clearroom", "rating",
-        "starpicker", "feedback", "viewonly", "slides",
+        "starpicker", "feedback", "viewonly", "slides", "textslide",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board", "notice",
       ];

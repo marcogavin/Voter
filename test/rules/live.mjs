@@ -374,9 +374,9 @@ ok("a kind that isn't slide is refused, even from the owner", badKindDenied);
 
 let longBodyDenied = false;
 try {
-  await database.set(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001/body`), "x".repeat(501));
+  await database.set(database.ref(owner.db, `${EVENT_PATH}/decks/d000/questions/q001/body`), "x".repeat(281));
 } catch { longBodyDenied = true; }
-ok("so is text past 500 characters", longBodyDenied);
+ok("so is text past 280 characters", longBodyDenied);
 
 console.log(failures ? `\n${failures} FAILED` : "\nall passed");
 process.exit(failures ? 1 : 0);

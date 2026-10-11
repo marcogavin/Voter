@@ -97,28 +97,46 @@ const slideQ = (id, text, body) => ({
     questions: [choiceQ("q000", "First?"), slideQ("q001", "Coffee break", "Back at 11:00"), choiceQ("q002", "Second?")],
     ...over,
   });
-  const pick = (value) => {
-    $("question-type").value = value;
-    $("question-type").dispatchEvent(new dom.window.Event("change"));
-  };
-
-  console.log("the editor, set to Slide");
+  console.log("Add text slide, a button of its own");
   snap();
-  $("add-question").click();
+  ok("sits beside Add question", shown($("add-slide")) && $("add-slide").textContent.includes("Add text slide"));
+  ok("and is not a question type", ![...$("question-type").options].some((o) => /slide/i.test(o.value + o.textContent)));
+  $("add-slide").click();
   await tick();
-  pick("slide");
-  ok("offers a text box", shown($("body-field")));
-  ok("and no answers to write", !shown($("options-field")));
-  ok("or a right answer to mark", !shown($("correct-field")));
-  ok("the first box is the heading", $("editor-label").textContent === "Heading");
+  ok("opens the editor", shown($("editor-sheet")));
+  ok("with a title and a text, and nothing else", shown($("question-input")) && shown($("body-field"))
+     && !shown($("type-field")) && !shown($("options-field")) && !shown($("correct-field")) && !shown($("rating-fields")));
+  ok("the first box is the title", $("editor-label").textContent === "Title");
   ok("and it may be left empty", !$("question-input").required);
-  ok("the button says what it adds", $("save").textContent.includes("Add slide"));
+  ok("the title holds 80 characters at most", $("question-input").maxLength === 80);
+  ok("the text 280", $("body-input").maxLength === 280);
+  ok("the button says what it adds", $("save").textContent.includes("Add text slide"));
+
+  console.log("counting down near the limits");
+  $("question-input").value = "x".repeat(70);
+  $("question-input").dispatchEvent(new dom.window.Event("input"));
+  ok("the title shows what's left", $("question-count").textContent === "10");
+  $("body-input").value = "y".repeat(250);
+  $("body-input").dispatchEvent(new dom.window.Event("input"));
+  ok("and so does the text", $("body-count").textContent === "30");
+  $("question-input").value = "";
+  $("body-input").value = "";
+  $("question-input").dispatchEvent(new dom.window.Event("input"));
+
+  console.log("too many lines");
+  $("body-input").value = Array.from({ length: 7 }, (_, i) => `Line ${i + 1}`).join("\n");
+  sync.state.calls = [];
+  $("editor").dispatchEvent(new dom.window.Event("submit", { cancelable: true }));
+  await tick();
+  ok("are refused, saying how many fit", shown($("form-error")) && /6 lines/.test($("form-error").textContent));
+  ok("without saving anything", called("saveQuestions").length === 0);
+  $("body-input").value = "";
 
   console.log("adding one with nothing in it");
   sync.state.calls = [];
   $("editor").dispatchEvent(new dom.window.Event("submit", { cancelable: true }));
   await tick();
-  ok("is refused, and says why", shown($("form-error")) && /heading/i.test($("form-error").textContent));
+  ok("is refused, and says why", shown($("form-error")) && /title/i.test($("form-error").textContent));
   ok("without saving anything", called("saveQuestions").length === 0);
 
   console.log("adding one with text but no heading");
@@ -134,18 +152,19 @@ const slideQ = (id, text, body) => ({
   console.log("back to a question");
   $("add-question").click();
   await tick();
-  ok("the editor opens as a question again", $("question-type").value === "choice" && shown($("options-field")) && !shown($("body-field")));
+  ok("the editor opens as a question again", shown($("type-field")) && shown($("options-field")) && !shown($("body-field")));
+  ok("with a question's own length back", $("question-input").maxLength === 200 && $("editor-label").textContent !== "Title");
   $("cancel").click();
 
   console.log("in the list");
   const rows = [...document.querySelectorAll(".qitem")];
-  ok("a slide says it is one", rows[1].querySelector(".qmeta").textContent === "Slide");
+  ok("a slide says it is one", rows[1].querySelector(".qmeta").textContent === "Text slide");
   ok("named by its heading", rows[1].querySelector(".qtext").textContent === "Coffee break");
 
   console.log("editing it");
   rows[1].querySelector('[data-act="edit"]').click();
   await tick();
-  ok("opens as a slide, with its words", $("question-type").value === "slide"
+  ok("opens as a text slide, with its words", shown($("body-field")) && !shown($("type-field"))
      && $("question-input").value === "Coffee break" && $("body-input").value === "Back at 11:00");
   $("cancel").click();
 
