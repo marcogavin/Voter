@@ -217,6 +217,7 @@
         <select id="question-type">
           <option value="choice" data-i18n="typeChoice">Multiple choice</option>
           <option value="rating" data-i18n="typeRating">Rating</option>
+          <option value="slide" data-i18n="typeSlide">Slide</option>
         </select>
       </label>
       <div id="rating-fields" hidden>
@@ -233,6 +234,15 @@
           <div id="rating-colors" class="swatches"></div>
         </div>
       </div>
+      <!-- A slide is words for the screen and nothing else: a heading above,
+           this underneath. No font, no size, no alignment — the big screen
+           fits whatever is written here to the wall by itself. -->
+      <label class="field" id="body-field" hidden>
+        <span class="field-label" data-i18n="slideBody">Text</span>
+        <textarea id="body-input" rows="4" maxlength="500"
+                  data-i18n-placeholder="slideBodyPlaceholder"
+                  placeholder="What the screen says"></textarea>
+      </label>
       <label class="field" id="options-field">
         <span class="field-label" data-i18n="optionsLabel">Answers — one per line</span>
         <textarea id="options-input" rows="3" required
@@ -341,7 +351,7 @@
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
         "tour", "tourmarks", "version", "versionsheet", "clearroom", "rating",
-        "starpicker", "feedback", "viewonly",
+        "starpicker", "feedback", "viewonly", "slides",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
         "preview", "board", "notice",
       ];

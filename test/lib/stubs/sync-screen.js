@@ -11,6 +11,11 @@ function withDerived(event) {
   const questions = event.questions ?? [];
   return {
     questionCount: questions.length,
+    // Like the real sync.js: a count of questions apart from slides only
+    // exists on a poll that has slides in it.
+    numbered: questions.some((q) => q?.kind === "slide")
+      ? questions.filter((q) => q?.kind !== "slide").length
+      : null,
     currentQuestion: questions[event.currentIndex] ?? null,
     ...event,
   };

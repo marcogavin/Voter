@@ -97,6 +97,9 @@ let legacyQuestions = null;
 // can see all of them — null on one that can't. Not the stored count: that
 // is what this exists to correct. See setCurrentIndex().
 let liveCount = null;
+// Whether the live poll has a count of its questions apart from its slides
+// stored — the one thing a save has to clear when its last slide goes.
+let liveNumbered = false;
 
 /**
  * Loads the SDK, connects, and signs this device in anonymously.
@@ -278,7 +281,10 @@ const PUBLIC_FIELDS = [
  * and re-asking for the text and answers on every reveal would take the
  * question off every phone for a round trip each time.
  */
-const CONTENT_FIELDS = ["text", "options", "voters", "times", "ratingStars", "ratingColor"];
+const CONTENT_FIELDS = [
+  "text", "options", "voters", "times", "ratingStars", "ratingColor",
+  "kind", "body", "number",
+];
 
 /** Once the run has moved past every question, what the standings need of each. */
 const STANDINGS_FIELDS = ["voters", "times"];
@@ -359,6 +365,7 @@ export function onEventChange(callback) {
       decks[deckId] = {
         questionCount: deckMeta.questionCount,
         likes: deckMeta.likes,
+        numbered: deckMeta.numbered,
         questions: questionsView,
         partial: true,
       };
@@ -398,7 +405,21 @@ export function onEventChange(callback) {
     };
     group.stops.push(database.onValue(at(p),
       (snap) => { if (!group.live) return; settle(); onData(snap.val()); emit(); },
-      () => { if (!group.live) return; settle(); onRefused(); emit(); },
+      () => {
+        // Refused after it has already answered is a grant taken back, not
+        // a field that was never ours to read — and a grant is only ever
+        // taken back because one of the public fields moved: the index, the
+        // deck, whether the answer is out. The database does both in the
+        // same instant but doesn't promise which a phone hears first, so
+        // the old value stays until that move arrives and rebuilds this
+        // group. Clearing it here redrew the old question with its answers
+        // gone — a question with nothing on it, for a moment, on every
+        // phone, every time the host pressed Next.
+        if (!group.live || answered) return;
+        settle();
+        onRefused();
+        emit();
+      },
     ));
   }
 
@@ -434,6 +455,9 @@ export function onEventChange(callback) {
       listen(group, `decks/${deckId}/likes`,
         (v) => { deckMeta.likes = v; },
         () => { deckMeta.likes = undefined; });
+      listen(group, `decks/${deckId}/numbered`,
+        (v) => { deckMeta.numbered = v; },
+        () => { deckMeta.numbered = undefined; });
     }
     building -= 1;
     rebuildQuestions();
@@ -528,6 +552,7 @@ function normalise(raw) {
   unmigrated = !raw?.decks;
   legacyQuestions = raw?.questions ?? null;
   liveCount = deck?.partial ? null : Object.keys(deck?.questions || {}).length;
+  liveNumbered = typeof deck?.numbered === "number";
   // Where the live poll's questions are *right now*, which during the window
   // between deploying this and the host's first save is still the old place.
   // Votes have to go where the counters actually are.
@@ -542,11 +567,13 @@ function normalise(raw) {
   // question still gets it; one only allowed to see none, correctly, doesn't.
   const currentKey = currentIndex >= 0 ? questionKey(currentIndex) : null;
   const currentRaw = currentKey ? deck?.questions?.[currentKey] : null;
-  // A question is on screen once its text is here, and not before: on a
+  // A question is on screen once its words are here, and not before: on a
   // device that reads it field by field, the index gets there first, and a
   // question with no words and no answers yet is a question that hasn't
-  // arrived — not one to draw.
-  const arrived = typeof currentRaw?.text === "string";
+  // arrived — not one to draw. A slide's words can be its text alone, with
+  // no heading, so either counts.
+  const arrived =
+    typeof currentRaw?.text === "string" || typeof currentRaw?.body === "string";
 
   return {
     ownerUid: raw?.ownerUid ?? null,
@@ -586,6 +613,15 @@ function normalise(raw) {
     // an audience device otherwise has no way to know — the rules let it see
     // one question at a time, never the whole deck it could count instead.
     questionCount: deckCount(deck),
+    // How many of those are questions rather than slides, for "Question 2 of
+    // 3" — a slide is a step through the poll but not a question in it. Only
+    // stored on a poll that has slides; anywhere else every step is a
+    // question, and the count above already says how many.
+    numbered: typeof deck?.numbered === "number"
+      ? deck.numbered
+      : deck?.partial
+        ? null
+        : countNumbered(deck?.questions),
     // Whichever questions this device is currently allowed to see: for the
     // owner that's the whole deck; for everyone else, per the rules, it's the
     // current question alone, and every one already stepped past once the run
@@ -647,7 +683,15 @@ function readQuestions(stored) {
 function readQuestion(id, raw) {
   return {
     id,
+    // "slide" for a slide — words on the screen and nothing to answer —
+    // and "question" for everything else, including everything saved
+    // before slides existed.
+    kind: raw.kind === "slide" ? "slide" : "question",
     text: raw.text || "",
+    body: raw.body || "",
+    // Its place among the poll's questions, counting no slides. Absent on a
+    // poll with no slides, where its place in the poll is the same thing.
+    number: typeof raw.number === "number" ? raw.number : null,
     correct: raw.correct ?? null,
     voters: raw.voters || {},
     times: raw.times || {},
@@ -693,8 +737,27 @@ function migration() {
 export function saveQuestions(questions) {
   requireConnection();
 
+  // Slides are steps in the poll but not questions in it, so a poll that
+  // has any numbers its questions separately. A poll with none writes
+  // exactly what it always has — nothing a rules file from before slides
+  // existed would refuse.
+  const hasSlides = questions.some((question) => question.kind === "slide");
+  let numbered = 0;
+
   const stored = {};
   questions.forEach((question, index) => {
+    if (question.kind === "slide") {
+      // Words, and nothing to answer: no options, no votes, no right answer.
+      // Either half may be empty, but not both — the editor sees to that.
+      stored[questionKey(index)] = {
+        kind: "slide",
+        ...(question.text ? { text: question.text } : {}),
+        ...(question.body ? { body: question.body } : {}),
+      };
+      return;
+    }
+    numbered += 1;
+
     const options = {};
     question.options.forEach((option, optionIndex) => {
       // 'a', 'b', 'c', ... — short, stable within a question
@@ -722,6 +785,7 @@ export function saveQuestions(questions) {
       ...(question.ratingStars
         ? { ratingStars: question.ratingStars, ratingColor: question.ratingColor }
         : {}),
+      ...(hasSlides ? { number: numbered } : {}),
     };
   });
 
@@ -734,7 +798,19 @@ export function saveQuestions(questions) {
     // What the rules let a non-owner device know instead of the deck it can't
     // read — see the comment at the top of this file.
     [`decks/${liveDeck}/questionCount`]: questions.length,
+    // Cleared rather than left behind when the last slide goes, so the
+    // phones go back to counting every step as a question. Not mentioned at
+    // all on a poll that never had slides, which saves exactly what it
+    // always has.
+    ...(hasSlides || liveNumbered
+      ? { [`decks/${liveDeck}/numbered`]: hasSlides ? numbered : null }
+      : {}),
   });
+}
+
+/** How many of a deck's items are questions, counted for real. */
+function countNumbered(stored) {
+  return Object.values(stored || {}).filter((q) => q?.kind !== "slide").length;
 }
 
 /**

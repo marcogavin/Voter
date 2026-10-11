@@ -17,13 +17,13 @@ import { isConfigured } from "./firebase-config.js";
 import { encode } from "./qr.js";
 import { drawIcons, icons } from "./icons.js";
 import { flyHearts, celebrate } from "./hearts.js";
-import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingStarsMarkup, ratingCaptionText } from "./scores.js";
+import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingStarsMarkup, ratingCaptionText, isSlide, questionNumber } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
-  "presence", "rating", "starsummary", "arrival",
+  "presence", "rating", "starsummary", "arrival", "slides",
 ];
 
 /**
@@ -97,6 +97,13 @@ function wireUp() {
   // it follows the mouse and then gets out of the way.
   wake();
   document.addEventListener("pointermove", wake);
+
+  // A slide is sized to the window it is in. Dragged onto the projector,
+  // sent full screen, or the projector's own resolution changing under it —
+  // each is a new size, so each is a new fit.
+  window.addEventListener("resize", () => {
+    if (els.stage.dataset.screen === "slide") fitSlide();
+  });
 }
 
 function wake() {
@@ -167,8 +174,16 @@ function render(event) {
   // screen the code *is* the screen, and at the end it would be an invitation
   // to something that has finished. The count of votes keeps it company: it
   // means nothing on any other screen.
-  els.join.hidden = screen !== "question";
-  els.votes.hidden = screen !== "question";
+  // A slide gets the whole wall: no count, no code, no strip along the
+  // bottom — the words are the screen.
+  const slide = screen === "question" && isSlide(event.currentQuestion);
+  els.join.hidden = screen !== "question" || slide;
+  els.votes.hidden = screen !== "question" || slide;
+
+  if (slide) {
+    stopTicking();
+    return showSlide(event);
+  }
 
   if (screen === "question") return showQuestion(event);
 
@@ -295,8 +310,8 @@ function showQuestion(event) {
   drawTime();
   foot({
     progress: t("questionProgress", {
-      n: event.currentIndex + 1,
-      of: event.questionCount,
+      n: questionNumber(event)?.n ?? event.currentIndex + 1,
+      of: questionNumber(event)?.of ?? event.questionCount,
     }),
     clock: running,
   });
@@ -305,6 +320,85 @@ function showQuestion(event) {
   // time running out, so the countdown has to redraw itself.
   if (running) startTicking();
   else stopTicking();
+}
+
+/* ── Slides ────────────────────────────────────────────────────────────── */
+
+/**
+ * The presenter's words, as big as the wall will take them.
+ *
+ * There is no font, size or alignment to choose, on purpose: the heading sits
+ * over the text, both centred, and the pair is set at the largest size that
+ * still fits the stage with room on every side. A heading alone comes out
+ * huge; a paragraph comes out as large as a paragraph can be. Fitted again
+ * whenever the window changes shape, so dragging it onto the projector is
+ * all the setting up there is.
+ */
+function showSlide(event) {
+  const question = event.currentQuestion;
+  const key = `${question.id}|${question.text}|${question.body}`;
+
+  if (els.stage.dataset.screen !== "slide" || shownQuestionId !== key) {
+    els.stage.dataset.screen = "slide";
+    shownQuestionId = key;
+    els.stage.innerHTML =
+      `<div class="big-slide">` +
+      (question.text ? `<h1 class="big-slide-title"></h1>` : "") +
+      (question.body ? `<p class="big-slide-body"></p>` : "") +
+      `</div>`;
+    const title = els.stage.querySelector(".big-slide-title");
+    const body = els.stage.querySelector(".big-slide-body");
+    if (title) title.textContent = question.text;
+    if (body) body.textContent = question.body;
+    fitSlide();
+  }
+  foot({});
+}
+
+/**
+ * The largest size the slide fits at, found by halving the gap: a size that
+ * fits is a floor, one that doesn't is a ceiling, and fourteen rounds leave
+ * them less than a pixel apart.
+ *
+ * "Fits" means nothing taller than the stage and no word wider than the
+ * slide — a word is never broken to make it fit; the whole slide gets smaller
+ * instead. And there is a ceiling of its own, so "Break" on a 4K wall is a
+ * heading rather than five letters the height of the room.
+ */
+function fitSlide() {
+  const slide = els.stage.querySelector(".big-slide");
+  if (!slide) return;
+
+  const style = window.getComputedStyle(els.stage);
+  const height =
+    els.stage.clientHeight -
+    (parseFloat(style.paddingTop) || 0) -
+    (parseFloat(style.paddingBottom) || 0);
+  const width = slide.clientWidth;
+  // Not laid out — a page nobody is looking at, or one under test without a
+  // layout engine. It keeps the size the stylesheet gives it.
+  if (!height || !width) return;
+
+  const parts = [...slide.children];
+  const fits = (px) => {
+    slide.style.fontSize = `${px}px`;
+    return (
+      slide.scrollHeight <= height + 1 &&
+      parts.every(
+        (part) => part.scrollWidth <= Math.min(part.clientWidth, width) + 1,
+      )
+    );
+  };
+
+  let low = 12;
+  let high = Math.max(low, Math.min(height * 0.16, width * 0.09));
+  if (fits(high)) return;
+  for (let round = 0; round < 14; round += 1) {
+    const middle = (low + high) / 2;
+    if (fits(middle)) low = middle;
+    else high = middle;
+  }
+  slide.style.fontSize = `${Math.floor(low)}px`;
 }
 
 /**

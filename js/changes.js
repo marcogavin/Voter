@@ -20,6 +20,16 @@
 
 export const CHANGES = [
   {
+    version: "2.6",
+    on: "2026-10-11",
+    lines: [
+      "Slides: pick Slide as the question type to put words on the screen between questions — a heading, some text, or both. The big screen sizes and centres them to fill the wall by itself, phones show them too, and Next walks through them like any question without stopping to reveal anything.",
+      "\"Question 2 of 5\" counts questions only, so the slides between them don't throw the numbering off.",
+      "The question editor no longer leaves an empty band under the question type.",
+      "Pressing Next no longer flashes the last question with its answers missing on the room's phones for a moment.",
+    ],
+  },
+  {
     version: "2.5",
     on: "2026-10-11",
     lines: [

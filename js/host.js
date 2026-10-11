@@ -53,6 +53,7 @@ import {
   RATING_COLORS,
   DEFAULT_RATING_COLOR,
   isRatingQuestion,
+  isSlide,
   ratingOptions,
   ratingStarsMarkup,
   ratingCaptionText,
@@ -71,13 +72,15 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly",
+  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides",
 ];
 
 const els = {
   tabs: document.getElementById("tabs"),
   bigScreen: document.getElementById("bigscreen"),
   signedOut: document.getElementById("signed-out"),
+  bodyField: document.getElementById("body-field"),
+  bodyInput: document.getElementById("body-input"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
   deckOpen: document.getElementById("deck-open"),
@@ -436,6 +439,8 @@ function onCorrectChange(changeEvent) {
 }
 
 function onQuestionTypeChange() {
+  // A slide has no answers to mark.
+  if (els.questionType.value === "slide") correctIndex = null;
   // Switching in: the answers are fixed and there's no right one to pick, so
   // whatever the host had typed or marked is replaced rather than left
   // behind half-used. Switching back out leaves the textarea as it is —
@@ -462,10 +467,18 @@ function setRatingOptions(count) {
 /** Shows only the fields the chosen question type actually uses. */
 function applyQuestionType() {
   const rating = els.questionType.value === "rating";
+  const slide = els.questionType.value === "slide";
   els.ratingFields.hidden = !rating;
-  els.optionsField.hidden = rating;
-  els.optionsInput.required = !rating;
-  els.correctField.hidden = rating;
+  els.optionsField.hidden = rating || slide;
+  els.optionsInput.required = !rating && !slide;
+  els.correctField.hidden = rating || slide;
+  els.bodyField.hidden = !slide;
+  // A slide may be a heading alone or text alone; a question needs its words.
+  els.questionInput.required = !slide;
+  els.questionInput.placeholder = slide
+    ? t("slideHeadingPlaceholder")
+    : t("questionPlaceholder");
+  drawEditorLabels();
 }
 
 /**
@@ -617,17 +630,24 @@ function drawList() {
     item.className = "qitem" + (index === editingIndex ? " is-editing" : "");
     item.dataset.index = String(index);
     const answer = question.options.find((o) => o.id === question.correct);
+    const slide = isSlide(question);
+    if (slide) item.classList.add("is-slide");
+    // A slide is named by its heading, or by its text when it has none, and
+    // says it's a slide where a question says how many answers it has.
+    const title = slide ? question.text || question.body : question.text;
+    const meta = slide
+      ? t("slideBadge")
+      : t("optionsCount", { n: question.options.length }) +
+        (answer ? ` · ✓ ${escapeHtml(answer.label)}` : "");
     // The question takes the full width and the four things you can do to it
     // share the line under it with its own summary — they used to sit on a
     // line of their own, which cost about 30px on every row in the list.
     item.innerHTML = `
       <span class="qnum">${index + 1}</span>
       <div class="qbody">
-        <span class="qtext">${escapeHtml(question.text)}</span>
+        <span class="qtext">${escapeHtml(title)}</span>
         <span class="qfoot">
-          <small class="qmeta">${t("optionsCount", { n: question.options.length })}${
-            answer ? ` · ✓ ${escapeHtml(answer.label)}` : ""
-          }</small>
+          <small class="qmeta">${meta}</small>
           <span class="qbtns">
             <button type="button" class="iconbtn" data-act="up"   aria-label="${t("moveUp")}"    ${index === 0 ? "disabled" : ""}>↑</button>
             <button type="button" class="iconbtn" data-act="down" aria-label="${t("moveDown")}"  ${index === questions.length - 1 ? "disabled" : ""}>↓</button>
@@ -696,7 +716,7 @@ function drawRun() {
   // between this button and Start over beside it.
   nameButton(els.reset, t("resetVotes"));
   nameButton(els.clear, t("startOver"));
-  els.reset.disabled = !isOwner || !question;
+  els.reset.disabled = !isOwner || !question || isSlide(question);
   els.clear.disabled = !isOwner || (!question && !atEnd && !votesCast() && !likes);
 
   // Blanking only means anything while something is up.
@@ -789,6 +809,30 @@ function drawRun() {
           questions.length ? t("pressStart") : t("addInSetup")
         }</p>`;
     }
+    return;
+  }
+
+  if (isSlide(question)) {
+    // Nothing to count and nothing to reveal: the host sees what the room
+    // sees, and Next moves on.
+    shownQuestionId = null;
+    els.runQuestion.textContent = question.text || t("slideBadge");
+    const key = `slide:${question.id}:${question.text}:${question.body}:${getLanguage()}`;
+    if (els.options.dataset.screen !== key) {
+      els.options.dataset.screen = key;
+      els.options.innerHTML =
+        `<p class="preview-label">${t("whatTheRoomSees")}</p>` +
+        `<div class="preview"><div class="slide">` +
+        (question.text ? `<p class="slide-title"></p>` : "") +
+        (question.body ? `<p class="slide-body"></p>` : "") +
+        `</div></div>`;
+      const title = els.options.querySelector(".slide-title");
+      const body = els.options.querySelector(".slide-body");
+      if (title) title.textContent = question.text;
+      if (body) body.textContent = question.body;
+    }
+    watchClock();
+    els.hint.textContent = blanked ? t("screenHiddenNote") : t("slideOnScreen");
     return;
   }
 
@@ -1148,6 +1192,8 @@ async function onSubmit(submitEvent) {
   submitEvent.preventDefault();
 
   const text = els.questionInput.value.trim();
+
+  if (els.questionType.value === "slide") return submitSlide(text);
   const labels = els.optionsInput.value
     .split("\n")
     .map((line) => line.trim())
@@ -1212,6 +1258,32 @@ async function onSubmit(submitEvent) {
   }
 }
 
+/**
+ * A slide: a heading, some text, or both — and nothing else. It replaces
+ * whatever was at its place outright, since a slide has no votes to keep.
+ */
+async function submitSlide(text) {
+  const body = els.bodyInput.value.trim();
+  if (!text && !body) {
+    setStatus("needTwoOptions", "warn");
+    showFormError(t("needSlideText"));
+    return;
+  }
+  showFormError(null);
+
+  const slide = { kind: "slide", text, body, correct: null, options: [], voters: {} };
+  const next = [...questions];
+  if (editingIndex === null) next.push(slide);
+  else next[editingIndex] = slide;
+
+  if (await commit(next, editingIndex === null ? "added" : "saved")) {
+    stopEditing();
+    els.questionInput.focus();
+  } else {
+    showFormError(els.hint.textContent);
+  }
+}
+
 function onListClick(clickEvent) {
   const button = clickEvent.target.closest("button[data-act]");
   if (!button || !isOwner) return;
@@ -1261,8 +1333,9 @@ function startEditing(index) {
   editingIndex = index;
   els.questionInput.value = question.text;
   els.optionsInput.value = question.options.map((o) => o.label).join("\n");
+  els.bodyInput.value = question.body ?? "";
   const rating = isRatingQuestion(question);
-  els.questionType.value = rating ? "rating" : "choice";
+  els.questionType.value = isSlide(question) ? "slide" : rating ? "rating" : "choice";
   if (rating) els.ratingStars.value = String(question.ratingStars);
   drawRatingColors(rating ? question.ratingColor : DEFAULT_RATING_COLOR);
   applyQuestionType();
@@ -1284,11 +1357,15 @@ function startEditing(index) {
  */
 function drawEditorLabels() {
   const adding = editingIndex === null;
+  const slide = els.questionType.value === "slide";
 
-  els.editorLabel.textContent = adding
-    ? t("questionN", { n: questions.length + 1 })
-    : t("editingQuestionN", { n: editingIndex + 1 });
-  setLabel(els.save, adding ? t("addQuestion") : t("saveChanges"));
+  // On a slide the first box is its heading, not a question.
+  els.editorLabel.textContent = slide
+    ? t("slideHeading")
+    : adding
+      ? t("questionN", { n: questions.length + 1 })
+      : t("editingQuestionN", { n: editingIndex + 1 });
+  setLabel(els.save, adding ? (slide ? t("addSlide") : t("addQuestion")) : t("saveChanges"));
 }
 
 function stopEditing() {
@@ -1373,7 +1450,8 @@ function watchClock() {
   ticker = null;
 
   const question = questions[currentIndex] ?? null;
-  if (!isOwner || !question || revealed || !askedAt || !seconds) return;
+  // A slide has nothing to close, so it has no clock.
+  if (!isOwner || !question || isSlide(question) || revealed || !askedAt || !seconds) return;
 
   // Hidden means paused: the counter shows what is left, holds there, and
   // nothing closes behind a blank screen.

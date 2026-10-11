@@ -278,6 +278,69 @@ try {
   await tap(host, "#next"); // heart
   await eventually("then the heart", phone, () => !!document.getElementById("like")?.offsetParent);
   await shot("12-quiz-ending");
+
+  console.log("\n-- a slide, written in the host's editor and run between two questions --");
+  await switchTo("d003", { title: "With a slide", questionCount: 2, questions: {
+    q000: { text: "Tea or coffee?", options: { a: { label: "Tea", votes: 0 }, b: { label: "Coffee", votes: 0 } } },
+    q001: { text: "Morning or evening?", options: { a: { label: "Morning", votes: 0 }, b: { label: "Evening", votes: 0 } } },
+  } });
+  await tap(host, "#tab-setup");
+  await eventually("the host's list has the two questions", host,
+    () => document.querySelectorAll(".qitem").length === 2);
+  await tap(host, "#add-question");
+  await host.selectOption("#question-type", "slide");
+  await host.fill("#question-input", "Coffee break");
+  await host.fill("#body-input", "Back in fifteen minutes.\nGrab a drink and say hello to someone new.");
+  await tap(host, "#save");
+  await eventually("the slide is saved at the end", host,
+    () => document.querySelectorAll(".qitem").length === 3
+      && document.querySelector(".qitem:last-child .qmeta")?.textContent === "Slide");
+  await tap(host, '.qitem:last-child [data-act="up"]');
+  await eventually("and moved between the two questions", host,
+    () => document.querySelector('.qitem[data-index="1"] .qmeta')?.textContent === "Slide");
+  ok("the rules took the slide, numbered apart from the questions",
+     (await adminDb.ref(`${EVENT_PATH}/decks/d003/questions/q001/kind`).get()).val() === "slide" &&
+     (await adminDb.ref(`${EVENT_PATH}/decks/d003/numbered`).get()).val() === 2);
+
+  await tap(host, "#tab-run");
+  await tap(host, "#next");
+  await eventually("the first question is 1 of 2", phone,
+    () => document.getElementById("progress").textContent === "Question 1 of 2"
+      && [...document.querySelectorAll(".choice")].filter((b) => b.offsetParent && !b.disabled).length === 2);
+  await tap(phone, '.choice[data-id="a"]');
+  await eventually("a vote on it lands", phone,
+    () => document.querySelector('.choice[data-id="a"]')?.classList.contains("is-mine"));
+
+  await tap(host, "#next");
+  await eventually("Next goes to the slide on the phone", phone,
+    () => document.querySelector(".slide-title")?.textContent === "Coffee break");
+  await eventually("with its text", phone,
+    () => document.querySelector(".slide-body")?.textContent.startsWith("Back in fifteen minutes."));
+  await eventually("and nothing to tap, no clock, no badge", phone,
+    () => !document.querySelector(".choice, .star-btn")
+      && document.getElementById("clock").hidden
+      && document.getElementById("status").hidden);
+  await shot("13-slide-phone");
+  await eventually("the wall shows the slide, alone", wall,
+    () => document.getElementById("stage").dataset.screen === "slide"
+      && document.getElementById("join").hidden && document.getElementById("votes").hidden);
+  const fitted = await wall.evaluate(() => {
+    const stage = document.getElementById("stage").getBoundingClientRect();
+    const slide = document.querySelector(".big-slide").getBoundingClientRect();
+    return { inside: slide.top >= stage.top - 1 && slide.bottom <= stage.bottom + 1,
+             size: parseFloat(getComputedStyle(document.querySelector(".big-slide")).fontSize) };
+  });
+  ok(`and fits it to the wall (${fitted.size.toFixed(0)}px)`, fitted.inside && fitted.size > 30);
+  await wall.screenshot({ path: join(SHOTS, "e2e-14-slide-wall.png") });
+  await host.screenshot({ path: join(SHOTS, "e2e-15-slide-host.png") });
+
+  await tap(host, "#next");
+  await eventually("Next again is the second question — 2 of 2, not 3 of 3", phone,
+    () => document.getElementById("progress").textContent === "Question 2 of 2"
+      && [...document.querySelectorAll(".choice")].filter((b) => b.offsetParent && !b.disabled).length === 2);
+  await eventually("and the wall's code and count are back", wall,
+    () => !document.getElementById("join").hidden);
+  await shot("16-after-slide");
 } catch (error) {
   failures++;
   console.log(`  ✗ the run itself broke: ${error.message}`);

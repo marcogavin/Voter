@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -1227,6 +1227,46 @@ a.iconbtn {
   gap: var(--space-4);
 }
 
+/* ─── Slides ─────────────────────────────────────────────────────────────
+   The presenter's words between two questions, and nothing else on screen.
+   Centred both ways and never styled by hand: the phone sets them at its
+   own reading sizes, the wall fits them to itself (see fitSlide in
+   js/screen.js), and the host's preview is the phone's. */
+
+.stage.is-slide {
+  justify-content: center;
+}
+
+.slide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+.slide > * {
+  max-width: 100%;
+}
+
+.slide-title {
+  margin: 0;
+  font-size: var(--text-display);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.slide-body {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  white-space: pre-line;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
 /* The hearts leave from here, so it has to be the thing they're measured
    against rather than the whole column. */
 .heart-stage {
@@ -2009,6 +2049,13 @@ a.iconbtn {
   min-width: 0;
 }
 
+/* The same picker in the question editor sits in a column, not a row, where
+   an 11rem basis is a height: it left an empty band under the question type
+   about the size of the field itself. There it takes its own height. */
+.setup .field--pick {
+  flex: 0 0 auto;
+}
+
 /* ─── The run toolbar ──────────────────────────────────────────────────
    Three or four things you can do to what's on screen, in one row of equal
    cells. Laid out as ordinary buttons they took whatever width their label
@@ -2434,6 +2481,13 @@ body.screen {
   --big-row: clamp(1rem, 2.8vmin, 2.5rem);
   --big-note: clamp(0.875rem, 2.2vmin, 1.75rem);
 
+  /* A slide's shape, as proportions of whatever size fitSlide() lands on:
+     the share of the wall's width it may use, how much bigger the heading
+     is than the text, and the space between them. */
+  --big-slide-width: 88%;
+  --big-slide-heading: 1.5em;
+  --big-slide-gap: 0.6em;
+
   height: 100vh;
   height: 100dvh;
   display: grid;
@@ -2715,6 +2769,49 @@ body.screen {
    go. */
 .big-stage[data-screen="question"] {
   padding-bottom: clamp(0.5rem, 4vh, 3rem);
+}
+
+/* A slide has the wall to itself — no strip along the bottom to hold it up
+   off — so it centres for real, with the same margin above and below. The
+   size comes from fitSlide(); the proportions between the two parts and the
+   room on either side come from here. */
+.big-stage[data-screen="slide"] {
+  padding-top: var(--big-gap);
+  padding-bottom: var(--big-gap);
+}
+
+.big-slide {
+  width: var(--big-slide-width);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--big-slide-gap);
+  font-size: var(--big-title);
+  text-align: center;
+}
+
+/* Each part may be as wide as the slide and no wider, so a word too long
+   for a line overflows its part — which is what fitSlide() measures for —
+   rather than quietly widening the slide past the edge of the wall. */
+.big-slide > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.big-slide-title {
+  margin: 0;
+  font-size: var(--big-slide-heading);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+.big-slide-body {
+  margin: 0;
+  font-size: 1em;
+  line-height: var(--leading-body);
+  white-space: pre-line;
+  text-wrap: pretty;
 }
 
 /* A leaderboard is a list read from the top down, and the longer it is the

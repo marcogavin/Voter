@@ -81,6 +81,10 @@
               ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val()",
               ".validate": "newData.isNumber() && newData.val() >= 0"
             },
+            "numbered": {
+              ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val()",
+              ".validate": "newData.isNumber() && newData.val() >= 0"
+            },
             "likes": {
               ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val()",
               ".write": "auth != null && newData.isNumber() && (!data.exists() ? newData.val() === 1 : newData.val() === data.val() + 1)",
@@ -124,6 +128,18 @@
                     ".write": "auth != null && $voterUid === auth.uid && !data.exists() && root.child('events').child($eventId).child('revealed').val() !== true",
                     ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3600000"
                   }
+                },
+                "kind": {
+                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
+                  ".validate": "newData.val() === 'slide'"
+                },
+                "body": {
+                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
+                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500"
+                },
+                "number": {
+                  ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
+                  ".validate": "newData.isNumber() && newData.val() >= 1"
                 },
                 "ratingStars": {
                   ".read": "auth != null && $deckId === root.child('events').child($eventId).child('currentDeck').val() && $questionId === root.child('events').child($eventId).child('currentQuestionKey').val()",
