@@ -1763,7 +1763,9 @@ async function onReset() {
   if (!question) return;
 
   try {
-    await resetVotes(question);
+    // The question starts over, clock and all — held at the top if the
+    // screen is hidden, the way a hidden question's clock always holds.
+    await resetVotes(question, { paused: blanked });
     flash("reset");
   } catch (error) {
     setStatus("refused", "error");

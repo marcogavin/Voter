@@ -63,7 +63,10 @@ export function restoreDeck(id, data, options = {}) {
   return Promise.resolve(id);
 }
 export function setCurrentDeck(d) { return note("setCurrentDeck", d); }
-export function resetVotes(q) { return note("resetVotes", q.id); }
+export function resetVotes(q, options = {}) {
+  state.calls.push({ name: "resetVotes", arg: q.id, paused: options.paused === true });
+  return Promise.resolve();
+}
 export function resetAllVotes(qs) { return note("resetAllVotes", qs.map((q) => q.id)); }
 export function clearRoom() { return note("clearRoom"); }
 export function getUid() { return state.uid; }

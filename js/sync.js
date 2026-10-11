@@ -1150,11 +1150,24 @@ export function resetAllVotes(questions) {
   return database.update(eventRef, updates);
 }
 
-/** Clears one question's results and lets everyone vote on it again. */
-export function resetVotes(question) {
+/**
+ * Starts the question on screen over: its answers, votes and times cleared,
+ * voting open again, and the clock back at the top. One write, so no phone
+ * ever sees the answers gone with the old clock still running down — or a
+ * question whose time had run out cleared but still closed, which is what a
+ * reset used to leave behind.
+ *
+ * `paused` is for a reset while the screen is hidden: the fresh clock holds
+ * at the top until the question is shown again, the way a hidden one does.
+ */
+export function resetVotes(question, { paused = false } = {}) {
   requireConnection();
 
   const updates = {
+    ownerUid: uid,
+    revealed: false,
+    askedAt: database.serverTimestamp(),
+    pausedAt: paused ? database.serverTimestamp() : null,
     [`${questionsPath}/${question.id}/voters`]: null,
     [`${questionsPath}/${question.id}/times`]: null,
   };
