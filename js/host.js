@@ -66,7 +66,7 @@ import {
   LANGUAGES,
   getLanguage,
 } from "./i18n.js";
-import { wireTheme } from "./theme.js";
+import { followDevice } from "./theme.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
@@ -77,9 +77,8 @@ window.VOTR_BUILD = [
   "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock", "theme",
 ];
 
-// Day or night, wired before anything else: it's for the screen, not the
-// poll, and works on a page that hasn't connected yet — or never will.
-const drawTheme = wireTheme(document.getElementById("theme"));
+// Day or night: whatever the device says, before anything else.
+followDevice();
 
 const els = {
   tabs: document.getElementById("tabs"),
@@ -581,7 +580,6 @@ function render(event) {
   // reads t(), or that text is written in the language being replaced.
   if (setLanguage(event.lang)) {
     applyStaticText();
-    drawTheme();
     fillLanguages();
     drawCorrectChoices();
     drawCounts();

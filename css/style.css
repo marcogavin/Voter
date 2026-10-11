@@ -138,10 +138,11 @@
 
 /* ─── Dark ─────────────────────────────────────────────────────────────
    The same interface with the paper turned down, not a second design: every
-   value here is already a token, so this is a palette and nothing else. It
-   follows the device until somebody chooses otherwise with the sun-and-moon
-   button — see js/theme.js, and the few lines at the top of each page that
-   pick the palette before the first paint.
+   value here is already a token, so this is a palette and nothing else. The
+   phone and the host follow the device; the big screen does too, until it is
+   switched with its own sun-and-moon button — see js/theme.js, and the few
+   lines at the top of each page that pick the palette before the first
+   paint.
 
    The accent lifts (a royal blue that reads on white disappears on black)
    and the result colours lift with it; each was checked against the surface
@@ -2409,26 +2410,10 @@ body.audience .panel {
   white-space: nowrap;
 }
 
-.top-row--centred .top-end {
+.top-row--centred .whoami {
   grid-column: 3;
   justify-self: end;
   align-self: center;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-width: 0;
-}
-
-/* A long name gives way to the switch beside it rather than pushing it off
-   the edge: it shortens, and the whole of it is still one tap away. */
-.top-row--centred .whoami {
-  min-width: 0;
-}
-
-.top-row--centred .whoami-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  overflow-wrap: normal;
 }
 
 /* Letterhead, not a splash screen: it was a fifth of a phone screen tall,

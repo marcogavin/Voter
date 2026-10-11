@@ -18,7 +18,7 @@ import { flyHearts, heartColour, celebrate } from "./hearts.js";
 import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingColorVar, ratingCaptionText, isSlide, questionNumber } from "./scores.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
-import { wireTheme } from "./theme.js";
+import { followDevice } from "./theme.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
@@ -28,9 +28,8 @@ window.VOTR_BUILD = [
   "speed", "presence", "rating", "starpicker", "arrival", "slides", "theme",
 ];
 
-// Day or night, wired before anything else: it's for the screen, not the
-// poll, and works on a page that hasn't connected yet — or never will.
-const drawTheme = wireTheme(document.getElementById("theme"));
+// Day or night: whatever the device says, before anything else.
+followDevice();
 
 const optionsEl = document.getElementById("options");
 const stageEl = document.querySelector(".stage");
@@ -108,7 +107,6 @@ function render(event) {
   // it happened to be built in.
   if (setLanguage(event.lang)) {
     applyStaticText();
-    drawTheme();
     shownShape = null;
     delete optionsEl.dataset.screen;
   }

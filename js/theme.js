@@ -1,14 +1,15 @@
-// Day or night, chosen per browser.
+// Day or night.
 //
-// The night palette has always been there, following the device's own
-// setting. This lets a person override it with one button, top right on each
-// page, and remembers the choice in this browser alone — never on the event,
-// because one person's dark room is not the next person's.
+// The phone and the host follow the device, as they always have: an attendee
+// has already chosen, for every app on their phone, and the host's page is on
+// the host's own device. The big screen is the exception. What suits it
+// depends on the room — night in a dark hall, day in a bright meeting room —
+// not on whichever laptop happens to be plugged in, so it alone has a switch,
+// for whoever sets the room up, remembered in that browser.
 //
-// The very first choice is made before the page paints, by a few lines inline
-// at the top of each page, so a page set to night never flashes white. This
-// module is everything after that: the button, the memory, and following the
-// device for as long as nobody has chosen.
+// The very first palette is set before the page paints, by a few lines inline
+// at the top of each page, so nothing flashes the wrong colour. This module is
+// everything after that.
 
 import { t } from "./i18n.js";
 import { icons } from "./icons.js";
@@ -48,7 +49,18 @@ function apply(theme) {
 }
 
 /**
- * Wires a button to switch between day and night. Returns a function that
+ * The phone and the host: follow the device, and keep following it — the
+ * phone that goes dark at sunset takes the page with it. Never reads the big
+ * screen's choice, though both live in the same browser storage: the host's
+ * laptop is often the one driving the projector too.
+ */
+export function followDevice() {
+  apply(device());
+  DEVICE?.addEventListener?.("change", () => apply(device()));
+}
+
+/**
+ * The big screen: wires a button to switch between day and night. Returns a function that
  * redraws its icon and its name — call it whenever the language changes, so
  * the name follows the room like every other word on the page.
  */

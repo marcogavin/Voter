@@ -23,7 +23,7 @@ export const CHANGES = [
     version: "2.9",
     on: "2026-10-12",
     lines: [
-      "A sun-and-moon button at the top right of every page switches between day and night. The choice is remembered in that browser only; until you press it, each page follows your device's own setting as before.",
+      "The big screen has a sun-and-moon button at the top right that switches it between day and night — night for a dark hall, day for a bright room. It fades away with the mouse like the full-screen button, and is remembered on that screen. Phones and the host page still follow the device's own setting.",
     ],
   },
   {
