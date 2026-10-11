@@ -378,5 +378,29 @@ try {
 } catch { longBodyDenied = true; }
 ok("so is text past 280 characters", longBodyDenied);
 
+console.log("\n-- deleting a poll and taking it back, under the real rules --");
+await adminDb.ref(`${EVENT_PATH}/decks/d009`).set({
+  title: "Doomed", questionCount: 1, likes: 4,
+  questions: { q000: { text: "Q", correct: "a", voters: { someone: "a" }, times: { someone: 1200 },
+    options: { a: { label: "A", votes: 1 }, b: { label: "B", votes: 0 } } } },
+});
+await tick(600);
+const before = (await adminDb.ref(`${EVENT_PATH}/decks/d009`).get()).val();
+sync.__normalise({ ownerUid: "owner-uid-1", currentDeck: "d000",
+  decks: (await adminDb.ref(`${EVENT_PATH}/decks`).get()).val() });
+const removedDeck = await sync.deleteDeck("d009", ["d000", "d009"]);
+await tick(400);
+ok("the owner can delete it", (await adminDb.ref(`${EVENT_PATH}/decks/d009`).get()).val() === null);
+await sync.restoreDeck("d009", removedDeck, { live: false, existingIds: ["d000"] });
+await tick(400);
+ok("and put it back exactly as it was — votes, times and applause",
+   JSON.stringify((await adminDb.ref(`${EVENT_PATH}/decks/d009`).get()).val()) === JSON.stringify(before));
+
+let viewerRestoreDenied = false;
+try {
+  await database.set(database.ref(viewer.db, `${EVENT_PATH}/decks/d010`), removedDeck);
+} catch { viewerRestoreDenied = true; }
+ok("a non-owner cannot put a poll back", viewerRestoreDenied);
+
 console.log(failures ? `\n${failures} FAILED` : "\nall passed");
 process.exit(failures ? 1 : 0);

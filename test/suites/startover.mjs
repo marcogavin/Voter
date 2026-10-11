@@ -49,6 +49,13 @@ ok("and is offered while one is up", !$("reset").disabled);
 $("reset").click();
 await tick();
 ok("clears that question alone", called("resetVotes").length === 1 && called("resetVotes")[0].arg === "q000");
+ok("restarting its clock running, since the screen is showing", called("resetVotes")[0].paused === false);
+snap({ currentIndex: 0, blanked: true });
+sync.state.calls = [];
+$("reset").click();
+await tick();
+ok("or held at the top while the screen is hidden", called("resetVotes").at(-1)?.paused === true);
+snap({ currentIndex: 0, blanked: false });
 ok("and nothing else", called("resetAllVotes").length === 0);
 
 console.log("with nothing on screen");

@@ -71,11 +71,22 @@ eq("no migration writes once migrated", Object.keys(captured),
    ["ownerUid", "decks/d001/questions", "decks/d001/questionCount"]);
 
 await sync.resetVotes({ id: "q000", options: [{ id: "a" }, { id: "b" }] });
-eq("reset targets the live survey, times and all", Object.keys(captured), [
+eq("reset targets the live survey, times and all", Object.keys(captured).filter((k) => k.startsWith("decks/")), [
   "decks/d001/questions/q000/voters",
   "decks/d001/questions/q000/times",
   "decks/d001/questions/q000/options/a/votes",
   "decks/d001/questions/q000/options/b/votes"]);
+// Clearing the answers is half of starting the question again. The other
+// half is the round itself: voting open, and the clock back at the top —
+// a question whose time had run out stayed closed after a reset, with the
+// clock still at nothing, so nobody could answer it again.
+eq("and reopens voting", captured.revealed, false);
+eq("with the clock started again, on the server's time", captured.askedAt, "<server-ts>");
+eq("and running", captured.pausedAt, null);
+eq("in the same write, so no phone sees one without the other", captured.ownerUid, "host-uid");
+
+await sync.resetVotes({ id: "q000", options: [{ id: "a" }] }, { paused: true });
+eq("while the screen is hidden, the fresh clock holds at the top", captured.pausedAt, "<server-ts>");
 
 /* 5 — deleting */
 console.log("\ndeleting");

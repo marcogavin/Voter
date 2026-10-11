@@ -20,6 +20,15 @@
 
 export const CHANGES = [
   {
+    version: "2.7",
+    on: "2026-10-12",
+    lines: [
+      "Deleting a question or a text slide now offers Undo along the bottom of the page for ten seconds. It comes back where it was, votes and all.",
+      "Deleting a poll still asks first, and now says plainly that you have a few seconds to undo it and that after that it's gone for good — then offers the same Undo.",
+      "Reset votes now starts the question over properly: voting reopens and the countdown goes back to the full time. It used to clear the votes but leave the clock where it was — so a question whose time had run out stayed closed and nobody could answer it again.",
+    ],
+  },
+  {
     version: "2.6",
     on: "2026-10-11",
     lines: [

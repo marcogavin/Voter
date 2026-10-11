@@ -340,6 +340,52 @@ try {
   await eventually("and the wall's code and count are back", wall,
     () => !document.getElementById("join").hidden);
   await shot("16-after-slide");
+
+  console.log("\n-- deleting a question in the real host page, and taking it back --");
+  await tap(host, "#tab-setup");
+  await tap(host, '.qitem[data-index="0"] [data-act="del"]');
+  await eventually("it goes at once, and Undo is offered", host,
+    () => document.querySelectorAll(".qitem").length === 2
+      && !document.getElementById("undo").hidden
+      && document.getElementById("undo-text").textContent === "Question deleted");
+  await host.screenshot({ path: join(SHOTS, "e2e-17-undo-bar.png") });
+  await tap(host, "#undo-btn");
+  await eventually("Undo brings it back first in the list", host,
+    () => document.querySelectorAll(".qitem").length === 3
+      && document.querySelector('.qitem[data-index="0"] .qtext')?.textContent === "Tea or coffee?");
+  ok("with its vote, under the real rules",
+     (await adminDb.ref(`${EVENT_PATH}/decks/d003/questions/q000/options/a/votes`).get()).val() === 1);
+
+  console.log("\n-- a question whose time ran out, reset by the host --");
+  await switchTo("d004", { title: "Clock", questionCount: 1, questions: {
+    q000: { text: "Quick one?", options: { a: { label: "Yes", votes: 0 }, b: { label: "No", votes: 0 } } },
+  } });
+  await adminDb.ref(EVENT_PATH).update({ seconds: 4 });
+  await tap(host, "#tab-run");
+  await tap(host, "#next");
+  await eventually("the question is up on the phone", phone,
+    () => document.getElementById("question").textContent === "Quick one?");
+  await tap(phone, '.choice[data-id="a"]');
+  await eventually("a vote lands", phone,
+    () => document.querySelector('.choice[data-id="a"]')?.classList.contains("is-mine"));
+  await eventually("then the time runs out and voting closes", phone,
+    () => document.getElementById("note").textContent === "Voting closed");
+  await tap(host, "#reset");
+  await eventually("Reset votes clears the phone's vote", phone,
+    () => !document.querySelector(".choice.is-mine"));
+  await eventually("reopens voting", phone,
+    () => [...document.querySelectorAll(".choice")].every((b) => !b.disabled)
+      && document.getElementById("note").textContent === "");
+  await eventually("and starts the countdown again from the top", phone,
+    () => !document.getElementById("clock").hidden
+      && /^[34]s$/.test(document.getElementById("clock-time").textContent));
+  await shot("18-after-reset");
+  await tap(phone, '.choice[data-id="b"]');
+  await eventually("so the room can answer again", phone,
+    () => document.querySelector('.choice[data-id="b"]')?.classList.contains("is-mine"));
+  ok("and the vote counts, under the real rules",
+     (await adminDb.ref(`${EVENT_PATH}/decks/d004/questions/q000/options/b/votes`).get()).val() === 1);
+  await adminDb.ref(EVENT_PATH).update({ seconds: 30 });
 } catch (error) {
   failures++;
   console.log(`  ✗ the run itself broke: ${error.message}`);

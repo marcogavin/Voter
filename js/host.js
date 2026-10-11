@@ -27,6 +27,7 @@ import {
   newDeck,
   renameDeck,
   deleteDeck,
+  restoreDeck,
   setCurrentDeck,
   resetVotes,
   resetAllVotes,
@@ -72,7 +73,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide",
+  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo",
 ];
 
 const els = {
@@ -84,6 +85,9 @@ const els = {
   addSlide: document.getElementById("add-slide"),
   typeField: document.getElementById("type-field"),
   bodyCount: document.getElementById("body-count"),
+  undo: document.getElementById("undo"),
+  undoText: document.getElementById("undo-text"),
+  undoBtn: document.getElementById("undo-btn"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
   deckOpen: document.getElementById("deck-open"),
@@ -307,6 +311,7 @@ function wireUp() {
   });
 
   els.editor.addEventListener("submit", onSubmit);
+  els.undoBtn.addEventListener("click", onUndo);
   els.addQuestion.addEventListener("click", () => {
     stopEditing();
     openEditor();
@@ -629,6 +634,7 @@ function render(event) {
   els.viewOnly.hidden = !(signedIn && !isOwner);
   els.addQuestion.disabled = !isOwner;
   els.addSlide.disabled = !isOwner;
+  els.undoBtn.disabled = !isOwner;
   els.editor.classList.toggle("is-locked", !isOwner);
   for (const control of els.editor.elements) {
     if (control !== els.cancel) control.disabled = !isOwner;
@@ -1153,12 +1159,22 @@ async function onDeckDelete(deck) {
   });
   if (!confirmed) return;
 
+  const wasLive = deck.id === currentDeck;
   try {
-    await deleteDeck(
+    const removed = await deleteDeck(
       deck.id,
       decks.map((other) => other.id),
     );
     flash("deleted");
+    if (removed) {
+      offerUndo(t("pollDeleted", { title: deckTitle(deck) }), async () => {
+        await restoreDeck(deck.id, removed, {
+          live: wasLive,
+          existingIds: decks.map((other) => other.id),
+        });
+        flash("restored");
+      });
+    }
   } catch (error) {
     setStatus("refused", "error");
     console.error(error);
@@ -1345,13 +1361,19 @@ function onListClick(clickEvent) {
       startEditing(index);
       break;
 
-    case "del":
-      next.splice(index, 1);
+    case "del": {
+      const [removed] = next.splice(index, 1);
       // Keep whatever is on screen on screen, even as indices shift beneath it.
       if (currentIndex === index) setCurrentIndex(-1);
       else if (currentIndex > index) setCurrentIndex(currentIndex - 1);
-      commit(next, "deleted");
+      commit(next, "deleted").then((landed) => {
+        if (!landed) return;
+        offerUndo(t(isSlide(removed) ? "slideDeleted" : "questionDeleted"), () =>
+          restoreQuestion(removed, index),
+        );
+      });
       break;
+    }
   }
 }
 
@@ -1421,6 +1443,63 @@ function stopEditing() {
   drawCounts();
   drawEditorLabels();
   drawList();
+}
+
+/* ── Undo ──────────────────────────────────────────────────────────────── */
+
+/** How long a deletion can be taken back. Long enough to notice a slip. */
+const UNDO_MS = 10000;
+let undoTimer = null;
+let undoAction = null;
+
+/**
+ * Offers to take back what was just deleted, for a few seconds, along the
+ * bottom of the page. One at a time: a second deletion replaces the offer
+ * for the first, which is then final.
+ */
+function offerUndo(text, action) {
+  clearTimeout(undoTimer);
+  undoAction = action;
+  els.undoText.textContent = text;
+  els.undo.hidden = false;
+  els.undoBtn.disabled = !isOwner;
+  undoTimer = setTimeout(closeUndo, UNDO_MS);
+}
+
+function closeUndo() {
+  clearTimeout(undoTimer);
+  undoTimer = null;
+  undoAction = null;
+  els.undo.hidden = true;
+}
+
+async function onUndo() {
+  const action = undoAction;
+  closeUndo();
+  if (!action || !isOwner) return;
+  try {
+    await action();
+  } catch (error) {
+    setStatus("refused", "error");
+    console.error(error);
+  }
+}
+
+/**
+ * Puts a deleted question back where it was, with its answers, votes and
+ * times. Into the poll as it is now rather than as it was: in the seconds
+ * since, votes may have landed on other questions, and taking them back with
+ * it would be a second, quieter deletion.
+ */
+async function restoreQuestion(removed, index) {
+  const back = [...questions];
+  back.splice(Math.min(index, back.length), 0, removed);
+  const onScreen = currentIndex;
+  if (await commit(back, "restored")) {
+    // What is on screen stays on screen: it moved up one when this went, and
+    // moves back down one now it's back.
+    if (onScreen >= index) await setCurrentIndex(onScreen + 1);
+  }
 }
 
 /** Returns true when the write landed, so callers know not to discard input. */
@@ -1684,7 +1763,9 @@ async function onReset() {
   if (!question) return;
 
   try {
-    await resetVotes(question);
+    // The question starts over, clock and all — held at the top if the
+    // screen is hidden, the way a hidden question's clock always holds.
+    await resetVotes(question, { paused: blanked });
     flash("reset");
   } catch (error) {
     setStatus("refused", "error");

@@ -52,9 +52,21 @@ export function saveLanguage(l) { return note("saveLanguage", l); }
 export function saveSeconds(s) { return note("saveSeconds", s); }
 export function newDeck(t) { return note("newDeck", t); }
 export function renameDeck(a, b) { return note("renameDeck", [a, b]); }
-export function deleteDeck(d) { return note("deleteDeck", d); }
+// Resolves with the poll it removed, as the real one does, so the host can
+// offer it back.
+export function deleteDeck(d) {
+  state.calls.push({ name: "deleteDeck", arg: d });
+  return Promise.resolve(state.removedDeck ?? { title: "Gone", questionCount: 1, questions: {} });
+}
+export function restoreDeck(id, data, options = {}) {
+  state.calls.push({ name: "restoreDeck", arg: id, data, options });
+  return Promise.resolve(id);
+}
 export function setCurrentDeck(d) { return note("setCurrentDeck", d); }
-export function resetVotes(q) { return note("resetVotes", q.id); }
+export function resetVotes(q, options = {}) {
+  state.calls.push({ name: "resetVotes", arg: q.id, paused: options.paused === true });
+  return Promise.resolve();
+}
 export function resetAllVotes(qs) { return note("resetAllVotes", qs.map((q) => q.id)); }
 export function clearRoom() { return note("clearRoom"); }
 export function getUid() { return state.uid; }

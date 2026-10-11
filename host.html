@@ -345,6 +345,16 @@
     </div>
   </div>
 
+  <!-- Undo, for a few seconds after something is deleted. Along the bottom
+       rather than in a dialog: it offers, it doesn't ask, and it goes away
+       by itself. -->
+  <div class="toast" id="undo" role="status" hidden>
+    <span class="toast-text" id="undo-text"></span>
+    <button type="button" class="btn btn--primary toast-btn" id="undo-btn">
+      <span class="btn-label" data-i18n="undo">Undo</span>
+    </button>
+  </div>
+
   <script type="module" src="js/host.js"></script>
 
   <!-- The page and its scripts are cached separately, so a browser can serve a
@@ -359,9 +369,9 @@
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
         "tour", "tourmarks", "version", "versionsheet", "clearroom", "rating",
-        "starpicker", "feedback", "viewonly", "slides", "textslide",
+        "starpicker", "feedback", "viewonly", "slides", "textslide", "undo",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
-        "preview", "board", "notice",
+        "preview", "board", "notice", "toast",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
