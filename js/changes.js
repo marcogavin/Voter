@@ -20,6 +20,14 @@
 
 export const CHANGES = [
   {
+    version: "2.7",
+    on: "2026-10-12",
+    lines: [
+      "Deleting a question or a text slide now offers Undo along the bottom of the page for ten seconds. It comes back where it was, votes and all.",
+      "Deleting a poll still asks first, and now says plainly that you have a few seconds to undo it and that after that it's gone for good — then offers the same Undo.",
+    ],
+  },
+  {
     version: "2.6",
     on: "2026-10-11",
     lines: [

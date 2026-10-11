@@ -340,6 +340,21 @@ try {
   await eventually("and the wall's code and count are back", wall,
     () => !document.getElementById("join").hidden);
   await shot("16-after-slide");
+
+  console.log("\n-- deleting a question in the real host page, and taking it back --");
+  await tap(host, "#tab-setup");
+  await tap(host, '.qitem[data-index="0"] [data-act="del"]');
+  await eventually("it goes at once, and Undo is offered", host,
+    () => document.querySelectorAll(".qitem").length === 2
+      && !document.getElementById("undo").hidden
+      && document.getElementById("undo-text").textContent === "Question deleted");
+  await host.screenshot({ path: join(SHOTS, "e2e-17-undo-bar.png") });
+  await tap(host, "#undo-btn");
+  await eventually("Undo brings it back first in the list", host,
+    () => document.querySelectorAll(".qitem").length === 3
+      && document.querySelector('.qitem[data-index="0"] .qtext')?.textContent === "Tea or coffee?");
+  ok("with its vote, under the real rules",
+     (await adminDb.ref(`${EVENT_PATH}/decks/d003/questions/q000/options/a/votes`).get()).val() === 1);
 } catch (error) {
   failures++;
   console.log(`  ✗ the run itself broke: ${error.message}`);

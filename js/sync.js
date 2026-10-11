@@ -100,6 +100,10 @@ let liveCount = null;
 // Whether the live poll has a count of its questions apart from its slides
 // stored — the one thing a save has to clear when its last slide goes.
 let liveNumbered = false;
+// Every poll as the owner last read it, in full — what deleting one hands
+// back, so it can be put back exactly as it was. Null on a device that can't
+// read them, which is every device but the owner's.
+let ownerDeckData = null;
 
 /**
  * Loads the SDK, connects, and signs this device in anonymously.
@@ -553,6 +557,7 @@ function normalise(raw) {
   legacyQuestions = raw?.questions ?? null;
   liveCount = deck?.partial ? null : Object.keys(deck?.questions || {}).length;
   liveNumbered = typeof deck?.numbered === "number";
+  ownerDeckData = deck?.partial ? null : raw?.decks ?? null;
   // Where the live poll's questions are *right now*, which during the window
   // between deploying this and the host's first save is still the old place.
   // Votes have to go where the counters actually are.
@@ -847,21 +852,48 @@ export function renameDeck(id, title) {
 /**
  * Removes a poll and everything in it. Falls back to a survivor when the one
  * being removed is live, so the room is never pointed at a poll that's gone.
+ *
+ * Resolves with the poll exactly as it was — questions, votes, times,
+ * applause — so that restoreDeck() can put it back. Null if this device never
+ * had it to hand back.
  */
 export function deleteDeck(id, allIds) {
   requireConnection();
 
+  // Refused there and then, not as a rejected promise — the last poll can't
+  // go, and a caller that forgets to await should still hear about it.
   const fallback = allIds.find((other) => other !== id);
   if (!fallback) {
     throw new Error("An event has to keep at least one poll.");
   }
 
-  return database.update(eventRef, {
+  const removed = ownerDeckData?.[id] ? structuredClone(ownerDeckData[id]) : null;
+  return database
+    .update(eventRef, {
+      ownerUid: uid,
+      ...migration(),
+      [`decks/${id}`]: null,
+      ...(id === liveDeck ? liveState(fallback) : {}),
+    })
+    .then(() => removed);
+}
+
+/**
+ * Puts back a poll deleteDeck() removed, everything in it as it was, and
+ * makes it live again if it was. Under its old id — unless a poll made since
+ * has taken that id, in which case under the next free one, so nothing is
+ * written over. Resolves with the id it went back under.
+ */
+export async function restoreDeck(id, data, { live = false, existingIds = [] } = {}) {
+  requireConnection();
+
+  const target = existingIds.includes(id) ? nextDeckKey(existingIds) : id;
+  await database.update(eventRef, {
     ownerUid: uid,
-    ...migration(),
-    [`decks/${id}`]: null,
-    ...(id === liveDeck ? liveState(fallback) : {}),
+    [`decks/${target}`]: data,
+    ...(live ? liveState(target) : {}),
   });
+  return target;
 }
 
 /** Puts a different poll on screen, from the top with nothing showing. */

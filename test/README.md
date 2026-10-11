@@ -56,6 +56,7 @@ Both are generated on every run and both are gitignored.
 | `viewonly` | a signed-in account that doesn't own the event: told so, and nothing it can write |
 | `slides` | slides: what is saved, the editor, Next walking through them, the phone and the wall |
 | `slidefit` | a slide fitted to the wall: nothing spilling, nothing broken, centred, and big |
+| `undo` | taking back a deleted question, slide or poll — votes and all |
 | `gate` | the host page ships closed |
 | `overflow` | nothing escapes the card, in five languages |
 | `taps` | nothing on a phone is smaller than a thumb |

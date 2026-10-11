@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides toast";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -2249,6 +2249,44 @@ a.iconbtn {
   .sheet-card {
     animation: none;
   }
+}
+
+/* ─── Undo ─────────────────────────────────────────────────────────────
+   For a few seconds after something is deleted. A card along the bottom,
+   above the page and any open sheet, that says what went and offers it back.
+   It doesn't block anything: carrying on is how you say no.               */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: max(var(--space-4), calc(env(safe-area-inset-bottom) + var(--space-3)));
+  transform: translateX(-50%);
+  z-index: 30;
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--space-4));
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  background: var(--card);
+  color: var(--ink);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+}
+
+.toast[hidden] {
+  display: none;
+}
+
+.toast-text {
+  font-size: var(--text-body);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.toast-btn {
+  flex: none;
 }
 
 /* ─── Overlays: the QR code, and asking for a name ─────────────────────── */
