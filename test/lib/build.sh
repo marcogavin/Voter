@@ -32,6 +32,7 @@ stub() {
       -e "s|from \"./changes.js\"|from \"../../js/changes.js\"|" \
       -e "s|from \"./i18n.js\"|from \"../../js/i18n.js\"|" \
       -e "s|from \"./theme.js\"|from \"../../js/theme.js\"|" \
+      -e "s|from \"./ring.js\"|from \"../../js/ring.js\"|" \
       "$1"
 }
 

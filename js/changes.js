@@ -24,6 +24,7 @@ export const CHANGES = [
     on: "2026-10-12",
     lines: [
       "The big screen has a sun-and-moon button at the top right that switches it between day and night — night for a dark hall, day for a bright room. It fades away with the mouse like the full-screen button, and is remembered on that screen. Phones and the host page still follow the device's own setting.",
+      "The countdown is a ring now, on the phones and the big screen: it drains with the seconds left in the middle, turns amber half way and red for the last five, when the number pops on every tick. On a phone it sits beside \"Question 2 of 5\", so it takes no room from the answers.",
     ],
   },
   {

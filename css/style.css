@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides toast nightmode";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides toast nightmode ring";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -131,6 +131,10 @@
   /* ── Controls ─────────────────────────────────────────────────────── */
   --control-h: 2.75rem; /* 44px — the touch minimum, not negotiable */
   --control-h-lg: 3.25rem; /* 52px — the audience's vote rows */
+
+  /* ── The countdown ring ───────────────────────────────────────────── */
+  --ring-size: 3rem; /* on a phone, beside "Question 2 of 5" */
+  --ring-stroke: 4; /* in the ring's own 40-unit drawing, so it scales with it */
 
   /* Native controls follow the day palette until night is chosen. */
   color-scheme: light;
@@ -856,49 +860,115 @@ a.iconbtn {
 }
 
 /* ─── The clock ────────────────────────────────────────────────────────
-   A bar that empties. The number alone, in the footer, was both too small
-   to glance at and nowhere near the question it belonged to.             */
+   A ring that drains, with the seconds in the middle (js/ring.js draws it).
+   Blue while there is time, amber from half way, red for the last five
+   seconds — when the number pops on each tick and the ring pulses. The same
+   ring on the phone and on the wall; only its size differs.               */
 
 .clock {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  position: relative;
+  flex: none;
+  width: var(--ring-size);
+  height: var(--ring-size);
 }
 
-.clock-track {
-  flex: 1;
-  height: 6px;
-  border-radius: var(--radius-pill);
-  background: var(--sunken);
-  overflow: hidden;
-}
-
-.clock-fill {
+.ring {
   display: block;
-  height: 100%;
   width: 100%;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
+  height: 100%;
+  /* The arc starts at twelve o'clock and drains anticlockwise from there. */
+  transform: rotate(-90deg);
+}
+
+.ring-track,
+.ring-arc {
+  fill: none;
+  stroke-width: var(--ring-stroke);
+}
+
+.ring-track {
+  stroke: var(--sunken);
+}
+
+.ring-arc {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
   transition:
-    width 0.25s linear,
-    background 0.25s ease;
+    stroke-dashoffset 0.25s linear,
+    stroke 0.4s ease;
+}
+
+.clock[data-phase="half"] .ring-arc {
+  stroke: var(--gold);
+}
+
+.clock[data-phase="urgent"] .ring-arc {
+  stroke: var(--live);
 }
 
 .clock-time {
-  font-size: var(--text-label);
-  font-weight: 700;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--ring-size) * 0.38);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--muted);
-  min-width: 2.5em;
-  text-align: right;
+  line-height: var(--leading-flat);
+  color: var(--ink);
 }
 
-.clock.is-urgent .clock-fill {
-  background: var(--live);
-}
-
-.clock.is-urgent .clock-time {
+.clock[data-phase="urgent"] .clock-time {
   color: var(--live);
+}
+
+/* The last seconds: each one lands with a pop, and the ring breathes — only
+   where the device allows motion. Switched on here rather than switched off
+   later: an override in the reduced-motion block below loses to these more
+   specific selectors, and did. */
+@media (prefers-reduced-motion: no-preference) {
+  .clock-time.is-tick {
+    animation: ring-pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+  }
+
+  .clock[data-phase="urgent"] .ring {
+    animation: ring-pulse 1s ease-in-out infinite;
+  }
+}
+
+@keyframes ring-pop {
+  from {
+    transform: scale(1.4);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes ring-pulse {
+  0%,
+  100% {
+    transform: rotate(-90deg) scale(1);
+  }
+  50% {
+    transform: rotate(-90deg) scale(1.07);
+  }
+}
+
+/* "Question 2 of 5" on the left and the ring on the right, on one line —
+   and no line at all when neither is showing. */
+.qhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.qhead:not(:has(> :not([hidden]))) {
+  display: none;
 }
 
 /* The first heading in a view sits straight under the tab strip, which is
@@ -3000,48 +3070,14 @@ body.screen {
   font-weight: 600;
 }
 
-/* The clock takes what's left, because from the back of a room a bar
-   emptying is legible long after a number stops being. */
+/* The ring, at the size of the wall. The tally keeps the right-hand end of
+   the strip whether or not there's a clock beside the progress. */
 .big-clock {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: var(--big-gap);
-  padding-bottom: 0.15em;
+  --ring-size: clamp(3.5rem, 11vmin, 8.5rem);
 }
 
-.big-clock-track {
-  flex: 1;
-  height: clamp(6px, 1.2vmin, 14px);
-  border-radius: var(--radius-pill);
-  background: var(--sunken);
-  overflow: hidden;
-}
-
-.big-clock-fill {
-  display: block;
-  height: 100%;
-  width: 100%;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  transition:
-    width 0.25s linear,
-    background 0.25s ease;
-}
-
-.big-clock-time {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  min-width: 3em;
-  text-align: right;
-}
-
-.big-clock.is-urgent .big-clock-fill {
-  background: var(--live);
-}
-
-.big-clock.is-urgent .big-clock-time {
-  color: var(--live);
+.big-tally {
+  margin-left: auto;
 }
 
 /* ── The one control ────────────────────────────────────────────────────
@@ -3066,7 +3102,6 @@ body.is-awake .big-full {
 @media (prefers-reduced-motion: reduce) {
   .big-fill,
   .big-pct,
-  .big-clock-fill,
   .big-full {
     transition: none;
   }
@@ -3302,7 +3337,9 @@ body.is-awake .big-full {
   .choice,
   .choice-fill,
   .choice-pct,
-  .clock-fill,
+  .ring-arc,
+  .ring,
+  .clock-time,
   .stage > * {
     transition: none;
     animation: none;

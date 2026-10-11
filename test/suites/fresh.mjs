@@ -10,7 +10,7 @@ const script = [...html.matchAll(/<script>\n([\s\S]*?)<\/script>/g)]
 let pass = 0, fail = 0;
 const ok = (n, c) => { c ? (pass++, console.log("  ✓", n)) : (fail++, console.log("  ✗", n)); };
 
-async function run({ build, styled = "groups sections hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot tourmarks versionsheet notice slides toast nightmode", alreadyTried }) {
+async function run({ build, styled = "groups sections hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot tourmarks versionsheet notice slides toast nightmode ring", alreadyTried }) {
   const state = { fetched: [], reloaded: false, appended: [], store: {} };
   if (alreadyTried) state.store["votr-refetched"] = "1";
   let onLoad = null;

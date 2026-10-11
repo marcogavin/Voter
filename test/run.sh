@@ -45,7 +45,7 @@ for t in run fresh guards join applause fallbacks startover polls pause badge \
 done
 
 # Layout, in a real browser. These need Chromium; see test/README.md.
-for t in gate overflow taps touching wall-fit tourfit slidefit theme; do
+for t in gate overflow taps touching wall-fit tourfit slidefit theme ring; do
   run "$t" "node"
 done
 
