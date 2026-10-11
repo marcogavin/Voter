@@ -53,6 +53,7 @@ Both are generated on every run and both are gitignored.
 | `contrast` | every colour pair, in both palettes |
 | `clearroom` | Clear the room: who it's offered to, what it asks, what it clears |
 | `arrival` | a question reaching a phone field by field, and being drawn once whole |
+| `viewonly` | a signed-in account that doesn't own the event: told so, and nothing it can write |
 | `gate` | the host page ships closed |
 | `overflow` | nothing escapes the card, in five languages |
 | `taps` | nothing on a phone is smaller than a thumb |

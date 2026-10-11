@@ -67,6 +67,14 @@
            Run is the view most likely to be held up or handed over. -->
       <p class="account" id="account"></p>
 
+      <!-- Signed in, but not the account that owns this event. Said up top
+           and in words, because a page that merely greys its controls out
+           reads as a broken one. Shown on both tabs: it governs both. -->
+      <div class="notice" id="view-only" role="status" hidden>
+        <p class="notice-title" data-i18n="viewOnlyTitle">View only</p>
+        <p class="notice-body" data-i18n="viewOnlyBody">Another Google account runs this event. You can look around, but only that account can add questions or run polls. To make changes, sign out and sign in with that account.</p>
+      </div>
+
       <!-- ── Setup: write the questions before the event ─────────────────── -->
       <section id="view-setup" hidden>
         <h2 class="section-title section-title--first" data-i18n="pollsSection">My polls</h2>
@@ -333,9 +341,9 @@
         "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
         "pause", "scores", "bigscreen", "speed", "times", "signin", "presence",
         "tour", "tourmarks", "version", "versionsheet", "clearroom", "rating",
-        "starpicker", "feedback",
+        "starpicker", "feedback", "viewonly",
         "groups", "sections", "hint", "hearts", "choices", "pollsheet", "paper",
-        "preview", "board",
+        "preview", "board", "notice",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
