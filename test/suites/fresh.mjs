@@ -37,7 +37,7 @@ async function run({ build, styled = "groups sections hint hearts choices clock 
 }
 
 console.log("current script, everything present");
-let s = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo"] });
+let s = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock"] });
 ok("no refetch", s.fetched.length === 0);
 ok("no reload", !s.reloaded);
 ok("no banner", s.appended.length === 0);
