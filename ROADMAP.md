@@ -109,16 +109,25 @@ text slide turns into the editor it was designed not to be. A tiny markup
 as raw HTML, so nothing typed can run as code on the wall. The auto-fit keeps
 working: it measures whatever is drawn.
 
-## 8. Pictures and video on text slides
+## 8. Video on text slides — a YouTube or Vimeo link first
 
-Added 11 October. An image, or a video that plays by itself, on a slide.
+Added 11 October; the starting point agreed the same day. Paste a YouTube or
+Vimeo link into a text slide and the wall plays it by itself, beside or
+instead of the slide's words.
 
-Needs somewhere to keep the files — storage with its own rules and size
-limits, which belongs with item 2's one-account-per-event. Browsers only let a
-video play by itself when it is muted, so the wall starts it silent and the
-host turns the sound on. Phones should not download a large video over
-mobile data to show the same thing the wall is showing: on a phone, a still
-and the caption. A YouTube or Vimeo link would avoid storing video at all.
+A link and not an upload, to begin with: nothing to store, no storage costs,
+no storage rules, and nothing for Undo to have to bring back but the link.
+The video lives where it already lives. The catches are the provider's, and
+worth knowing before a room depends on them: browsers only let a video start
+by itself when it is muted, so the wall starts it silent and the host turns
+the sound on; it needs internet at the venue; and the provider decides what
+plays before and around it. Phones show the slide's words and a still, never
+the video — nobody's mobile data should pay for what the wall is already
+showing.
+
+Uploaded pictures and video come after this, if they're wanted at all, and
+belong with item 2's one-account-per-event: that is where storage, its rules
+and its costs would live.
 
 ## 9. A day / night toggle
 
