@@ -42,6 +42,7 @@ const PAIRS = [
   ["--muted", "--sunken", 4.5, "a select's own text"],
   ["--accent", "--surface", 4.5, "the accent as text"],
   ["--accent", "--accent-soft", 4.5, "an icon on its tinted ground"],
+  ["--ink", "--accent-soft", 4.5, "the view-only notice"],
   ["--on-accent", "--accent", 4.5, "a primary button's label"],
   ["--ink", "--vote-soft", 4.5, "an answer you voted for"],
   ["--ink", "--right-soft", 4.5, "the right answer"],

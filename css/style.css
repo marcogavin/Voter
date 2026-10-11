@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -1507,6 +1507,32 @@ a.iconbtn {
 .account.is-error {
   color: var(--wrong);
   font-weight: 600;
+}
+
+/* Said, not implied: a signed-in account that doesn't own the event gets a
+   plain statement of what it can and can't do, at the top of both tabs.
+   Greyed-out controls on their own read as a page that has broken.        */
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.notice-title {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+
+.notice-body {
+  margin: 0;
+  font-size: var(--text-label);
+  overflow-wrap: anywhere;
 }
 
 /* ─── Polls ────────────────────────────────────────────────────────────

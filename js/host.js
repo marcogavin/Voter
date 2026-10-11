@@ -71,7 +71,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating", "starpicker", "feedback",
+  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly",
 ];
 
 const els = {
@@ -127,6 +127,7 @@ const els = {
   clear: document.getElementById("clear"),
 
   account: document.getElementById("account"),
+  viewOnly: document.getElementById("view-only"),
   signin: document.getElementById("signin"),
   signout: document.getElementById("signout"),
   askOverlay: document.getElementById("ask-overlay"),
@@ -422,7 +423,7 @@ function choice(value, label, checked) {
   const wrap = document.createElement("label");
   wrap.className = "correct-choice" + (checked ? " is-picked" : "");
   wrap.innerHTML = `
-    <input type="radio" name="correct" value="${value}"${checked ? " checked" : ""}>
+    <input type="radio" name="correct" value="${value}"${checked ? " checked" : ""}${isOwner ? "" : " disabled"}>
     <span>${escapeHtml(label)}</span>
   `;
   return wrap;
@@ -476,7 +477,7 @@ function drawRatingColors(picked) {
   els.ratingColors.innerHTML = RATING_COLORS.map(
     ({ key, var: cssVar }) => `
       <label class="swatch${key === picked ? " is-picked" : ""}" style="background: var(${cssVar})">
-        <input type="radio" name="rating-color" value="${key}" aria-label="${t(colorLabelKey(key))}"${key === picked ? " checked" : ""}>
+        <input type="radio" name="rating-color" value="${key}" aria-label="${t(colorLabelKey(key))}"${key === picked ? " checked" : ""}${isOwner ? "" : " disabled"}>
         <span class="swatch-ring"></span>
       </label>
     `,
@@ -577,10 +578,18 @@ function render(event) {
     els.hint.textContent = signedIn ? t("viewOnly") : t("signInPrompt");
   }
 
+  // Somebody signed in who doesn't own this event can look but not touch,
+  // and is told so in words at the top of the page. Every control that
+  // writes is off — Add question included, which is what used to open a
+  // half-locked form whose pickers worked and whose text boxes didn't.
+  els.viewOnly.hidden = !(signedIn && !isOwner);
+  els.addQuestion.disabled = !isOwner;
   els.editor.classList.toggle("is-locked", !isOwner);
-  for (const control of [els.questionInput, els.optionsInput, els.save]) {
-    control.disabled = !isOwner;
+  for (const control of els.editor.elements) {
+    if (control !== els.cancel) control.disabled = !isOwner;
   }
+  // The event can change hands with the form open, from another device.
+  if (!isOwner && !els.editorSheet.hidden) stopEditing();
 
   // The question being edited can disappear under us — another device could
   // delete it, or this one could while the save is still in flight. Switching
@@ -1241,6 +1250,8 @@ function onListClick(clickEvent) {
  * in Setup was an empty form rather than the questions they had written.
  */
 function openEditor() {
+  // Only the owner writes questions; the form is never opened to anyone else.
+  if (!isOwner) return;
   els.editorSheet.hidden = false;
   els.questionInput.focus();
 }

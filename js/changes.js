@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "2.5",
+    on: "2026-10-11",
+    lines: [
+      "Signing in to the host page with a Google account that doesn't run the event now says so at the top of the page, on both tabs, and how to change it. Add question is off for that account, instead of opening a faded form you couldn't type into.",
+    ],
+  },
+  {
     version: "2.4",
     on: "2026-10-10",
     lines: [
