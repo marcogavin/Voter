@@ -22,6 +22,19 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#101014" media="(prefers-color-scheme: dark)">
+  <!-- Day or night, before the first paint: what this browser chose, or
+       else what the device is set to. Inline, so a page set to night never
+       flashes white while its scripts load. js/theme.js does the rest. -->
+  <script>
+    (function () {
+      var theme = null;
+      try { theme = localStorage.getItem("votr-theme"); } catch (e) {}
+      if (theme !== "light" && theme !== "dark") {
+        theme = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="audience">
@@ -31,10 +44,15 @@
         <div class="mark">
           <img class="logo logo--banner" src="img/votr-logo.svg" alt="VOTR">
         </div>
-        <button type="button" class="whoami" id="whoami" hidden>
-          <span class="whoami-name"></span>
-          <span class="btn-icon" data-icon="edit"></span>
-        </button>
+        <!-- Top right: who you are, and day or night. The switch stays when
+             the name isn't there yet — it's for the screen, not the poll. -->
+        <div class="top-end">
+          <button type="button" class="whoami" id="whoami" hidden>
+            <span class="whoami-name"></span>
+            <span class="btn-icon" data-icon="edit"></span>
+          </button>
+          <button type="button" class="iconbtn" id="theme" aria-label="Switch to night mode"></button>
+        </div>
       </div>
 
       <!-- The question, its clock and its answers are one block, centred in
@@ -72,12 +90,13 @@
         "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
         "speed", "presence", "groups", "sections", "hearts", "choices", "clock",
         "paper", "rating", "starpicker", "arrival", "slides",
-        "board", "times",
+        "board", "times", "theme", "nightmode",
       ];
       var FILES = [
         "js/app.js", "js/host.js", "js/screen.js", "js/sync.js", "js/i18n.js",
         "js/qr.js", "js/firebase-config.js", "js/icons.js", "js/hearts.js",
-        "js/scores.js", "js/tour.js", "js/changes.js", "css/style.css",
+        "js/scores.js", "js/tour.js", "js/changes.js", "js/theme.js",
+        "css/style.css",
       ];
       var TRIED = "votr-refetched";
 

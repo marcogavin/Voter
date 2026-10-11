@@ -19,12 +19,17 @@ import { drawIcons, icons } from "./icons.js";
 import { flyHearts, celebrate } from "./hearts.js";
 import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingStarsMarkup, ratingCaptionText, isSlide, questionNumber } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
+import { wireTheme } from "./theme.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
-  "presence", "rating", "starsummary", "arrival", "slides",
+  "presence", "rating", "starsummary", "arrival", "slides", "theme",
 ];
+
+// Day or night, wired before anything else: it's for the screen, not the
+// poll, and works on a page that hasn't connected yet — or never will.
+const drawTheme = wireTheme(document.getElementById("theme"));
 
 /**
  * The most names worth putting on a wall, and the fewest worth calling a
@@ -152,6 +157,7 @@ function render(event) {
   // thing in it. Anything holding cached markup has to forget it.
   if (setLanguage(event.lang)) {
     applyStaticText();
+    drawTheme();
     delete els.stage.dataset.screen;
     shownQuestionId = null;
     drawFull();

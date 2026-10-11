@@ -8,7 +8,7 @@
      script — controls that look wrong or unstyled — and until now only the
      scripts announced themselves. Add a word here when a change would look
      broken against older markup. */
-  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides toast";
+  --build: "groups sections names hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot votesbadge tourmarks versionsheet notice slides toast nightmode";
 
   /* ── Colour ─────────────────────────────────────────────────────────
      Light and flat. Ink and one accent carry the interface; everything else
@@ -131,89 +131,94 @@
   /* ── Controls ─────────────────────────────────────────────────────── */
   --control-h: 2.75rem; /* 44px — the touch minimum, not negotiable */
   --control-h-lg: 3.25rem; /* 52px — the audience's vote rows */
+
+  /* Native controls follow the day palette until night is chosen. */
+  color-scheme: light;
 }
 
 /* ─── Dark ─────────────────────────────────────────────────────────────
    The same interface with the paper turned down, not a second design: every
    value here is already a token, so this is a palette and nothing else. It
-   follows the phone rather than offering a switch — a room reads this in
-   whatever their phone is already set to, and a toggle is one more thing to
-   find in the dark.
+   follows the device until somebody chooses otherwise with the sun-and-moon
+   button — see js/theme.js, and the few lines at the top of each page that
+   pick the palette before the first paint.
 
    The accent lifts (a royal blue that reads on white disappears on black)
    and the result colours lift with it; each was checked against the surface
    it lands on, and the soft grounds are near-black tints rather than the
    washed-out light ones.                                                  */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Dark pink disappears on near-black; this one is 6.4:1 on the sheet the
-       callout is drawn on, and its ground is a tint of it rather than the
-       washed-out light one. */
-    --tour: #ff8ac4;
-    --tour-soft: #3a1330;
-    --tour-ink: #14040d;
+:root[data-theme="dark"] {
+  /* Native controls — scrollbars, the open list of a select — follow the
+     palette on screen rather than the device's own setting. */
+  color-scheme: dark;
 
-    --bg: #08080b;
-    --paper: #121218;
-    --surface: #22222c; /* a sheet has to read as being in front of the page */
-    /* Dark separates by ground, not by outline. A hairline on black is a box
-       drawn around a thing; a step of lightness is the thing itself sitting
-       on something. Cards lift off the panel and their borders go. */
-    --card: #1e1e26;
-    --sunken: #24242e;
-    --flat: #3c4a80;
-    --border: #2c2c35;
-    --ink: #f2f2f4;
-    --muted: #a0a0aa;
+  /* Dark pink disappears on near-black; this one is 6.4:1 on the sheet the
+     callout is drawn on, and its ground is a tint of it rather than the
+     washed-out light one. */
+  --tour: #ff8ac4;
+  --tour-soft: #3a1330;
+  --tour-ink: #14040d;
 
-    --accent: #7aa2ff;
-    --accent-deep: #93b4ff;
-    --on-accent: #10131c;
-    --accent-soft: #1e2438;
-    --accent-soft-hover: #262e46;
+  --bg: #08080b;
+  --paper: #121218;
+  --surface: #22222c; /* a sheet has to read as being in front of the page */
+  /* Dark separates by ground, not by outline. A hairline on black is a box
+     drawn around a thing; a step of lightness is the thing itself sitting
+     on something. Cards lift off the panel and their borders go. */
+  --card: #1e1e26;
+  --sunken: #24242e;
+  --flat: #3c4a80;
+  --border: #2c2c35;
+  --ink: #f2f2f4;
+  --muted: #a0a0aa;
 
-    --scrim: rgba(0, 0, 0, 0.6);
+  --accent: #7aa2ff;
+  --accent-deep: #93b4ff;
+  --on-accent: #10131c;
+  --accent-soft: #1e2438;
+  --accent-soft-hover: #262e46;
 
-    --vote: #4fd1de;
-    --right: #58d68d;
-    --wrong: #ff7b72;
+  --scrim: rgba(0, 0, 0, 0.6);
 
-    --vote-soft: #10333a;
-    --right-soft: #12331f;
-    --wrong-soft: #3a1c1b;
+  --vote: #4fd1de;
+  --right: #58d68d;
+  --wrong: #ff7b72;
 
-    --gold: #d8b23a;
-    --gold-soft: #33290c;
-    --gold-ink: #f0d071;
+  --vote-soft: #10333a;
+  --right-soft: #12331f;
+  --wrong-soft: #3a1c1b;
 
-    --live: #ff6169;
-    --live-glow: rgba(255, 97, 105, 0.45);
-    --live-fade: rgba(255, 97, 105, 0);
+  --gold: #d8b23a;
+  --gold-soft: #33290c;
+  --gold-ink: #f0d071;
 
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4);
-  }
+  --live: #ff6169;
+  --live-glow: rgba(255, 97, 105, 0.45);
+  --live-fade: rgba(255, 97, 105, 0);
 
-  /* The wordmark and the waiting art are drawn in ink that was chosen for
-     white. Nothing else in here is filtered — this is the one place a fixed
-     colour lives inside an image rather than in a token. */
-  .logo {
-    filter: invert(1) hue-rotate(180deg) saturate(1.25);
-  }
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4);
+}
 
-  /* Outlines come off in the dark. A hairline on near-black draws a box
-     around a thing; the step of lightness *is* the thing. Everything that
-     was a bordered card is now a lighter ground instead. */
-  .choice,
-  .qitem,
-  .group,
-  .pollitem.is-open {
-    border-color: transparent;
-  }
+/* The wordmark and the waiting art are drawn in ink that was chosen for
+   white. Nothing else in here is filtered — this is the one place a fixed
+   colour lives inside an image rather than in a token. */
+[data-theme="dark"] .logo {
+  filter: invert(1) hue-rotate(180deg) saturate(1.25);
+}
 
-  .btn:not(.btn--outline):not(.btn--primary) {
-    background: var(--card);
-  }
+/* Outlines come off in the dark. A hairline on near-black draws a box
+   around a thing; the step of lightness *is* the thing. Everything that
+   was a bordered card is now a lighter ground instead. */
+[data-theme="dark"] .choice,
+[data-theme="dark"] .qitem,
+[data-theme="dark"] .group,
+[data-theme="dark"] .pollitem.is-open {
+  border-color: transparent;
+}
+
+[data-theme="dark"] .btn:not(.btn--outline):not(.btn--primary) {
+  background: var(--card);
 }
 
 * {
@@ -2404,10 +2409,26 @@ body.audience .panel {
   white-space: nowrap;
 }
 
-.top-row--centred .whoami {
+.top-row--centred .top-end {
   grid-column: 3;
   justify-self: end;
   align-self: center;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* A long name gives way to the switch beside it rather than pushing it off
+   the edge: it shortens, and the whole of it is still one tap away. */
+.top-row--centred .whoami {
+  min-width: 0;
+}
+
+.top-row--centred .whoami-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
 }
 
 /* Letterhead, not a splash screen: it was a fifth of a phone screen tall,
@@ -2575,7 +2596,13 @@ body.screen {
 
 .big-full {
   flex: none;
-  margin-left: var(--big-gap);
+}
+
+/* The mark holds the left and everything after it goes right — so the two
+   controls are at the top right whether or not the count is up between
+   them and the mark to push them there. */
+.logo--big {
+  margin-right: auto;
 }
 
 .logo--big {

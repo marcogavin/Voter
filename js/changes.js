@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "2.9",
+    on: "2026-10-12",
+    lines: [
+      "A sun-and-moon button at the top right of every page switches between day and night. The choice is remembered in that browser only; until you press it, each page follows your device's own setting as before.",
+    ],
+  },
+  {
     version: "2.8",
     on: "2026-10-12",
     lines: [

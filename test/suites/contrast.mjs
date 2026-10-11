@@ -7,9 +7,13 @@ function tokens(block) {
   for (const m of block.matchAll(/(--[\w-]+):\s*([^;]+);/g)) out[m[1]] = m[2].trim();
   return out;
 }
-const light = tokens(css.slice(css.indexOf(":root {"), css.indexOf("@media (prefers-color-scheme: dark)")));
-const darkBlock = css.slice(css.indexOf("@media (prefers-color-scheme: dark)"));
-const dark = { ...light, ...tokens(darkBlock.slice(0, darkBlock.indexOf("}\n\n  /*"))) };
+// The night palette is chosen by the page now — :root[data-theme="dark"] —
+// rather than by a media query, so that is where it is read from.
+const NIGHT = ':root[data-theme="dark"] {';
+if (!css.includes(NIGHT)) throw new Error("the night palette's block wasn't found — has it moved?");
+const light = tokens(css.slice(css.indexOf(":root {"), css.indexOf(NIGHT)));
+const darkBlock = css.slice(css.indexOf(NIGHT));
+const dark = { ...light, ...tokens(darkBlock.slice(0, darkBlock.indexOf("\n}\n"))) };
 
 const hex = (c) => {
   const m = /^#([0-9a-f]{6})$/i.exec(c);
