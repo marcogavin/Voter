@@ -2,10 +2,19 @@ name: Tests
 
 # Every push and every pull request. The point is that a red suite is red
 # whether or not anybody remembered to run it.
+#
+# Except when the only files touched are Markdown — the roadmap, the README,
+# CLAUDE.md, DESIGN.md. No page loads them and no suite reads them, so there
+# is nothing for the suites to catch. A change that touches anything else as
+# well still runs everything: GitHub skips only when every file matches.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"
   pull_request:
+    paths-ignore:
+      - "**.md"
 
 jobs:
   # The one thing no suite can check for you: that the changelog is current.
