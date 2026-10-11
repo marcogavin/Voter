@@ -20,6 +20,13 @@
 
 export const CHANGES = [
   {
+    version: "2.8",
+    on: "2026-10-12",
+    lines: [
+      "Undo now stays up for thirty seconds instead of ten, with the seconds left counting down beside it.",
+    ],
+  },
+  {
     version: "2.7",
     on: "2026-10-12",
     lines: [

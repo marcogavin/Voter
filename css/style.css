@@ -2285,6 +2285,17 @@ a.iconbtn {
   overflow-wrap: anywhere;
 }
 
+/* The seconds left, quiet beside the message: a figure that changes every
+   second must not shift the button along as it does. */
+.toast-time {
+  flex: none;
+  min-width: 3ch;
+  font-size: var(--text-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  text-align: right;
+}
+
 .toast-btn {
   flex: none;
 }

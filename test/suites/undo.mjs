@@ -60,13 +60,22 @@ const shown = (el) => Boolean(el) && !el.hidden && !el.closest("[hidden]");
   dom.window.localStorage.setItem("votr-tour-seen", "1");
   globalThis.location = dom.window.location;
 
-  // The bar's own ten seconds, held so the test decides when they're up.
+  // The bar's own thirty seconds, and the tick that counts them down, held so
+  // the test decides when time passes.
   const realTimeout = globalThis.setTimeout;
+  const realInterval = globalThis.setInterval;
   let undoExpiry = null;
+  let undoTick = null;
   globalThis.setTimeout = (fn, ms, ...rest) => {
-    if (ms === 10000) { undoExpiry = fn; return 0; }
+    if (ms === 30000) { undoExpiry = fn; return 0; }
     return realTimeout(fn, ms, ...rest);
   };
+  globalThis.setInterval = (fn, ms, ...rest) => {
+    if (ms === 200) { undoTick = fn; return 0; }
+    return realInterval(fn, ms, ...rest);
+  };
+  const realNow = Date.now;
+  const later = (ms) => { const now = realNow() + ms; Date.now = () => now; undoTick?.(); Date.now = realNow; };
 
   const sync = await import("../build/sync-host.js");
   await import("../build/host.js");
@@ -105,6 +114,11 @@ const shown = (el) => Boolean(el) && !el.hidden && !el.closest("[hidden]");
   ok("happens at once — nothing asked", !shown($("ask-overlay")) && saved.length === 2);
   ok("and offers it back", shown($("undo")) && $("undo-text").textContent === "Question deleted");
   ok("with a button that says so", $("undo-btn").textContent.trim() === "Undo" && !$("undo-btn").disabled);
+  ok("for thirty seconds, and it says so", shown($("undo-time")) && $("undo-time").textContent === "30s");
+  later(12000);
+  ok("counting down as they pass", $("undo-time").textContent === "18s");
+  later(29500);
+  ok("down to the last one", $("undo-time").textContent === "1s");
 
   console.log("pressing Undo");
   // The deletion has landed; meanwhile a vote arrives on the first question.
@@ -123,7 +137,7 @@ const shown = (el) => Boolean(el) && !el.hidden && !el.closest("[hidden]");
   await del(1);
   ok("says it was a text slide", $("undo-text").textContent === "Text slide deleted");
 
-  console.log("letting the ten seconds run out");
+  console.log("letting the thirty seconds run out");
   undoExpiry?.();
   await tick();
   ok("the bar goes by itself", !shown($("undo")));
@@ -167,6 +181,7 @@ const shown = (el) => Boolean(el) && !el.hidden && !el.closest("[hidden]");
   ok("can't press Undo on the owner's behalf", $("undo-btn").disabled);
 
   globalThis.setTimeout = realTimeout;
+  globalThis.setInterval = realInterval;
 }
 
 console.log(failed ? `\n${failed} FAILED` : "\nall passed");

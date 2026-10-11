@@ -73,7 +73,7 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo",
+  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock",
 ];
 
 const els = {
@@ -87,6 +87,7 @@ const els = {
   bodyCount: document.getElementById("body-count"),
   undo: document.getElementById("undo"),
   undoText: document.getElementById("undo-text"),
+  undoTime: document.getElementById("undo-time"),
   undoBtn: document.getElementById("undo-btn"),
   editorSheet: document.getElementById("editor-sheet"),
   addQuestion: document.getElementById("add-question"),
@@ -1447,28 +1448,48 @@ function stopEditing() {
 
 /* ── Undo ──────────────────────────────────────────────────────────────── */
 
-/** How long a deletion can be taken back. Long enough to notice a slip. */
-const UNDO_MS = 10000;
+/**
+ * How long a deletion can be taken back. Thirty seconds, not the ten most
+ * apps give: mid-event the presenter is talking, and a slip is noticed when
+ * they next look down, not the moment it happens.
+ */
+const UNDO_MS = 30000;
+/** How often the countdown is redrawn — often enough that a second never sticks. */
+const UNDO_TICK = 200;
 let undoTimer = null;
+let undoTicker = null;
+let undoDeadline = 0;
 let undoAction = null;
 
 /**
- * Offers to take back what was just deleted, for a few seconds, along the
- * bottom of the page. One at a time: a second deletion replaces the offer
- * for the first, which is then final.
+ * Offers to take back what was just deleted, along the bottom of the page,
+ * with the seconds left counting down beside it. One at a time: a second
+ * deletion replaces the offer for the first, which is then final.
  */
 function offerUndo(text, action) {
   clearTimeout(undoTimer);
+  clearInterval(undoTicker);
   undoAction = action;
+  undoDeadline = Date.now() + UNDO_MS;
   els.undoText.textContent = text;
   els.undo.hidden = false;
   els.undoBtn.disabled = !isOwner;
+  drawUndoTime();
   undoTimer = setTimeout(closeUndo, UNDO_MS);
+  undoTicker = setInterval(drawUndoTime, UNDO_TICK);
+}
+
+/** The seconds left, rounded up: it reads 1s until the very end, never 0s. */
+function drawUndoTime() {
+  const left = Math.max(1, Math.ceil((undoDeadline - Date.now()) / 1000));
+  els.undoTime.textContent = t("secondsLeft", { n: left });
 }
 
 function closeUndo() {
   clearTimeout(undoTimer);
+  clearInterval(undoTicker);
   undoTimer = null;
+  undoTicker = null;
   undoAction = null;
   els.undo.hidden = true;
 }
