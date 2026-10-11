@@ -120,6 +120,20 @@ host turns the sound on. Phones should not download a large video over
 mobile data to show the same thing the wall is showing: on a phone, a still
 and the caption. A YouTube or Vimeo link would avoid storing video at all.
 
+## 9. A day / night toggle
+
+Added 11 October. A sun-and-moon switch at the top right of each page.
+
+The smallest item here. The night palette already exists — every colour has
+a dark value, measured by the contrast suite — and today it follows the
+device's own setting. The toggle overrides that: three states (follow the
+device, day, night), remembered per browser, never per event, since one
+person's dark room is not the next person's. Each page already has a top
+right that is spoken for — the phone's name, the host's icons, the wall's
+full-screen button — so it sits beside those rather than in place of them.
+On the wall it is for whoever sets the room up, and fades with the mouse
+like the full-screen button does.
+
 ---
 
 ## Not doing
