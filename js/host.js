@@ -66,6 +66,7 @@ import {
   LANGUAGES,
   getLanguage,
 } from "./i18n.js";
+import { followDevice } from "./theme.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
@@ -73,8 +74,11 @@ import {
 window.VOTR_BUILD = [
   "polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker",
   "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour",
-  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock",
+  "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock", "theme",
 ];
+
+// Day or night: whatever the device says, before anything else.
+followDevice();
 
 const els = {
   tabs: document.getElementById("tabs"),

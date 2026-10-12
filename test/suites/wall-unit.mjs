@@ -78,7 +78,8 @@ ok("shares are live — there is nothing to copy",
    stage().querySelectorAll(".big-choice.is-counted").length === 2);
 ok("two of the three votes went to the first", text(".big-pct") === "67%");
 ok("the clock is running", !$("clock").hidden);
-ok("with the seconds left on it", $("clock-time").textContent === "20s");
+ok("with the seconds left in the middle of the ring", $("clock-time").textContent === "20");
+ok("and said in words for a screen reader", $("clock").getAttribute("aria-label") === "20s");
 ok("the room is counted, against how many are in it",
    $("votes").textContent === "Votes 3/3" && !$("votes").hidden);
 ok("and where it is in the poll", $("progress").textContent === "Question 1 of 2");
@@ -132,7 +133,7 @@ sync.state.now = () => now + 60000;
 sync.state.push(at({ currentIndex: 0, blanked: true, pausedAt: now + 5000 }));
 ok("the wall shows the way in, not a blank rectangle", screen() === "join");
 sync.state.push(at({ currentIndex: 0, pausedAt: null, askedAt: now + 55000 }));
-ok("and the clock comes back where it was", $("clock-time").textContent === "25s");
+ok("and the clock comes back where it was", $("clock-time").textContent === "25");
 
 console.log("the host edits the question that is already up");
 sync.state.now = () => now;

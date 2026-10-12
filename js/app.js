@@ -18,21 +18,24 @@ import { flyHearts, heartColour, celebrate } from "./hearts.js";
 import { screenAt, boardMarkup, fillNames, isRatingQuestion, ratingColorVar, ratingCaptionText, isSlide, questionNumber } from "./scores.js";
 import { isConfigured } from "./firebase-config.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
+import { followDevice } from "./theme.js";
+import { drawRing } from "./ring.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 // A browser can serve a fresh page against a cached older script, and the only
 // symptom is controls that don't respond — so the script says what it is.
 window.VOTR_BUILD = [
   "polls", "timer", "ending", "names", "applause", "stage", "pause", "scores",
-  "speed", "presence", "rating", "starpicker", "arrival", "slides",
+  "speed", "presence", "rating", "starpicker", "arrival", "slides", "theme", "ring",
 ];
+
+// Day or night: whatever the device says, before anything else.
+followDevice();
 
 const optionsEl = document.getElementById("options");
 const stageEl = document.querySelector(".stage");
 const progressEl = document.getElementById("progress");
 const clockEl = document.getElementById("clock");
-const clockFillEl = document.getElementById("clock-fill");
-const clockTimeEl = document.getElementById("clock-time");
 const questionEl = document.getElementById("question");
 const whoamiEl = document.getElementById("whoami");
 const statusEl = document.getElementById("status");
@@ -295,20 +298,21 @@ function drawProgress(index, total) {
 }
 
 /**
- * The clock is a bar that empties, with the seconds beside it. As a number
- * alone in the footer it was both too small to glance at and nowhere near
- * the question it was counting down.
+ * The clock is a ring that drains, with the seconds in the middle — see
+ * js/ring.js. It sits beside "Question 2 of 5" rather than under the
+ * question, so it costs the answers no room.
  */
 function drawTime() {
   const left = secondsLeft();
   const closed = latest?.revealed || left === 0;
-  const urgent = !closed && left !== null && left <= 5;
 
   clockEl.hidden = left === null || closed;
   if (!clockEl.hidden) {
-    clockFillEl.style.width = `${(left / latest.seconds) * 100}%`;
-    clockTimeEl.textContent = t("secondsLeft", { n: left });
-    clockEl.classList.toggle("is-urgent", urgent);
+    drawRing(clockEl, {
+      left,
+      fraction: 1 - elapsed() / (latest.seconds * 1000),
+      label: t("secondsLeft", { n: left }),
+    });
   }
 
   noteEl.textContent = closed ? t("votingClosed") : "";

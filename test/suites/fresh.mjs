@@ -1,12 +1,16 @@
 // Pull the inline checker out of host.html and run it against a fake page.
 import { readFileSync } from "fs";
 const html = readFileSync("../../host.html", "utf8");
-const script = html.match(/<script>\n([\s\S]*?)<\/script>/)[1];
+// The page has more than one inline script now — the first picks day or
+// night before it paints — so the checker is found by what it contains.
+const script = [...html.matchAll(/<script>\n([\s\S]*?)<\/script>/g)]
+  .map((m) => m[1])
+  .find((body) => body.includes("var NEEDS"));
 
 let pass = 0, fail = 0;
 const ok = (n, c) => { c ? (pass++, console.log("  ✓", n)) : (fail++, console.log("  ✗", n)); };
 
-async function run({ build, styled = "groups sections hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot tourmarks versionsheet notice slides toast", alreadyTried }) {
+async function run({ build, styled = "groups sections hint hearts choices clock pollsheet paper preview board bigscreen times cornerfoot tourmarks versionsheet notice slides toast nightmode ring", alreadyTried }) {
   const state = { fetched: [], reloaded: false, appended: [], store: {} };
   if (alreadyTried) state.store["votr-refetched"] = "1";
   let onLoad = null;
@@ -37,7 +41,7 @@ async function run({ build, styled = "groups sections hint hearts choices clock 
 }
 
 console.log("current script, everything present");
-let s = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock"] });
+let s = await run({ build: ["polls", "timer", "qr", "icons", "gate", "applause", "sheet", "pollpicker", "pause", "scores", "bigscreen", "speed", "signin", "presence", "tour", "version", "clearroom", "rating", "starpicker", "feedback", "viewonly", "slides", "textslide", "undo", "undoclock", "theme"] });
 ok("no refetch", s.fetched.length === 0);
 ok("no reload", !s.reloaded);
 ok("no banner", s.appended.length === 0);

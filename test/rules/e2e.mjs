@@ -378,7 +378,7 @@ try {
       && document.getElementById("note").textContent === "");
   await eventually("and starts the countdown again from the top", phone,
     () => !document.getElementById("clock").hidden
-      && /^[34]s$/.test(document.getElementById("clock-time").textContent));
+      && /^[34]$/.test(document.getElementById("clock-time").textContent));
   await shot("18-after-reset");
   await tap(phone, '.choice[data-id="b"]');
   await eventually("so the room can answer again", phone,

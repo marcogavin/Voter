@@ -19,12 +19,18 @@ import { drawIcons, icons } from "./icons.js";
 import { flyHearts, celebrate } from "./hearts.js";
 import { screenAt, boardMarkup, fillNames, roomSize, isRatingQuestion, ratingStarsMarkup, ratingCaptionText, isSlide, questionNumber } from "./scores.js";
 import { t, setLanguage, applyStaticText } from "./i18n.js";
+import { wireTheme } from "./theme.js";
+import { drawRing } from "./ring.js";
 
 // What this build of the app can do, read by the freshness check in the page.
 window.VOTR_BUILD = [
   "screen", "scores", "pause", "timer", "speed", "cornercode", "votecount",
-  "presence", "rating", "starsummary", "arrival", "slides",
+  "presence", "rating", "starsummary", "arrival", "slides", "theme", "ring",
 ];
+
+// Day or night, wired before anything else: it's for the screen, not the
+// poll, and works on a page that hasn't connected yet — or never will.
+const drawTheme = wireTheme(document.getElementById("theme"));
 
 /**
  * The most names worth putting on a wall, and the fewest worth calling a
@@ -47,8 +53,6 @@ const els = {
   foot: document.getElementById("foot"),
   progress: document.getElementById("progress"),
   clock: document.getElementById("clock"),
-  clockFill: document.getElementById("clock-fill"),
-  clockTime: document.getElementById("clock-time"),
   tally: document.getElementById("tally"),
   full: document.getElementById("full"),
 };
@@ -152,6 +156,7 @@ function render(event) {
   // thing in it. Anything holding cached markup has to forget it.
   if (setLanguage(event.lang)) {
     applyStaticText();
+    drawTheme();
     delete els.stage.dataset.screen;
     shownQuestionId = null;
     drawFull();
@@ -550,14 +555,20 @@ function secondsLeft() {
   return Math.max(0, Math.ceil(latest.seconds - gone));
 }
 
-/** Paints the clock. Whether it is on screen at all is the footer's call. */
+/**
+ * Paints the clock — a ring, see js/ring.js. Whether it is on screen at all
+ * is the footer's call.
+ */
 function drawTime() {
   const left = secondsLeft();
   if (left === null) return;
 
-  els.clockFill.style.width = `${(left / latest.seconds) * 100}%`;
-  els.clockTime.textContent = t("secondsLeft", { n: left });
-  els.clock.classList.toggle("is-urgent", left <= 5);
+  const gone = (latest.pausedAt ?? serverNow()) - latest.askedAt;
+  drawRing(els.clock, {
+    left,
+    fraction: 1 - gone / (latest.seconds * 1000),
+    label: t("secondsLeft", { n: left }),
+  });
 }
 
 function startTicking() {
