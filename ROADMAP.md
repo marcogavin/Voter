@@ -143,6 +143,23 @@ full-screen button — so it sits beside those rather than in place of them.
 On the wall it is for whoever sets the room up, and fades with the mouse
 like the full-screen button does.
 
+## 10. Keeping a poll yours: move, copy, lock, and a sample that can't be lost
+
+Added 12 October, after someone who was meant to make their own poll added
+their questions to the end of the demo poll instead. Untangling it meant
+exporting the demo from the Firebase console, deleting it, and rebuilding it
+by hand, because nothing in the app can move a question.
+
+- **Move or copy questions to another poll.** Pick one or more questions and
+  send them to another of your polls, with every choice, the right answer and
+  the order kept. Moving would have fixed this on its own.
+- **A built-in sample poll.** The demo comes from the code, not the database,
+  so nobody can edit it or delete it by accident. Anyone can start from a
+  copy of it.
+- **Lock a poll.** It stays read-only until its owner unlocks it, so nobody
+  can add, edit, reorder or delete questions in it, the owner included.
+  It can still be run.
+
 ---
 
 ## Not doing
